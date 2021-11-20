@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="18-01-2021-create-user-table" author="mkorotkiy">
+        <createTable tableName="user">
+            <column name="id" type="int" autoIncrement="true">
+                <constraints primaryKey="true" unique="true" nullable="false"/>
+            </column>
+            <column name="username" type="varchar(25)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="password" type="nvarchar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="first_name" type="nvarchar(64)"/>
+            <column name="second_name" type="nvarchar(64)"/>
+            <column name="middle_name" type="nvarchar(64)"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>
