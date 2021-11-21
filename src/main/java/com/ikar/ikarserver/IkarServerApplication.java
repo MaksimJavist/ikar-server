@@ -13,7 +13,6 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @EnableJpaRepositories(basePackages = {
         "com.ikar.ikarserver.repository.jpa"
 })
-@EnableWebMvc
 public class IkarServerApplication {
 
     public static void main(String[] args) {
