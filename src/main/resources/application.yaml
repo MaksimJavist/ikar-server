@@ -9,7 +9,7 @@ spring:
   liquibase:
     change-log: classpath:liquibase/changelog.xml
   jpa:
-    show-sql: false
+    show-sql: true
     generate-ddl: false
     hibernate:
       ddl-auto: none

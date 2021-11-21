@@ -9,8 +9,7 @@ public class NotFoundException extends AppException {
         super(message);
     }
 
-    @Override
-    public Supplier<NotFoundException> supplier(String message, Object... objects) {
+    public static Supplier<NotFoundException> supplier(String message, Object... objects) {
         return () -> new NotFoundException(MessageFormat.format(message, objects));
     }
 

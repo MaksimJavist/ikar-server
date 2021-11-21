@@ -8,6 +8,4 @@ public abstract class AppException extends RuntimeException {
         super(message);
     }
 
-    public abstract Supplier<? extends AppException> supplier(String message, Object... objects);
-
 }

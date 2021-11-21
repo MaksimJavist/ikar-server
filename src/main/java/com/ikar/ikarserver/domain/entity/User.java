@@ -17,14 +17,14 @@ import javax.validation.constraints.Null;
 @Getter
 @Setter
 @Entity
-@Table(name = "user")
+@Table(name = "user", schema = "public")
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     @NotNull(groups = Marker.Update.class)
-    @Null(groups = Marker.Update.class)
+    @Null(groups = Marker.Create.class)
     private Long id;
 
     @NotBlank

@@ -6,6 +6,7 @@ import lombok.NonNull;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.groups.Default;
+import java.util.Optional;
 
 public interface UserService {
 
@@ -15,8 +16,8 @@ public interface UserService {
     @Validated({Marker.Update.class, Default.class})
     User update(@NonNull User user);
 
-    User getUserByUsername(@NonNull String username);
+    Optional<User> getUserByUsername(@NonNull String username);
 
-    boolean existByUsername(@NonNull String username);
+    boolean existsByUsername(@NonNull String username);
 
 }
