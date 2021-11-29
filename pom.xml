@@ -14,106 +14,74 @@
     <artifactId>ikar-server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>ikar-server</name>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>backend</module>
+        <module>frontend</module>
+    </modules>
 
     <properties>
         <java.version>1.8</java.version>
     </properties>
 
-    <dependencies>
-        <!--Зависимости спринга-->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jdbc</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.session</groupId>
-            <artifactId>spring-session-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
-        </dependency>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>javax.validation</groupId>
+                <artifactId>validation-api</artifactId>
+                <version>2.0.1.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>1.18.20</version>
+            </dependency>
 
-        <!--Остальные зависимость-->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
-            <version>2.0.1.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>org.liquibase</groupId>
-            <artifactId>liquibase-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-websocket</artifactId>
-        </dependency>
+            <dependency>
+                <groupId>org.kurento</groupId>
+                <artifactId>kurento-client</artifactId>
+                <version>6.16.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.kurento</groupId>
+                <artifactId>kurento-utils-js</artifactId>
+                <version>6.15.0</version>
+            </dependency>
 
-        <dependency>
-            <groupId>org.kurento</groupId>
-            <artifactId>kurento-client</artifactId>
-            <version>6.16.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.kurento</groupId>
-            <artifactId>kurento-utils-js</artifactId>
-            <version>6.15.0</version>
-        </dependency>
-
-        <!-- WebJars -->
-        <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>webjars-locator</artifactId>
-            <version>0.40</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars.bower</groupId>
-            <artifactId>jquery</artifactId>
-            <version>3.5.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars.bower</groupId>
-            <artifactId>bootstrap</artifactId>
-            <version>4.5.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars.bower</groupId>
-            <artifactId>demo-console</artifactId>
-            <version>1.5.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars.bower</groupId>
-            <artifactId>ekko-lightbox</artifactId>
-            <version>5.2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars.bower</groupId>
-            <artifactId>webrtc-adapter</artifactId>
-            <version>7.4.0</version>
-        </dependency>
-    </dependencies>
+            <!-- WebJars -->
+            <dependency>
+                <groupId>org.webjars</groupId>
+                <artifactId>webjars-locator</artifactId>
+                <version>0.40</version>
+            </dependency>
+            <dependency>
+                <groupId>org.webjars.bower</groupId>
+                <artifactId>jquery</artifactId>
+                <version>3.5.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.webjars.bower</groupId>
+                <artifactId>bootstrap</artifactId>
+                <version>4.5.3</version>
+            </dependency>
+            <dependency>
+                <groupId>org.webjars.bower</groupId>
+                <artifactId>demo-console</artifactId>
+                <version>1.5.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.webjars.bower</groupId>
+                <artifactId>ekko-lightbox</artifactId>
+                <version>5.2.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.webjars.bower</groupId>
+                <artifactId>webrtc-adapter</artifactId>
+                <version>7.4.0</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <plugins>
