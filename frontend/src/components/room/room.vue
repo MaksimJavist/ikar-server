@@ -25,8 +25,7 @@
           <div id="participants" v-for="(participant, index) in getFilledParticipants" :key="index">
               <ParticipantFrame v-if="participant" :participant="participant.getObject()"/>
           </div>
-        <input type="button" id="button-leave"
-               value="Leave room">
+        <input type="button" id="button-leave" @click="leaveRoom" value="Leave room">
       </div>
     </div>
   </div>
@@ -91,6 +90,7 @@ export default {
                 break
             case 'participantLeft':
                 this.onParticipantLeft(parsedMessage)
+                break
             case 'iceCandidate':
                 this.participants.find(el => el.name === parsedMessage.name).rtcPeer.addIceCandidate(parsedMessage.candidate, function (error) {
                     if (error) {
@@ -136,7 +136,9 @@ export default {
             this.receiveVideoFromSender(request.name)
         },
         onParticipantLeft(request) {
-            const participant = this.participants.find(el => el.name === request.name)
+            const indexLeaved = this.participants.findIndex(el => el.name === request.name)
+            this.participants[indexLeaved].dispose()
+            this.participants.splice(indexLeaved, 1)
         },
         receiveVideoFromSender: function (sender) {
             const participant = new Participant(sender, this.socket)
@@ -164,6 +166,13 @@ export default {
         sendMessage: function (message) {
             const jsonMessage = JSON.stringify(message)
             this.socket.send(jsonMessage)
+        },
+        leaveRoom: function () {
+            this.sendMessage({
+                id : 'leaveRoom'
+            })
+
+            this.participants.splice(0, this.participants.length)
         }
     }
 }
