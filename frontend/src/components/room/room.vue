@@ -1,0 +1,170 @@
+<template>
+  <div id="container">
+    <div id="wrapper">
+      <div id="join" class="animate join">
+        <h1>Join a Room</h1>
+        <form onsubmit="return false;" accept-charset="UTF-8">
+          <p>
+            <input v-model="userName" type="text" name="name" value="" id="name"
+                   placeholder="Username" required>
+          </p>
+          <p>
+            <input v-model="roomName" type="text" name="room" value="" id="roomName"
+                   placeholder="Room" required>
+          </p>
+          <p class="submit">
+            <input @click="joinRoom" type="submit" name="commit" value="Join!">
+          </p>
+        </form>
+      </div>
+      <div id="room">
+          <h2 id="room-header"></h2>
+          <div id="video">
+
+          </div>
+          <div id="participants" v-for="(participant, index) in getFilledParticipants" :key="index">
+              <ParticipantFrame v-if="participant" :participant="participant.getObject()"/>
+          </div>
+        <input type="button" id="button-leave"
+               value="Leave room">
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import KurentoUtils from 'kurento-utils'
+import Participant from '@/util/Participant'
+import ParticipantFrame from '@/components/room/participant-frame'
+
+export default {
+    name: "room",
+    components: {
+        ParticipantFrame
+    },
+    data() {
+        return {
+            userName: null,
+            roomName: null,
+            participants: [],
+            socket: null
+        }
+    },
+    beforeDestroy() {
+        if (this.socket) {
+            this.socket.close()
+        }
+    },
+    created() {
+        this.socket = new WebSocket('ws://localhost:8443/groupcall')
+    },
+    computed: {
+        getFilledParticipants: function () {
+            console.log(this.participants.filter(el => el.name && el.video))
+            return this.participants.filter(el => el.name && el.video)
+        }
+    },
+    methods: {
+        joinRoom: function () {
+            this.createWebSocketConnection()
+        },
+        createWebSocketConnection: function () {
+            this.socket.onmessage = this.socketOnMessageCallback
+            const message = {
+                id : 'joinRoom',
+                name : this.userName,
+                room : this.roomName,
+            }
+            this.sendMessage(message)
+        },
+        socketOnMessageCallback: function (message) {
+            const parsedMessage = JSON.parse(message.data)
+            switch (parsedMessage.id) {
+            case 'existingParticipants':
+                this.onExistingParticipants(parsedMessage)
+                break
+            case 'receiveVideoAnswer':
+                this.receiveVideoResponse(parsedMessage)
+                break
+            case 'newParticipantArrived':
+                this.onNewParticipant(parsedMessage)
+                break
+            case 'participantLeft':
+                this.onParticipantLeft(parsedMessage)
+            case 'iceCandidate':
+                this.participants.find(el => el.name === parsedMessage.name).rtcPeer.addIceCandidate(parsedMessage.candidate, function (error) {
+                    if (error) {
+                        console.error("Error adding candidate: " + error)
+                        return
+                    }
+                })
+                break
+            }
+        },
+        onExistingParticipants: function (message) {
+            const constraints = {
+                audio : true,
+                video : {
+                    mandatory : {
+                        maxWidth : 320,
+                        maxFrameRate : 15,
+                        minFrameRate : 15
+                    }
+                }
+            }
+            const participant = new Participant(this.userName, this.socket)
+            const video = participant.video
+
+            const options = {
+                localVideo: video,
+                mediaConstraints: constraints,
+                onicecandidate: participant.onIceCandidate.bind(participant)
+            }
+            participant.rtcPeer = new KurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options,
+                function (error) {
+                    if(error) {
+                        return console.error(error)
+                    }
+                    this.generateOffer(participant.offerToReceiveVideo.bind(participant))
+                })
+
+            this.participants.push(participant)
+
+            message.data.forEach(this.receiveVideoFromSender)
+        },
+        onNewParticipant(request) {
+            this.receiveVideoFromSender(request.name)
+        },
+        onParticipantLeft(request) {
+            const participant = this.participants.find(el => el.name === request.name)
+        },
+        receiveVideoFromSender: function (sender) {
+            const participant = new Participant(sender, this.socket)
+            const video = participant.video
+
+            const options = {
+                remoteVideo: video,
+                onicecandidate: participant.onIceCandidate.bind(participant)
+            }
+            participant.rtcPeer = new KurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options,
+                function (error) {
+                    if(error) {
+                        return console.error(error)
+                    }
+                    this.generateOffer(participant.offerToReceiveVideo.bind(participant))
+                })
+
+            this.participants.push(participant)
+        },
+        receiveVideoResponse: function (result) {
+            this.participants.find(el => el.name === result.name).rtcPeer.processAnswer(result.sdpAnswer, function (error) {
+                if (error) return console.error (error)
+            })
+        },
+        sendMessage: function (message) {
+            const jsonMessage = JSON.stringify(message)
+            this.socket.send(jsonMessage)
+        }
+    }
+}
+</script>

@@ -49,7 +49,7 @@ public class KurentoConfiguration implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(callHandler(), "/groupcall");
+        registry.addHandler(callHandler(), "/groupcall").setAllowedOriginPatterns("*");
     }
 
 }
