@@ -29,6 +29,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter implemen
                 .authorizeRequests()
                     .antMatchers("/*").permitAll()
                     .antMatchers("/login*").permitAll()
+                    .antMatchers("/room*").permitAll()
                     .antMatchers("/registration*").anonymous()
                     .anyRequest().authenticated()
                     .and()

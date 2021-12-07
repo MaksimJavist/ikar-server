@@ -1,5 +1,5 @@
 server:
-  port: 8443
+  port: 8080
 #  ssl:
 #    key-store: classpath:keystore.jks
 #    key-store-password: kurento

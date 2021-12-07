@@ -3,6 +3,8 @@ package com.ikar.ikarserver.backend.configuration;
 import com.ikar.ikarserver.backend.domain.kurento.CallHandler;
 import com.ikar.ikarserver.backend.domain.kurento.RoomManager;
 import com.ikar.ikarserver.backend.domain.kurento.UserRegistry;
+import com.ikar.ikarserver.backend.service.RoomIdentifierService;
+import com.ikar.ikarserver.backend.service.impl.RoomIdentifierServiceImpl;
 import org.kurento.client.KurentoClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,8 +20,14 @@ public class KurentoConfiguration implements WebSocketConfigurer {
     @Bean
     public RoomManager roomManager() {
         return new RoomManager(
-                kurentoClient()
+                kurentoClient(),
+                roomIdentifierService()
         );
+    }
+
+    @Bean
+    public RoomIdentifierService roomIdentifierService() {
+        return new RoomIdentifierServiceImpl();
     }
 
     @Bean

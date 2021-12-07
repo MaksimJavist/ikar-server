@@ -32,15 +32,18 @@
 </template>
 
 <script>
-import KurentoUtils from 'kurento-utils'
 import Participant from '@/util/Participant'
 import ParticipantFrame from '@/components/room/participant-frame'
+import ParticipantMixin from "@/mixin/ParticipantMixin"
 
 export default {
     name: "room",
     components: {
         ParticipantFrame
     },
+    mixins: [
+        ParticipantMixin
+    ],
     data() {
         return {
             userName: null,
@@ -59,7 +62,6 @@ export default {
     },
     computed: {
         getFilledParticipants: function () {
-            console.log(this.participants.filter(el => el.name && el.video))
             return this.participants.filter(el => el.name && el.video)
         }
     },
@@ -78,7 +80,8 @@ export default {
         },
         socketOnMessageCallback: function (message) {
             const parsedMessage = JSON.parse(message.data)
-            switch (parsedMessage.id) {
+            const messageId = parsedMessage.id
+            switch (messageId) {
             case 'existingParticipants':
                 this.onExistingParticipants(parsedMessage)
                 break
@@ -91,15 +94,12 @@ export default {
             case 'participantLeft':
                 this.onParticipantLeft(parsedMessage)
                 break
-            case 'iceCandidate':
-                this.participants.find(el => el.name === parsedMessage.name).rtcPeer.addIceCandidate(parsedMessage.candidate, function (error) {
-                    if (error) {
-                        console.error("Error adding candidate: " + error)
-                        return
-                    }
-                })
+            case 'iceCandidate': {
+                const candidateName = parsedMessage.name
+                const candidate = this.getParticipantByName(candidateName)
+                candidate.rtcPeer.addIceCandidate(parsedMessage.candidate, this.showErrorCallback)
                 break
-            }
+            }}
         },
         onExistingParticipants: function (message) {
             const constraints = {
@@ -120,14 +120,7 @@ export default {
                 mediaConstraints: constraints,
                 onicecandidate: participant.onIceCandidate.bind(participant)
             }
-            participant.rtcPeer = new KurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options,
-                function (error) {
-                    if(error) {
-                        return console.error(error)
-                    }
-                    this.generateOffer(participant.offerToReceiveVideo.bind(participant))
-                })
-
+            participant.rtcPeer = this.createWebRtcPeerForReceiver(options, participant)
             this.participants.push(participant)
 
             message.data.forEach(this.receiveVideoFromSender)
@@ -148,13 +141,7 @@ export default {
                 remoteVideo: video,
                 onicecandidate: participant.onIceCandidate.bind(participant)
             }
-            participant.rtcPeer = new KurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options,
-                function (error) {
-                    if(error) {
-                        return console.error(error)
-                    }
-                    this.generateOffer(participant.offerToReceiveVideo.bind(participant))
-                })
+            participant.rtcPeer = this.createWebRtcPeerForSender(options, participant)
 
             this.participants.push(participant)
         },
