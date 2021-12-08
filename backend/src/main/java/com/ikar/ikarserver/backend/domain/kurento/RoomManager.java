@@ -1,5 +1,6 @@
 package com.ikar.ikarserver.backend.domain.kurento;
 
+import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.RoomIdentifierService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,11 +15,12 @@ public class RoomManager {
 
     private final KurentoClient kurento;
     private final RoomIdentifierService identifierService;
+    private final AuthInfoService authInfoService;
     private final ConcurrentMap<String, Room> rooms = new ConcurrentHashMap<>();
 
     public String createRoom() {
         String roomIdentifier = identifierService.generateIdentifierRoom();
-        log.debug("Creation room with identifier {}", roomIdentifier);
+        log.info("Creation room with identifier {}", roomIdentifier);
         Room room = new Room(roomIdentifier, kurento.createMediaPipeline());
         rooms.put(roomIdentifier, room);
         return roomIdentifier;

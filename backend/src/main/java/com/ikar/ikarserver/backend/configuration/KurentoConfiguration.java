@@ -3,7 +3,9 @@ package com.ikar.ikarserver.backend.configuration;
 import com.ikar.ikarserver.backend.domain.kurento.CallHandler;
 import com.ikar.ikarserver.backend.domain.kurento.RoomManager;
 import com.ikar.ikarserver.backend.domain.kurento.UserRegistry;
+import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.RoomIdentifierService;
+import com.ikar.ikarserver.backend.service.impl.AuthInfoServiceImpl;
 import com.ikar.ikarserver.backend.service.impl.RoomIdentifierServiceImpl;
 import org.kurento.client.KurentoClient;
 import org.springframework.context.annotation.Bean;
@@ -15,19 +17,25 @@ import org.springframework.web.socket.server.standard.ServletServerContainerFact
 
 @Configuration
 @EnableWebSocket
-public class KurentoConfiguration implements WebSocketConfigurer {
+public class KurentoConfiguration {
 
     @Bean
     public RoomManager roomManager() {
         return new RoomManager(
                 kurentoClient(),
-                roomIdentifierService()
+                roomIdentifierService(),
+                authInfoServiceImpl()
         );
     }
 
     @Bean
     public RoomIdentifierService roomIdentifierService() {
         return new RoomIdentifierServiceImpl();
+    }
+
+    @Bean
+    public AuthInfoService authInfoServiceImpl() {
+        return new AuthInfoServiceImpl();
     }
 
     @Bean
@@ -53,11 +61,6 @@ public class KurentoConfiguration implements WebSocketConfigurer {
         ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
         container.setMaxTextMessageBufferSize(32768);
         return container;
-    }
-
-    @Override
-    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(callHandler(), "/groupcall").setAllowedOriginPatterns("*");
     }
 
 }

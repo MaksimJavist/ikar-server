@@ -4,13 +4,11 @@ import com.ikar.ikarserver.backend.service.RoomIdentifierService;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.impl.auth.DigestScheme;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
 
-@Service
 public final class RoomIdentifierServiceImpl implements RoomIdentifierService {
 
     private final String HEX_FORMAT = "%02x";
