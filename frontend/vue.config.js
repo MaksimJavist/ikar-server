@@ -1,3 +1,6 @@
 module.exports = {
-    outputDir: 'target/dist'
+    outputDir: 'target/dist',
+    devServer: {
+        proxy: 'http://localhost:8080'
+    }
 }

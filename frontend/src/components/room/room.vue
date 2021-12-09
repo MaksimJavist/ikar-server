@@ -8,10 +8,10 @@
             <input v-model="userName" type="text" name="name" value="" id="name"
                    placeholder="Username" required>
           </p>
-          <p>
-            <input v-model="roomName" type="text" name="room" value="" id="roomName"
-                   placeholder="Room" required>
-          </p>
+<!--          <p>-->
+<!--            <input v-model="roomName" type="text" name="room" value="" id="roomName"-->
+<!--                   placeholder="Room" required>-->
+<!--          </p>-->
           <p class="submit">
             <input @click="joinRoom" type="submit" name="commit" value="Join!">
           </p>
@@ -58,7 +58,7 @@ export default {
         }
     },
     created() {
-        this.socket = new WebSocket('ws://localhost:8443/groupcall')
+        this.socket = new WebSocket('ws://localhost:8080/groupcall')
     },
     computed: {
         getFilledParticipants: function () {
@@ -67,14 +67,12 @@ export default {
     },
     methods: {
         joinRoom: function () {
-            this.createWebSocketConnection()
-        },
-        createWebSocketConnection: function () {
             this.socket.onmessage = this.socketOnMessageCallback
+            const roomIdentifier = this.$route.params.roomId
             const message = {
-                id : 'joinRoom',
-                name : this.userName,
-                room : this.roomName,
+                id: 'joinRoom',
+                name: this.userName,
+                room: roomIdentifier,
             }
             this.sendMessage(message)
         },

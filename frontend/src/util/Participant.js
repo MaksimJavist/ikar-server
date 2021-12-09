@@ -47,7 +47,8 @@ class Participant {
     getObject() {
         return {
             name: this.name,
-            video: this.video
+            video: this.video,
+            rtcPeer: this.rtcPeer
         }
     }
 

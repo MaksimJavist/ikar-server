@@ -8,12 +8,12 @@ export default new VueRouter({
     mode: 'history',
     routes: [
         {
-            path: '/create-call',
+            path: '',
             name: 'createCall',
             component: CreateCall
         },
         {
-            path: '/room',
+            path: '/room/:roomId',
             name: 'room',
             component: Room
         }

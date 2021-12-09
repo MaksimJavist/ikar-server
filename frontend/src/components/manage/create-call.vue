@@ -15,11 +15,16 @@
 </template>
 
 <script>
+import api from '@/api'
+
 export default {
     name: "CreateRoom",
     methods: {
         createRoomCall: function () {
-            this.$router.push('/room')
+            api.createNewRoom()
+                .then(resp => {
+                    this.$router.push(`/room/${resp.data}`)
+                })
         }
     }
 }

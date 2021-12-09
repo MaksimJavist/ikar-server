@@ -7,8 +7,6 @@ import com.google.gson.JsonPrimitive;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.Continuation;
 import org.kurento.client.MediaPipeline;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
 
 import javax.annotation.PreDestroy;

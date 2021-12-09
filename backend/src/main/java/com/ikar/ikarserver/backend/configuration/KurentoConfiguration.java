@@ -17,7 +17,7 @@ import org.springframework.web.socket.server.standard.ServletServerContainerFact
 
 @Configuration
 @EnableWebSocket
-public class KurentoConfiguration {
+public class KurentoConfiguration implements WebSocketConfigurer {
 
     @Bean
     public RoomManager roomManager() {
@@ -61,6 +61,11 @@ public class KurentoConfiguration {
         ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
         container.setMaxTextMessageBufferSize(32768);
         return container;
+    }
+
+    @Override
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(callHandler(), "/groupcall").setAllowedOriginPatterns("*");
     }
 
 }
