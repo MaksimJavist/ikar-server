@@ -1,5 +1,6 @@
 package com.ikar.ikarserver.backend.domain.kurento;
 
+import com.ikar.ikarserver.backend.exception.NotFoundException;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.RoomIdentifierService;
 import lombok.RequiredArgsConstructor;

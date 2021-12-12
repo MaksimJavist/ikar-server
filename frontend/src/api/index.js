@@ -10,6 +10,13 @@ const createNewRoom = () =>
         method: 'GET'
     })
 
+const getAuthInfo = () =>
+    axiosInstance({
+        url: '/api/auth/info',
+        method: 'GET'
+    })
+
 export default {
-    createNewRoom
+    createNewRoom,
+    getAuthInfo
 }

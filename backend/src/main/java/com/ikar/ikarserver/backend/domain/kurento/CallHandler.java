@@ -41,8 +41,8 @@ public class CallHandler extends TextWebSocketHandler {
                 joinRoom(jsonMessage, session);
                 break;
             case "receiveVideoFrom":
-                final String senderName = jsonMessage.get("sender").getAsString();
-                final UserSession sender = registry.getByName(senderName);
+                final String senderUuid = jsonMessage.get("uuid").getAsString();
+                final UserSession sender = registry.getByUuid(senderUuid);
                 final String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
                 user.receiveVideoFrom(sender, sdpOffer);
                 break;
@@ -55,7 +55,7 @@ public class CallHandler extends TextWebSocketHandler {
                 if (user != null) {
                     IceCandidate cand = new IceCandidate(candidate.get("candidate").getAsString(),
                             candidate.get("sdpMid").getAsString(), candidate.get("sdpMLineIndex").getAsInt());
-                    user.addCandidate(cand, jsonMessage.get("name").getAsString());
+                    user.addCandidate(cand, jsonMessage.get("uuid").getAsString());
                 }
                 break;
             default:

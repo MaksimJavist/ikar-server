@@ -1,4 +1,4 @@
-package com.ikar.ikarserver.backend.domain.entity;
+package com.ikar.ikarserver.backend.domain;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -10,5 +10,9 @@ public class AuthUserInfo {
     private Long id;
 
     private String username;
+
+    private String firstName;
+
+    private String secondName;
 
 }

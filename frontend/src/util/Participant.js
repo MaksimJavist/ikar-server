@@ -2,7 +2,8 @@ class Participant {
 
     rtcPeer
 
-    constructor(name, webSocketConnection) {
+    constructor(uuid, name, webSocketConnection) {
+        this.uuid = uuid
         this.name = name
         this.webSocket = webSocketConnection
         this.video = document.createElement('video')
@@ -20,7 +21,7 @@ class Participant {
         const message = {
             id: 'onIceCandidate',
             candidate: candidate,
-            name: this.name
+            uuid: this.uuid
         }
         this.sendMessage(message)
     }
@@ -29,7 +30,7 @@ class Participant {
         if (error) return console.error ("sdp offer error")
         const msg = {
             id : "receiveVideoFrom",
-            sender : this.name,
+            uuid : this.uuid,
             sdpOffer : offerSdp
         }
         this.sendMessage(msg)
@@ -46,10 +47,19 @@ class Participant {
 
     getObject() {
         return {
+            uuid: this.uuid,
             name: this.name,
             video: this.video,
             rtcPeer: this.rtcPeer
         }
+    }
+
+    set uuid(uuid) {
+        this._uuid = uuid
+    }
+
+    get uuid() {
+        return this._uuid
     }
 
     set name(name) {

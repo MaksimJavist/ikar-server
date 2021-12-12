@@ -8,8 +8,8 @@ const ParticipantMixin = {
         createWebRtcPeerForSender: function (options, participant) {
             return new KurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options, generateOfferCallback(participant))
         },
-        getParticipantByName: function (name) {
-            return this.participants.find(el => el.name === name)
+        getParticipantByUuid: function (uuid) {
+            return this.participants.find(el => el.uuid === uuid)
         },
         showErrorCallback: function (error) {
             if (error) {

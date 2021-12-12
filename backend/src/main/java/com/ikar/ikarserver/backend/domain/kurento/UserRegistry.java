@@ -6,29 +6,29 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class UserRegistry {
 
-    private final ConcurrentHashMap<String, UserSession> usersByName = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, UserSession> usersByUuid = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, UserSession> usersBySessionId = new ConcurrentHashMap<>();
 
     public void register(UserSession user) {
-        usersByName.put(user.getName(), user);
+        usersByUuid.put(user.getUuid(), user);
         usersBySessionId.put(user.getSession().getId(), user);
     }
 
-    public UserSession getByName(String name) {
-        return usersByName.get(name);
+    public UserSession getByUuid(String uuid) {
+        return usersByUuid.get(uuid);
     }
 
     public UserSession getBySession(WebSocketSession session) {
         return usersBySessionId.get(session.getId());
     }
 
-    public boolean exists(String name) {
-        return usersByName.keySet().contains(name);
+    public boolean exists(String uuid) {
+        return usersByUuid.keySet().contains(uuid);
     }
 
     public UserSession removeBySession(WebSocketSession session) {
         final UserSession user = getBySession(session);
-        usersByName.remove(user.getName());
+        usersByUuid.remove(user.getUuid());
         usersBySessionId.remove(session.getId());
         return user;
     }

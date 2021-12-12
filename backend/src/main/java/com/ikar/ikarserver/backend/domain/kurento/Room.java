@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -42,23 +43,28 @@ public class Room implements Closeable {
 
     public UserSession join(String userName, WebSocketSession session) throws IOException {
         log.info("ROOM {}: adding participant {}", this.name, userName);
-        final UserSession participant = new UserSession(userName, this.name, session, this.pipeline);
+        String uuid = UUID.randomUUID().toString();
+        final UserSession participant = new UserSession(uuid, userName, this.name, session, this.pipeline);
         joinRoom(participant);
-        participants.put(participant.getName(), participant);
+        participants.put(participant.getUuid(), participant);
         sendParticipantNames(participant);
         return participant;
     }
 
     public void leave(UserSession user) throws IOException {
         log.debug("PARTICIPANT {}: Leaving room {}", user.getName(), this.name);
-        this.removeParticipant(user.getName());
+        this.removeParticipant(user.getUuid());
         user.close();
     }
 
     private Collection<String> joinRoom(UserSession newParticipant) throws IOException {
+        final JsonObject newParticipantJson = new JsonObject();
+        newParticipantJson.addProperty("uuid", newParticipant.getUuid());
+        newParticipantJson.addProperty("name", newParticipant.getName());
+
         final JsonObject newParticipantMsg = new JsonObject();
         newParticipantMsg.addProperty("id", "newParticipantArrived");
-        newParticipantMsg.addProperty("name", newParticipant.getName());
+        newParticipantMsg.add("data", newParticipantJson);
 
         final List<String> participantsList = new ArrayList<>(participants.values().size());
         log.debug("ROOM {}: notifying other participants of new participant {}", name,
@@ -70,27 +76,27 @@ public class Room implements Closeable {
             } catch (final IOException e) {
                 log.debug("ROOM {}: participant {} could not be notified", name, participant.getName(), e);
             }
-            participantsList.add(participant.getName());
+            participantsList.add(participant.getUuid());
         }
 
         return participantsList;
     }
 
-    private void removeParticipant(String name) throws IOException {
-        participants.remove(name);
+    private void removeParticipant(String uuid) throws IOException {
+        participants.remove(uuid);
 
-        log.debug("ROOM {}: notifying all users that {} is leaving the room", this.name, name);
+        log.debug("ROOM {}: notifying all users that {} is leaving the room", this.name, uuid);
 
         final List<String> unnotifiedParticipants = new ArrayList<>();
         final JsonObject participantLeftJson = new JsonObject();
         participantLeftJson.addProperty("id", "participantLeft");
-        participantLeftJson.addProperty("name", name);
+        participantLeftJson.addProperty("uuid", uuid);
         for (final UserSession participant : participants.values()) {
             try {
-                participant.cancelVideoFrom(name);
+                participant.cancelVideoFrom(uuid);
                 participant.sendMessage(participantLeftJson);
             } catch (final IOException e) {
-                unnotifiedParticipants.add(participant.getName());
+                unnotifiedParticipants.add(participant.getUuid());
             }
         }
 
@@ -106,15 +112,19 @@ public class Room implements Closeable {
         final JsonArray participantsArray = new JsonArray();
         for (final UserSession participant : this.getParticipants()) {
             if (!participant.equals(user)) {
-                final JsonElement participantName = new JsonPrimitive(participant.getName());
-                participantsArray.add(participantName);
+                final JsonObject participantJson = new JsonObject();
+                participantJson.addProperty("uuid", participant.getUuid());
+                participantJson.addProperty("name", participant.getName());
+
+                participantsArray.add(participantJson);
             }
         }
-
         final JsonObject existingParticipantsMsg = new JsonObject();
         existingParticipantsMsg.addProperty("id", "existingParticipants");
+        existingParticipantsMsg.addProperty("registeredName", user.getName());
+        existingParticipantsMsg.addProperty("registeredUuid", user.getUuid());
         existingParticipantsMsg.add("data", participantsArray);
-        log.debug("PARTICIPANT {}: sending a list of {} participants", user.getName(),
+        log.debug("PARTICIPANT {}: sending a list of {} participants", user.getUuid(),
                 participantsArray.size());
         user.sendMessage(existingParticipantsMsg);
     }

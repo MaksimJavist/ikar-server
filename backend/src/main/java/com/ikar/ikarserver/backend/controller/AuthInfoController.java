@@ -1,6 +1,7 @@
 package com.ikar.ikarserver.backend.controller;
 
-import com.ikar.ikarserver.backend.domain.kurento.RoomManager;
+import com.ikar.ikarserver.backend.domain.AuthInfo;
+import com.ikar.ikarserver.backend.service.AuthInfoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -9,17 +10,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@RequestMapping("/api/room")
-public class RoomController {
+public class AuthInfoController {
 
-    private final RoomManager roomManager;
+    private final AuthInfoService service;
 
-    @GetMapping(value = "/create")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<String> createNewRoom(){
+    @GetMapping("info")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<AuthInfo> getAuthInfo() {
         return ResponseEntity.ok(
-                roomManager.createRoom()
+                service.getAuthInfo()
         );
     }
 
