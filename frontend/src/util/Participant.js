@@ -15,6 +15,10 @@ class Participant {
         this.video.id = 'video' + this.name
         this.video.autoplay = true
         this.video.controls = false
+        this.video.style.width='100%'
+        this.video.style.maxHeight='100%'
+        this.video.style.objectFit='cover'
+        this.video.classList.add('rounded')
     }
 
     onIceCandidate(candidate) {

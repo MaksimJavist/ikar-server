@@ -1,17 +1,18 @@
 <template>
-  <div id="container">
-    <div id="wrapper">
-      <div id="join" class="animate join">
-        <h1>Выберите действие</h1>
-        <p class="submit">
-          <input @click="createRoomCall" type="submit" name="commit" value="Создать комнату">
-        </p>
-        <p class="submit">
-          <input type="submit" name="commit" value="Создать конференцию">
-        </p>
-      </div>
-    </div>
-  </div>
+  <b-container fluid>
+      <b-row class="vh-100 justify-content-center" align-v="center">
+          <b-col cols="4">
+              <b-card title="Выберите действие" align="center">
+                    <b-row class="justify-content-center mt-4 mb-3">
+                        <b-button class="w-75" @click="createRoomCall" variant="outline-success" pill>Создать комнату</b-button>
+                    </b-row>
+                    <b-row class="justify-content-center">
+                        <b-button class="w-75" variant="outline-success" pill>Создать конференцию</b-button>
+                    </b-row>
+              </b-card>
+          </b-col>
+      </b-row>
+  </b-container>
 </template>
 
 <script>
@@ -25,7 +26,7 @@ export default {
                 .then(resp => {
                     this.$router.push(`/room/${resp.data}`)
                 })
-        }
+        },
     }
 }
 </script>
