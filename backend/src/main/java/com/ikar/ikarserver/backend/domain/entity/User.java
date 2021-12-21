@@ -17,7 +17,7 @@ import javax.validation.constraints.Null;
 @Getter
 @Setter
 @Entity
-@Table(name = "user", schema = "public")
+@Table(name = "user")
 public class User {
 
     @Id

@@ -1,22 +1,27 @@
-package com.ikar.ikarserver.backend.domain.kurento;
+package com.ikar.ikarserver.backend.handler;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.ikar.ikarserver.backend.domain.kurento.Room;
+import com.ikar.ikarserver.backend.domain.kurento.RoomManager;
+import com.ikar.ikarserver.backend.domain.kurento.UserRegistry;
+import com.ikar.ikarserver.backend.domain.kurento.UserSession;
+import com.ikar.ikarserver.backend.dto.ChatMessageDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.IceCandidate;
-import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 @Slf4j
 @RequiredArgsConstructor
-public class CallHandler extends TextWebSocketHandler {
+public class RoomHandler extends TextWebSocketHandler {
 
     private static final Gson gson = new GsonBuilder().create();
 
@@ -58,6 +63,19 @@ public class CallHandler extends TextWebSocketHandler {
                     user.addCandidate(cand, jsonMessage.get("uuid").getAsString());
                 }
                 break;
+            case "sendChat":
+                UserSession messageSender = registry.getBySession(session);
+                Room room = roomManager.getRoom(messageSender.getRoomUuid());
+                String chatMessage = jsonMessage.get("message").getAsString();
+                room.sendNewMessage(
+                        new ChatMessageDto(
+                                messageSender.getUuid(),
+                                messageSender.getName(),
+                                LocalDateTime.now(),
+                                chatMessage
+                        )
+                );
+                break;
             default:
                 break;
         }
@@ -66,7 +84,7 @@ public class CallHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         UserSession user = registry.removeBySession(session);
-        roomManager.getRoom(user.getRoomName()).leave(user);
+        roomManager.getRoom(user.getRoomUuid()).leave(user);
     }
 
     private void joinRoom(JsonObject params, WebSocketSession session) throws IOException {
@@ -80,7 +98,7 @@ public class CallHandler extends TextWebSocketHandler {
     }
 
     private void leaveRoom(UserSession user) throws IOException {
-        final Room room = roomManager.getRoom(user.getRoomName());
+        final Room room = roomManager.getRoom(user.getRoomUuid());
         room.leave(user);
         if (room.getParticipants().isEmpty()) {
             roomManager.removeRoom(room);

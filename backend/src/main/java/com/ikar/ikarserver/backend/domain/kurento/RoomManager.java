@@ -1,7 +1,8 @@
 package com.ikar.ikarserver.backend.domain.kurento;
 
-import com.ikar.ikarserver.backend.exception.NotFoundException;
+import com.ikar.ikarserver.backend.repository.jpa.RoomChatMessageJpaRepository;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
+import com.ikar.ikarserver.backend.service.RoomChatMessageService;
 import com.ikar.ikarserver.backend.service.RoomIdentifierService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,12 +18,13 @@ public class RoomManager {
     private final KurentoClient kurento;
     private final RoomIdentifierService identifierService;
     private final AuthInfoService authInfoService;
+    private final RoomChatMessageService service;
     private final ConcurrentMap<String, Room> rooms = new ConcurrentHashMap<>();
 
     public String createRoom() {
         String roomIdentifier = identifierService.generateIdentifierRoom();
         log.info("Creation room with identifier {}", roomIdentifier);
-        Room room = new Room(roomIdentifier, kurento.createMediaPipeline());
+        Room room = new Room(roomIdentifier, kurento.createMediaPipeline(), service);
         rooms.put(roomIdentifier, room);
         return roomIdentifier;
     }
@@ -33,7 +35,7 @@ public class RoomManager {
 
         if (room == null) {
             log.debug("Room {} not existent. Will create now!", roomName);
-            room = new Room(roomName, kurento.createMediaPipeline());
+            room = new Room(roomName, kurento.createMediaPipeline(), service);
             rooms.put(roomName, room);
         }
         log.debug("Room {} found!", roomName);
@@ -41,9 +43,9 @@ public class RoomManager {
     }
 
     public void removeRoom(Room room) {
-        this.rooms.remove(room.getName());
+        this.rooms.remove(room.getUuid());
         room.close();
-        log.info("Room {} removed and closed", room.getName());
+        log.info("Room {} removed and closed", room.getUuid());
     }
 
 }

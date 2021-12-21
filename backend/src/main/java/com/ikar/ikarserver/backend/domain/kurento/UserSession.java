@@ -26,17 +26,17 @@ public class UserSession implements Closeable {
 
     private final MediaPipeline pipeline;
 
-    private final String roomName;
+    private final String roomUuid;
     private final WebRtcEndpoint outgoingMedia;
     private final ConcurrentMap<String, WebRtcEndpoint> incomingMedia = new ConcurrentHashMap<>();
 
-    public UserSession(String uuid, final String name, String roomName, final WebSocketSession session,
+    public UserSession(String uuid, final String name, String roomUuid, final WebSocketSession session,
                        MediaPipeline pipeline) {
         this.uuid = uuid;
         this.pipeline = pipeline;
         this.name = name;
         this.session = session;
-        this.roomName = roomName;
+        this.roomUuid = roomUuid;
         this.outgoingMedia = new WebRtcEndpoint.Builder(pipeline).build();
 
         this.outgoingMedia.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
@@ -80,12 +80,12 @@ public class UserSession implements Closeable {
      *
      * @return The room
      */
-    public String getRoomName() {
-        return this.roomName;
+    public String getRoomUuid() {
+        return this.roomUuid;
     }
 
     public void receiveVideoFrom(UserSession sender, String sdpOffer) throws IOException {
-        log.info("USER {}: connecting with {} in room {}", this.name, sender.getUuid(), this.roomName);
+        log.info("USER {}: connecting with {} in room {}", this.name, sender.getUuid(), this.roomUuid);
 
         log.trace("USER {}: SdpOffer for {} is {}", this.name, sender.getUuid(), sdpOffer);
 
@@ -240,7 +240,7 @@ public class UserSession implements Closeable {
         }
         UserSession other = (UserSession) obj;
         boolean eq = uuid.equals(other.uuid);
-        eq &= roomName.equals(other.roomName);
+        eq &= roomUuid.equals(other.roomUuid);
         return eq;
     }
 
@@ -254,7 +254,7 @@ public class UserSession implements Closeable {
         int result = 1;
         result = 31 * result + uuid.hashCode();
         result = 31 * result + name.hashCode();
-        result = 31 * result + roomName.hashCode();
+        result = 31 * result + roomUuid.hashCode();
         return result;
     }
 

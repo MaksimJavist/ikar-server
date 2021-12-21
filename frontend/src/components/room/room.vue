@@ -35,6 +35,7 @@
                     <b-card class="h-100" align="center" style="background-color: #e1e2e3">
                         <div id="microButton" class="d-inline-block" style="margin: 0 10px">
                             <b-button v-if="microEnable"
+                                      v-b-tooltip.hover
                                       title="Выключить микрофон"
                                       @click="changeMicroDisabled(false)"
                                       variant="outline-success">
@@ -42,6 +43,7 @@
                             </b-button>
                             <b-button
                                 v-else
+                                v-b-tooltip.hover
                                 title="Включить микрофон"
                                 @click="changeMicroDisabled(true)"
                                 variant="outline-danger">
@@ -51,6 +53,7 @@
                         <div id="videoButton" class="d-inline-block" style="margin: 0 10px">
                             <b-button
                                 v-if="videoEnable"
+                                v-b-tooltip.hover
                                 title="Выключить камеру"
                                 @click="changeVideoEnabled(false)"
                                 variant="outline-success">
@@ -58,14 +61,15 @@
                             </b-button>
                             <b-button
                                 v-else
+                                v-b-tooltip.hover
                                 title="Включить камеру"
                                 @click="changeVideoEnabled(true)"
                                 variant="outline-danger">
                                 <b-icon-camera-video-off/>
                             </b-button>
                         </div>
-                        <div v-if="false" id="displayButton" class="d-inline-block" style="margin: 0 10px">
-                            <b-button variant="outline-success">
+                        <div v-if="true" id="displayButton" class="d-inline-block" style="margin: 0 10px">
+                            <b-button variant="outline-success" @click="sendChatMessage">
                                 <b-icon-display/>
                             </b-button>
                             <b-button variant="outline-danger">
@@ -75,6 +79,7 @@
                         <div id="shareButton" class="d-inline-block" style="margin: 0 10px">
                             <b-button
                                 variant="outline-primary"
+                                v-b-tooltip.hover
                                 title="Скопировать ссылку на конференцию"
                                 v-clipboard:copy="getRoomFullReference()"
                                 @click="copyLinkToast">
@@ -128,9 +133,6 @@ export default {
                 }
             })
     },
-    created() {
-        // this.socket.onopen = this.joinRoom
-    },
     beforeDestroy() {
         if (this.socket) {
             this.socket.close()
@@ -159,6 +161,7 @@ export default {
         connectRoom: function () {
             this.joinFrameVisible = false
             this.socket = new WebSocket('ws://localhost:8080/groupcall')
+            this.chatSocket = new WebSocket('ws://localhost:8080/roomchat')
             this.socket.onopen = this.joinRoom
         },
         joinRoom: function () {
@@ -294,6 +297,13 @@ export default {
                     solid: true
                 })
             }
+        },
+        sendChatMessage: function () {
+            const message = {
+                id: 'sendChat',
+                message: 'hello'
+            }
+            this.socket.send(JSON.stringify(message))
         }
     }
 }

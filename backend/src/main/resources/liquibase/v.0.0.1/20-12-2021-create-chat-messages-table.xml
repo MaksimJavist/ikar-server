@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="20-12-2021-create-room-chat-messages-table" author="mkorotkiy">
+        <createTable tableName="room_chat_messages">
+            <column name="uuid" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="room_identifier" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date_time_message" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sender_uuid" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sender_name" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="text_message" type="text">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="room_chat_messages" columnNames="uuid, room_identifier"/>
+    </changeSet>
+
+    <changeSet id="20-12-2021-create-conference-chat-messages-table" author="mkorotkiy">
+        <createTable tableName="conference_chat_messages">
+            <column name="uuid" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="conference_identifier" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date_time_message" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sender_uuid" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sender_name" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="text_message" type="text">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="conference_chat_messages" columnNames="uuid, conference_identifier"/>
+    </changeSet>
+
+</databaseChangeLog>
