@@ -1,0 +1,20 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+        <changeSet id="22-01-2021-user-table-rename" author="mkorotkiy">
+            <renameTable oldTableName="user" newTableName="app_user"/>
+        </changeSet>
+
+        <changeSet id="22-02-2021-add-uuid-column-app-ser-table" author="mkorotkiy">
+            <addColumn tableName="app_user">
+                <column name="uuid" type="varchar(64)"/>
+            </addColumn>
+        </changeSet>
+
+        <changeSet id="22-02-2021-add-nullable-constraint-app-user-uuid" author="mkorotkiy">
+            <addNotNullConstraint tableName="app_user" columnName="uuid"/>
+        </changeSet>
+
+</databaseChangeLog>

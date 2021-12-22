@@ -1,6 +1,6 @@
 package com.ikar.ikarserver.backend.service;
 
-import com.ikar.ikarserver.backend.domain.entity.User;
+import com.ikar.ikarserver.backend.domain.entity.AppUser;
 import com.ikar.ikarserver.backend.util.Marker;
 import lombok.NonNull;
 import org.springframework.validation.annotation.Validated;
@@ -11,12 +11,12 @@ import java.util.Optional;
 public interface UserService {
 
     @Validated({Marker.Create.class, Default.class})
-    User register(@NonNull User user);
+    AppUser register(@NonNull AppUser appUser);
 
     @Validated({Marker.Update.class, Default.class})
-    User update(@NonNull User user);
+    AppUser update(@NonNull AppUser appUser);
 
-    Optional<User> getUserByUsername(@NonNull String username);
+    Optional<AppUser> getUserByUsername(@NonNull String username);
 
     boolean existsByUsername(@NonNull String username);
 

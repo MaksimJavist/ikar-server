@@ -1,6 +1,6 @@
 package com.ikar.ikarserver.backend.repository.impl;
 
-import com.ikar.ikarserver.backend.domain.entity.User;
+import com.ikar.ikarserver.backend.domain.entity.AppUser;
 import com.ikar.ikarserver.backend.repository.UserRepository;
 import com.ikar.ikarserver.backend.repository.jpa.UserJpaRepository;
 import lombok.NonNull;
@@ -16,12 +16,12 @@ public class UserRepositoryImpl implements UserRepository {
     private final UserJpaRepository jpaRepository;
 
     @Override
-    public User save(@NonNull User user) {
-        return jpaRepository.save(user);
+    public AppUser save(@NonNull AppUser appUser) {
+        return jpaRepository.save(appUser);
     }
 
     @Override
-    public Optional<User> findByUsername(@NonNull String username) {
+    public Optional<AppUser> findByUsername(@NonNull String username) {
         return jpaRepository.findByUsername(username);
     }
 

@@ -1,6 +1,5 @@
 package com.ikar.ikarserver.backend.domain.kurento;
 
-import com.ikar.ikarserver.backend.repository.jpa.RoomChatMessageJpaRepository;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.RoomChatMessageService;
 import com.ikar.ikarserver.backend.service.RoomIdentifierService;

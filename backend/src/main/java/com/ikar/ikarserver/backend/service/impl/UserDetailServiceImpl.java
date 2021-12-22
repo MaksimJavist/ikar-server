@@ -1,7 +1,7 @@
 package com.ikar.ikarserver.backend.service.impl;
 
 import com.ikar.ikarserver.backend.domain.CustomUserDetails;
-import com.ikar.ikarserver.backend.domain.entity.User;
+import com.ikar.ikarserver.backend.domain.entity.AppUser;
 import com.ikar.ikarserver.backend.exception.NotFoundException;
 import com.ikar.ikarserver.backend.service.UserService;
 import com.ikar.ikarserver.backend.util.Messages;
@@ -21,15 +21,16 @@ public class UserDetailServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
-        User user = userService.getUserByUsername(s)
+        AppUser appUser = userService.getUserByUsername(s)
                 .orElseThrow(NotFoundException.supplier(Messages.NOT_FOUND_USER, s));
         return new CustomUserDetails(
-                user.getUsername(),
-                user.getPassword(),
+                appUser.getUsername(),
+                appUser.getPassword(),
                 new ArrayList<>(),
-                user.getId(),
-                user.getFirstName(),
-                user.getSecondName()
+                appUser.getId(),
+                appUser.getUuid(),
+                appUser.getFirstName(),
+                appUser.getSecondName()
         );
     }
 

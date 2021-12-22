@@ -9,6 +9,8 @@ public class AuthUserInfo {
 
     private Long id;
 
+    private String uuid;
+
     private String username;
 
     private String firstName;

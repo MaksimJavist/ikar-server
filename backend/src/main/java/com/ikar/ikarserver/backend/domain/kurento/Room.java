@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.ikar.ikarserver.backend.domain.entity.RoomChatMessage;
 import com.ikar.ikarserver.backend.dto.ChatMessageDto;
-import com.ikar.ikarserver.backend.repository.jpa.RoomChatMessageJpaRepository;
 import com.ikar.ikarserver.backend.service.RoomChatMessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.Continuation;
@@ -205,7 +204,8 @@ public class Room implements Closeable {
 
     private void sendMessageAllParticipants(ChatMessageDto message) {
         final JsonObject newChatMessage = new JsonObject();
-        newChatMessage.addProperty("id", "newMessage");
+        newChatMessage.addProperty("id", "newChatMessage");
+        newChatMessage.addProperty("senderUuid", message.getSenderUuid());
         newChatMessage.addProperty("sender", message.getSender());
         newChatMessage.addProperty("message", message.getMessage());
         participants.values().forEach(

@@ -18,7 +18,7 @@
         <b-container class="vh-100" fluid v-else>
             <b-row class="h-75 pt-4 justify-content-center">
                 <b-col cols="12">
-                    <b-card class="h-100 pl-2 pr-2 overflow-auto" style="background-color: #e1e2e3" title="Участники:" align="center">
+                    <b-card class="h-100 pl-2 pr-2 overflow-auto border border-info" style="background-color: #e1e2e3; border-width: medium !important;" title="Участники:" align="center">
                         <b-row class="h-100">
                             <b-col cols="3" class="h-50 p-1" v-if="getLocalParticipant">
                                 <ParticipantLocal :participant="getLocalParticipant.getObject()"/>
@@ -32,8 +32,8 @@
             </b-row>
             <b-row v-if="getLocalParticipant" class="h-25 justify-content-center" align-v="center">
                 <b-col cols="3" class="h-50">
-                    <b-card class="h-100" align="center" style="background-color: #e1e2e3">
-                        <div id="microButton" class="d-inline-block" style="margin: 0 10px">
+                    <b-card class="h-100 border border-info" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
+                        <div id="microButton" class="d-inline-block " style="margin: 0 10px">
                             <b-button v-if="microEnable"
                                       v-b-tooltip.hover
                                       title="Выключить микрофон"
@@ -68,7 +68,7 @@
                                 <b-icon-camera-video-off/>
                             </b-button>
                         </div>
-                        <div v-if="true" id="displayButton" class="d-inline-block" style="margin: 0 10px">
+                        <div v-if="false" id="displayButton" class="d-inline-block" style="margin: 0 10px">
                             <b-button variant="outline-success" @click="sendChatMessage">
                                 <b-icon-display/>
                             </b-button>
@@ -86,9 +86,47 @@
                                 <b-icon-share/>
                             </b-button>
                         </div>
+                        <div id="chatButton" class="d-inline-block" style="margin: 0 10px">
+                            <b-button
+                                variant="outline-info"
+                                v-b-tooltip.hover
+                                title="Открыть чат"
+                                v-clipboard:copy="getRoomFullReference()"
+                                @click="switchChatVisible">
+                                <b-icon-chat-dots/>
+                            </b-button>
+                        </div>
                     </b-card>
                 </b-col>
             </b-row>
+            <b-card v-if="chatVisible"
+                 class="h-50 w-25 border border-primary position-fixed rounded text-center"
+                 style="border-width: medium !important; bottom: 3%; right: 3%; background-color: #e1e2e3;">
+                <h3>Чат</h3>
+                <div class="mb-4 bg-white text-white rounded overflow-auto" style="height: 65%">
+                    <div class="text-left">
+                        <div class="m-2 p-2 w-auto bg-dark d-inline-block rounded text-left" style="max-width: 75%">
+                            <strong>Максим Короткий:</strong>
+                            <div>Сооьщение, полученное от пользователя, контент 1, контент 2</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="m-2 p-2 w-auto bg-success d-inline-block rounded text-left" style="max-width: 75%">
+                            <strong>Максим Короткий:</strong>
+                            <div>Сооьщение, полученное от пользователя, контент 1, контент 2</div>
+                        </div>
+                    </div>
+                </div>
+                <b-form-input class="mb-2" v-model="messageText" placeholder="Введите сообщение:"></b-form-input>
+                <b-button
+                    class="w-100"
+                    variant="outline-info"
+                    v-b-tooltip.hover
+                    title="Отправить сообщение"
+                    @click="switchChatVisible">
+                    Отправить
+                </b-button>
+            </b-card>
         </b-container>
     </div>
 </template>
@@ -119,7 +157,9 @@ export default {
             socket: null,
             authenticatedUser: false,
             microEnable: true,
-            videoEnable: true
+            videoEnable: true,
+            chatVisible: false,
+            messageText: null
         }
     },
     beforeCreate() {
@@ -161,7 +201,6 @@ export default {
         connectRoom: function () {
             this.joinFrameVisible = false
             this.socket = new WebSocket('ws://localhost:8080/groupcall')
-            this.chatSocket = new WebSocket('ws://localhost:8080/roomchat')
             this.socket.onopen = this.joinRoom
         },
         joinRoom: function () {
@@ -195,6 +234,9 @@ export default {
                 const candidate = this.getParticipantByUuid(candidateUuid)
                 candidate.rtcPeer.addIceCandidate(parsedMessage.candidate, this.showErrorCallback)
                 break
+            }
+            case 'newChatMessage': {
+                console.log(parsedMessage)
             }}
         },
         onExistingParticipants: function (message) {
@@ -304,6 +346,9 @@ export default {
                 message: 'hello'
             }
             this.socket.send(JSON.stringify(message))
+        },
+        switchChatVisible: function () {
+            this.chatVisible = !this.chatVisible
         }
     }
 }

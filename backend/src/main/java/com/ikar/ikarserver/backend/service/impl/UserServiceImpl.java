@@ -1,6 +1,6 @@
 package com.ikar.ikarserver.backend.service.impl;
 
-import com.ikar.ikarserver.backend.domain.entity.User;
+import com.ikar.ikarserver.backend.domain.entity.AppUser;
 import com.ikar.ikarserver.backend.exception.CreationException;
 import com.ikar.ikarserver.backend.exception.NotFoundException;
 import com.ikar.ikarserver.backend.repository.UserRepository;
@@ -25,28 +25,28 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User register(@NonNull User user) {
-        if (existsByUsername(user.getUsername())) {
-            throw CreationException.supplier(Messages.BUSY_USERNAME, user.getUsername()).get();
+    public AppUser register(@NonNull AppUser appUser) {
+        if (existsByUsername(appUser.getUsername())) {
+            throw CreationException.supplier(Messages.BUSY_USERNAME, appUser.getUsername()).get();
         }
-        user.setPassword(
-                passwordEncoder.encode(user.getPassword())
+        appUser.setPassword(
+                passwordEncoder.encode(appUser.getPassword())
         );
-        return repository.save(user);
+        return repository.save(appUser);
     }
 
     @Override
-    public User update(@NonNull User user) {
-        String username = user.getUsername();
-        Optional<User> optionalUser = getUserByUsername(username);
-        User userForUpdate = optionalUser.orElseThrow(
+    public AppUser update(@NonNull AppUser appUser) {
+        String username = appUser.getUsername();
+        Optional<AppUser> optionalUser = getUserByUsername(username);
+        AppUser appUserForUpdate = optionalUser.orElseThrow(
                 NotFoundException.supplier(Messages.NOT_FOUND_USER, username)
         );
-        return repository.save(userForUpdate);
+        return repository.save(appUserForUpdate);
     }
 
     @Override
-    public Optional<User> getUserByUsername(@NonNull String username) {
+    public Optional<AppUser> getUserByUsername(@NonNull String username) {
         return repository.findByUsername(username);
     }
 

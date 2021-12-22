@@ -17,8 +17,8 @@ import javax.validation.constraints.Null;
 @Getter
 @Setter
 @Entity
-@Table(name = "user")
-public class User {
+@Table(name = "app_user", schema = "public")
+public class AppUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,6 +26,10 @@ public class User {
     @NotNull(groups = Marker.Update.class)
     @Null(groups = Marker.Create.class)
     private Long id;
+
+    @NotBlank
+    @Column(name = "uuid")
+    private String uuid;
 
     @NotBlank
     @Column(name = "username")

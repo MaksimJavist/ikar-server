@@ -11,6 +11,8 @@ public class CustomUserDetails extends User {
 
     private final Long id;
 
+    private final String uuid;
+
     private final String firstName;
 
     private final String secondName;
@@ -18,10 +20,12 @@ public class CustomUserDetails extends User {
     public CustomUserDetails(String username,
                              String password, Collection<? extends GrantedAuthority> authorities,
                              Long id,
+                             String uuid,
                              String firstName,
                              String secondName) {
         super(username, password, authorities);
         this.id = id;
+        this.uuid = uuid;
         this.firstName = firstName;
         this.secondName = secondName;
     }
