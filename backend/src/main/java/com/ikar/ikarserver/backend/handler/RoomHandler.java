@@ -26,7 +26,6 @@ public class RoomHandler extends TextWebSocketHandler {
     private static final Gson gson = new GsonBuilder().create();
 
     private final RoomManager roomManager;
-
     private final UserRegistry registry;
 
     @Override
@@ -47,7 +46,7 @@ public class RoomHandler extends TextWebSocketHandler {
                 break;
             case "receiveVideoFrom":
                 final String senderUuid = jsonMessage.get("uuid").getAsString();
-                final UserSession sender = registry.getByUuid(senderUuid);
+                final UserSession sender = registry.getBySessionAndUuid(senderUuid, session);
                 final String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
                 user.receiveVideoFrom(sender, sdpOffer);
                 break;
@@ -94,7 +93,7 @@ public class RoomHandler extends TextWebSocketHandler {
 
         Room room = roomManager.getRoom(roomName);
         final UserSession user = room.join(name, session);
-        registry.register(user);
+        registry.register(user, room);
     }
 
     private void leaveRoom(UserSession user) throws IOException {

@@ -23,7 +23,7 @@ public class RoomManager {
     public String createRoom() {
         String roomIdentifier = identifierService.generateIdentifierRoom();
         log.info("Creation room with identifier {}", roomIdentifier);
-        Room room = new Room(roomIdentifier, kurento.createMediaPipeline(), service);
+        Room room = new Room(roomIdentifier, kurento.createMediaPipeline(), service, authInfoService);
         rooms.put(roomIdentifier, room);
         return roomIdentifier;
     }
@@ -34,7 +34,7 @@ public class RoomManager {
 
         if (room == null) {
             log.debug("Room {} not existent. Will create now!", roomName);
-            room = new Room(roomName, kurento.createMediaPipeline(), service);
+            room = new Room(roomName, kurento.createMediaPipeline(), service, authInfoService);
             rooms.put(roomName, room);
         }
         log.debug("Room {} found!", roomName);

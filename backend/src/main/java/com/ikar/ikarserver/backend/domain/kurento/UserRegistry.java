@@ -6,30 +6,34 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class UserRegistry {
 
-    private final ConcurrentHashMap<String, UserSession> usersByUuid = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Room> roomBySessionId = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, UserSession> usersBySessionId = new ConcurrentHashMap<>();
 
-    public void register(UserSession user) {
-        usersByUuid.put(user.getUuid(), user);
-        usersBySessionId.put(user.getSession().getId(), user);
+    public void register(UserSession user, Room room) {
+        String sessionId = user.getSession().getId();
+        usersBySessionId.put(sessionId, user);
+        roomBySessionId.put(sessionId, room);
     }
 
-    public UserSession getByUuid(String uuid) {
-        return usersByUuid.get(uuid);
+    public UserSession getBySessionAndUuid(String uuid, WebSocketSession session) {
+        final Room room = roomBySessionId.get(session.getId());
+        return room.getParticipant(uuid);
     }
 
     public UserSession getBySession(WebSocketSession session) {
         return usersBySessionId.get(session.getId());
     }
 
-    public boolean exists(String uuid) {
-        return usersByUuid.keySet().contains(uuid);
+    public boolean existsByUuidInUserRoom(String uuid, WebSocketSession session) {
+        final Room room = roomBySessionId.get(session.getId());
+        return room.existParticipant(uuid);
     }
 
     public UserSession removeBySession(WebSocketSession session) {
         final UserSession user = getBySession(session);
-        usersByUuid.remove(user.getUuid());
-        usersBySessionId.remove(session.getId());
+        final String sessionId = session.getId();
+        roomBySessionId.remove(sessionId);
+        usersBySessionId.remove(sessionId);
         return user;
     }
 

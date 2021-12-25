@@ -2,8 +2,10 @@ package com.ikar.ikarserver.backend.domain.kurento;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.ikar.ikarserver.backend.domain.entity.ChatMessage;
 import com.ikar.ikarserver.backend.domain.entity.RoomChatMessage;
 import com.ikar.ikarserver.backend.dto.ChatMessageDto;
+import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.RoomChatMessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.Continuation;
@@ -13,28 +15,28 @@ import org.springframework.web.socket.WebSocketSession;
 import javax.annotation.PreDestroy;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Slf4j
 public class Room implements Closeable {
 
     private final ConcurrentMap<String, UserSession> participants = new ConcurrentHashMap<>();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final MediaPipeline pipeline;
     private final String uuid;
-    private final List<ChatMessageDto> bufferMessage = new CopyOnWriteArrayList<>();
-    private final RoomChatMessageService service;
+    private final RoomChatMessageService messageService;
+    private final AuthInfoService authInfoService;
 
-    public Room(String roomName, MediaPipeline pipeline, RoomChatMessageService service) {
+    public Room(String roomName, MediaPipeline pipeline, RoomChatMessageService messageService, AuthInfoService authInfoService) {
         this.uuid = roomName;
         this.pipeline = pipeline;
-        this.service = service;
+        this.messageService = messageService;
+        this.authInfoService = authInfoService;
         log.info("ROOM {} has been created", roomName);
     }
 
@@ -49,7 +51,8 @@ public class Room implements Closeable {
 
     public UserSession join(String userName, WebSocketSession session) throws IOException {
         log.info("ROOM {}: adding participant {}", this.uuid, userName);
-        String uuid = UUID.randomUUID().toString();
+        Optional<String> optUuid = authInfoService.getWebsocketUserUuid(session);
+        String uuid = optUuid.orElse(UUID.randomUUID().toString());
         final UserSession participant = new UserSession(uuid, userName, this.uuid, session, this.pipeline);
         joinRoom(participant);
         participants.put(participant.getUuid(), participant);
@@ -139,8 +142,16 @@ public class Room implements Closeable {
         return participants.values();
     }
 
-    public UserSession getParticipant(String name) {
-        return participants.get(name);
+    public UserSession getParticipant(String uuid) {
+        return participants.get(uuid);
+    }
+
+    public boolean existParticipant(String uuid) { return participants.containsKey(uuid); }
+
+    private List<ChatMessageDto> getAllRoomMessages() {
+        return messageService.getAllMessagesByUuid(uuid)
+                .stream().map(this::convertChatMessagesToDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -174,32 +185,16 @@ public class Room implements Closeable {
 
     public void sendNewMessage(ChatMessageDto message) {
         sendMessageAllParticipants(message);
-        addNewMessageInBuffer(message);
+//        addNewMessageInBuffer(message);
     }
 
-    private synchronized void addNewMessageInBuffer(ChatMessageDto message) {
-        if (bufferMessage.size() >= 20) {
-            List<RoomChatMessage> messages = getConvertedMessages();
-            service.addAllMessages(messages);
-            bufferMessage.clear();
-        }
-        bufferMessage.add(message);
-    }
-
-    private List<RoomChatMessage> getConvertedMessages() {
-        return bufferMessage.stream()
-                .map(message -> {
-                    RoomChatMessage chatMessage = new RoomChatMessage();
-                    chatMessage.setUuid(
-                            UUID.randomUUID().toString()
-                    );
-                    chatMessage.setRoomIdentifier(uuid);
-                    chatMessage.setDateTimeMessage(message.getTimeMessage());
-                    chatMessage.setSenderName(message.getSender());
-                    chatMessage.setText(message.getMessage());
-                    return chatMessage;
-                })
-                .collect(Collectors.toList());
+    private ChatMessageDto convertChatMessagesToDto(ChatMessage message) {
+            ChatMessageDto messageDto = new ChatMessageDto();
+            messageDto.setSenderUuid(message.getSenderUuid());
+            messageDto.setSender(message.getSenderUuid());
+            messageDto.setTimeMessage(message.getDateTimeMessage());
+            messageDto.setMessage(message.getText());
+            return messageDto;
     }
 
     private void sendMessageAllParticipants(ChatMessageDto message) {

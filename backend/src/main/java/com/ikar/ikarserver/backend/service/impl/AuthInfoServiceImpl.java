@@ -5,9 +5,14 @@ import com.ikar.ikarserver.backend.domain.AuthInfoDetail;
 import com.ikar.ikarserver.backend.domain.AuthUserInfo;
 import com.ikar.ikarserver.backend.domain.CustomUserDetails;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
+import lombok.NonNull;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.web.socket.WebSocketSession;
+
+import java.util.Optional;
 
 public class AuthInfoServiceImpl implements AuthInfoService {
 
@@ -21,6 +26,15 @@ public class AuthInfoServiceImpl implements AuthInfoService {
     public AuthInfo getAuthInfo() {
         Authentication authentication = getAuthentication();
         return createAuthInfo(authentication);
+    }
+
+    @Override
+    public Optional<String> getWebsocketUserUuid(@NonNull WebSocketSession session) {
+        if (session.getPrincipal() == null) {
+            return Optional.empty();
+        }
+        CustomUserDetails details = getCustomUserDetailsFromSocketSession(session);
+        return Optional.of(details.getUuid());
     }
 
     private AuthInfo createAuthInfo(Authentication authentication) {
@@ -48,6 +62,7 @@ public class AuthInfoServiceImpl implements AuthInfoService {
 
         AuthUserInfo info = new AuthUserInfo();
         info.setId(customUser.getId());
+        info.setUuid(customUser.getUuid());
         info.setUsername(customUser.getUsername());
         info.setFirstName(customUser.getFirstName());
         info.setSecondName(customUser.getSecondName());
@@ -57,5 +72,9 @@ public class AuthInfoServiceImpl implements AuthInfoService {
 
     private boolean isAnonymousUser(Authentication authentication) {
         return authentication.getPrincipal().equals("anonymousUser");
+    }
+
+    private CustomUserDetails getCustomUserDetailsFromSocketSession(WebSocketSession session) {
+        return (CustomUserDetails) ((UsernamePasswordAuthenticationToken) session.getPrincipal()).getPrincipal();
     }
 }
