@@ -14,14 +14,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RoomMessagesBuffer {
 
-    private final List<ChatMessageDto> buffer = new CopyOnWriteArrayList<>();
     private final RoomChatMessageService messageService;
     private final String roomUuid;
+    private final List<ChatMessageDto> buffer = new CopyOnWriteArrayList<>();
 
     private static ChatMessageDto convertChatMessagesToDto(ChatMessage message) {
         ChatMessageDto messageDto = new ChatMessageDto();
         messageDto.setSenderUuid(message.getSenderUuid());
-        messageDto.setSender(message.getSenderUuid());
+        messageDto.setSender(message.getSenderName());
         messageDto.setTimeMessage(message.getDateTimeMessage());
         messageDto.setMessage(message.getText());
         return messageDto;
@@ -56,6 +56,7 @@ public class RoomMessagesBuffer {
                     chatMessage.setUuid(
                             UUID.randomUUID().toString()
                     );
+                    chatMessage.setSenderUuid(message.getSenderUuid());
                     chatMessage.setRoomIdentifier(roomUuid);
                     chatMessage.setDateTimeMessage(message.getTimeMessage());
                     chatMessage.setSenderName(message.getSender());

@@ -103,27 +103,31 @@
                  class="h-50 w-25 border border-primary position-fixed rounded text-center"
                  style="border-width: medium !important; bottom: 3%; right: 3%; background-color: #e1e2e3;">
                 <h3>Чат</h3>
-                <div class="mb-4 bg-white text-white rounded overflow-auto" style="height: 65%">
-                    <div class="text-left">
-                        <div class="m-2 p-2 w-auto bg-dark d-inline-block rounded text-left" style="max-width: 75%">
-                            <strong>Максим Короткий:</strong>
-                            <div>Сооьщение, полученное от пользователя, контент 1, контент 2</div>
+                <div ref="chatDiv" class="mb-4 bg-white text-white rounded overflow-auto" style="height: 65%">
+                    <span v-for="(message, index) in chatMessages" :key="index">
+                        <div :class="message.senderUuid === localParticipantUuid ? 'text-right' : 'text-left'">
+                            <div class="m-2 p-2 w-auto d-inline-block rounded text-left"
+                                 :class="message.senderUuid === localParticipantUuid ? 'bg-success' : 'bg-dark'"
+                                 style="max-width: 75%">
+                                <strong>{{ message.senderName}}:</strong>
+                                <div>{{ message.text }}</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="text-right">
-                        <div class="m-2 p-2 w-auto bg-success d-inline-block rounded text-left" style="max-width: 75%">
-                            <strong>Максим Короткий:</strong>
-                            <div>Сооьщение, полученное от пользователя, контент 1, контент 2</div>
-                        </div>
-                    </div>
+                    </span>
+<!--                    <div class="text-left">-->
+<!--                        <div class="m-2 p-2 w-auto  d-inline-block rounded text-left" style="max-width: 75%">-->
+<!--                            <strong>Максим Короткий:</strong>-->
+<!--                            <div>Сооьщение, полученное от пользователя, контент 1, контент 2</div>-->
+<!--                        </div>-->
+<!--                    </div>-->
                 </div>
-                <b-form-input class="mb-2" v-model="messageText" placeholder="Введите сообщение:"></b-form-input>
+                <b-form-input class="mb-2" v-model="chatInputText" placeholder="Введите сообщение:"></b-form-input>
                 <b-button
                     class="w-100"
                     variant="outline-info"
                     v-b-tooltip.hover
                     title="Отправить сообщение"
-                    @click="switchChatVisible">
+                    @click="sendChatMessage">
                     Отправить
                 </b-button>
             </b-card>
@@ -154,12 +158,13 @@ export default {
             roomName: null,
             localParticipantUuid: null,
             participants: [],
+            chatMessages: [],
             socket: null,
             authenticatedUser: false,
             microEnable: true,
             videoEnable: true,
             chatVisible: false,
-            messageText: null
+            chatInputText: null
         }
     },
     beforeCreate() {
@@ -173,6 +178,10 @@ export default {
                 }
             })
     },
+    updated: function () {
+        const chatElement = this.$refs.chatDiv
+        chatElement.scrollTop = chatElement.scrollHeight
+    },
     beforeDestroy() {
         if (this.socket) {
             this.socket.close()
@@ -185,6 +194,9 @@ export default {
         videoEnable: function (newVal) {
             this.getLocalParticipant.rtcPeer.videoEnabled = newVal
         }
+        // chatMessages: function () {
+        //
+        // }
     },
     computed: {
         getLocalParticipant: function () {
@@ -236,7 +248,8 @@ export default {
                 break
             }
             case 'newChatMessage': {
-                console.log(parsedMessage)
+                this.newChatMessage(parsedMessage.data)
+                break
             }}
         },
         onExistingParticipants: function (message) {
@@ -253,6 +266,8 @@ export default {
             this.localParticipantUuid = message.registeredUuid
             const participantUuid = message.registeredUuid
             const participantName = message.registeredName
+            this.chatMessages = this.chatMessages.concat(message.messages)
+            console.log(this.chatMessages)
             const participant = new Participant(participantUuid, participantName, this.socket)
             const video = participant.video
 
@@ -303,6 +318,9 @@ export default {
             this.participants = []
             this.socket.close()
         },
+        newChatMessage: function (chatMessage) {
+            this.chatMessages.push(chatMessage)
+        },
         getRoomFullReference: function () {
             return window.location.href
         },
@@ -343,9 +361,10 @@ export default {
         sendChatMessage: function () {
             const message = {
                 id: 'sendChat',
-                message: 'hello'
+                message: this.chatInputText
             }
             this.socket.send(JSON.stringify(message))
+            this.chatInputText = null
         },
         switchChatVisible: function () {
             this.chatVisible = !this.chatVisible

@@ -8,6 +8,7 @@ import com.ikar.ikarserver.backend.dto.ChatMessageDto;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.RoomChatMessageService;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.SimpleNaturalIdLoadAccess;
 import org.kurento.client.Continuation;
 import org.kurento.client.MediaPipeline;
 import org.springframework.web.socket.WebSocketSession;
@@ -27,6 +28,8 @@ public class Room implements Closeable {
 
     private final ConcurrentMap<String, UserSession> participants = new ConcurrentHashMap<>();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    private final RoomMessagesBuffer messageBuffer;
     private final MediaPipeline pipeline;
     private final String uuid;
     private final RoomChatMessageService messageService;
@@ -37,6 +40,7 @@ public class Room implements Closeable {
         this.pipeline = pipeline;
         this.messageService = messageService;
         this.authInfoService = authInfoService;
+        this.messageBuffer = new RoomMessagesBuffer(messageService, uuid);
         log.info("ROOM {} has been created", roomName);
     }
 
@@ -132,6 +136,7 @@ public class Room implements Closeable {
         existingParticipantsMsg.addProperty("id", "existingParticipants");
         existingParticipantsMsg.addProperty("registeredName", user.getName());
         existingParticipantsMsg.addProperty("registeredUuid", user.getUuid());
+        existingParticipantsMsg.add("messages", getAllRoomMessages());
         existingParticipantsMsg.add("data", participantsArray);
         log.debug("PARTICIPANT {}: sending a list of {} participants", user.getUuid(),
                 participantsArray.size());
@@ -147,12 +152,6 @@ public class Room implements Closeable {
     }
 
     public boolean existParticipant(String uuid) { return participants.containsKey(uuid); }
-
-    private List<ChatMessageDto> getAllRoomMessages() {
-        return messageService.getAllMessagesByUuid(uuid)
-                .stream().map(this::convertChatMessagesToDto)
-                .collect(Collectors.toList());
-    }
 
     @Override
     public void close() {
@@ -184,25 +183,39 @@ public class Room implements Closeable {
     }
 
     public void sendNewMessage(ChatMessageDto message) {
+        executor.submit(
+                () -> messageBuffer.addNewMessageInBuffer(message)
+        );
         sendMessageAllParticipants(message);
-//        addNewMessageInBuffer(message);
     }
 
-    private ChatMessageDto convertChatMessagesToDto(ChatMessage message) {
-            ChatMessageDto messageDto = new ChatMessageDto();
-            messageDto.setSenderUuid(message.getSenderUuid());
-            messageDto.setSender(message.getSenderUuid());
-            messageDto.setTimeMessage(message.getDateTimeMessage());
-            messageDto.setMessage(message.getText());
-            return messageDto;
+    private JsonArray getAllRoomMessages() {
+        List<ChatMessageDto> messages = messageBuffer.getAllRoomMessages();
+        JsonArray array = new JsonArray();
+
+        messages.forEach(message -> {
+            final JsonObject element = new JsonObject();
+            element.addProperty("senderUuid", message.getSenderUuid());
+            element.addProperty("senderName", message.getSender());
+            element.addProperty("time", message.getTimeMessage().toString());
+            element.addProperty("text", message.getMessage());
+
+            array.add(element);
+        });
+
+        return array;
     }
 
     private void sendMessageAllParticipants(ChatMessageDto message) {
+        final JsonObject dataMessage = new JsonObject();
+        dataMessage.addProperty("senderUuid", message.getSenderUuid());
+        dataMessage.addProperty("senderName", message.getSender());
+        dataMessage.addProperty("time", message.getTimeMessage().toString());
+        dataMessage.addProperty("text", message.getMessage());
+
         final JsonObject newChatMessage = new JsonObject();
         newChatMessage.addProperty("id", "newChatMessage");
-        newChatMessage.addProperty("senderUuid", message.getSenderUuid());
-        newChatMessage.addProperty("sender", message.getSender());
-        newChatMessage.addProperty("message", message.getMessage());
+        newChatMessage.add("data", dataMessage);
         participants.values().forEach(
                 participant -> {
                     try {

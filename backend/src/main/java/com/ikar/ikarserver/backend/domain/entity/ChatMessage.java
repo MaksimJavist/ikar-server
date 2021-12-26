@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.Column;
+import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -14,6 +15,11 @@ import java.time.LocalDateTime;
 @Setter
 @MappedSuperclass
 public class ChatMessage {
+
+    @Id
+    @NotBlank
+    @Column(name = "uuid")
+    private String uuid;
 
     @NotNull
     @Column(name = "date_time_message")

@@ -15,11 +15,6 @@ public class RoomChatMessage extends ChatMessage {
 
     @Id
     @NotBlank
-    @Column(name = "uuid")
-    private String uuid;
-
-    @Id
-    @NotBlank
     @Column(name = "room_identifier")
     private String roomIdentifier;
 
