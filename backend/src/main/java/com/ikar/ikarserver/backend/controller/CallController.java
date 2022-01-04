@@ -1,6 +1,7 @@
 package com.ikar.ikarserver.backend.controller;
 
-import com.ikar.ikarserver.backend.domain.kurento.RoomManager;
+import com.ikar.ikarserver.backend.domain.kurento.conference.ConferenceManager;
+import com.ikar.ikarserver.backend.domain.kurento.room.RoomManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -10,16 +11,25 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/room")
-public class RoomController {
+@RequestMapping("/api")
+public class CallController {
 
     private final RoomManager roomManager;
+    private final ConferenceManager conferenceManager;
 
-    @GetMapping(value = "/create")
+    @GetMapping(value = "/room/create")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<String> createNewRoom(){
         return ResponseEntity.ok(
                 roomManager.createRoom()
+        );
+    }
+
+    @GetMapping(value = "/conference/create")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> createConference() {
+        return ResponseEntity.ok(
+                conferenceManager.createConference()
         );
     }
 

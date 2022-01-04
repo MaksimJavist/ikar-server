@@ -7,7 +7,7 @@
                         <b-button class="w-75" @click="createRoomCall" variant="outline-success" pill>Создать комнату</b-button>
                     </b-row>
                     <b-row class="justify-content-center">
-                        <b-button class="w-75" variant="outline-success" pill>Создать конференцию</b-button>
+                        <b-button class="w-75" @click="createConference" variant="outline-success" pill>Создать конференцию</b-button>
                     </b-row>
               </b-card>
           </b-col>
@@ -27,6 +27,12 @@ export default {
                     this.$router.push(`/room/${resp.data}`)
                 })
         },
+        createConference: function () {
+            api.createNewConference()
+                .then(resp => {
+                    this.$router.push(`/conference/${resp.data}`)
+                })
+        }
     }
 }
 </script>

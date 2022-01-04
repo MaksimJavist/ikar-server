@@ -1,14 +1,12 @@
-package com.ikar.ikarserver.backend.domain.kurento;
+package com.ikar.ikarserver.backend.domain.kurento.room;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.ikar.ikarserver.backend.domain.entity.ChatMessage;
-import com.ikar.ikarserver.backend.domain.entity.RoomChatMessage;
+import com.ikar.ikarserver.backend.domain.CustomUserDetails;
 import com.ikar.ikarserver.backend.dto.ChatMessageDto;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.RoomChatMessageService;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.SimpleNaturalIdLoadAccess;
 import org.kurento.client.Continuation;
 import org.kurento.client.MediaPipeline;
 import org.springframework.web.socket.WebSocketSession;
@@ -21,24 +19,21 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class Room implements Closeable {
 
-    private final ConcurrentMap<String, UserSession> participants = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, RoomUserSession> participants = new ConcurrentHashMap<>();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private final RoomMessagesBuffer messageBuffer;
     private final MediaPipeline pipeline;
     private final String uuid;
-    private final RoomChatMessageService messageService;
     private final AuthInfoService authInfoService;
 
     public Room(String roomName, MediaPipeline pipeline, RoomChatMessageService messageService, AuthInfoService authInfoService) {
         this.uuid = roomName;
         this.pipeline = pipeline;
-        this.messageService = messageService;
         this.authInfoService = authInfoService;
         this.messageBuffer = new RoomMessagesBuffer(messageService, uuid);
         log.info("ROOM {} has been created", roomName);
@@ -53,24 +48,23 @@ public class Room implements Closeable {
         this.close();
     }
 
-    public UserSession join(String userName, WebSocketSession session) throws IOException {
+    public RoomUserSession join(String userName, WebSocketSession session) throws IOException {
         log.info("ROOM {}: adding participant {}", this.uuid, userName);
-        Optional<String> optUuid = authInfoService.getWebsocketUserUuid(session);
-        String uuid = optUuid.orElse(UUID.randomUUID().toString());
-        final UserSession participant = new UserSession(uuid, userName, this.uuid, session, this.pipeline);
+        String uuid = getUserUuid(session);
+        final RoomUserSession participant = new RoomUserSession(uuid, userName, this.uuid, session, this.pipeline);
         joinRoom(participant);
         participants.put(participant.getUuid(), participant);
         sendParticipantNames(participant);
         return participant;
     }
 
-    public void leave(UserSession user) throws IOException {
+    public void leave(RoomUserSession user) throws IOException {
         log.debug("PARTICIPANT {}: Leaving room {}", user.getName(), this.uuid);
         this.removeParticipant(user.getUuid());
         user.close();
     }
 
-    private Collection<String> joinRoom(UserSession newParticipant) throws IOException {
+    private Collection<String> joinRoom(RoomUserSession newParticipant) throws IOException {
         final JsonObject newParticipantJson = new JsonObject();
         newParticipantJson.addProperty("uuid", newParticipant.getUuid());
         newParticipantJson.addProperty("name", newParticipant.getName());
@@ -83,7 +77,7 @@ public class Room implements Closeable {
         log.debug("ROOM {}: notifying other participants of new participant {}", uuid,
                 newParticipant.getName());
 
-        for (final UserSession participant : participants.values()) {
+        for (final RoomUserSession participant : participants.values()) {
             try {
                 participant.sendMessage(newParticipantMsg);
             } catch (final IOException e) {
@@ -104,7 +98,7 @@ public class Room implements Closeable {
         final JsonObject participantLeftJson = new JsonObject();
         participantLeftJson.addProperty("id", "participantLeft");
         participantLeftJson.addProperty("uuid", uuid);
-        for (final UserSession participant : participants.values()) {
+        for (final RoomUserSession participant : participants.values()) {
             try {
                 participant.cancelVideoFrom(uuid);
                 participant.sendMessage(participantLeftJson);
@@ -120,10 +114,10 @@ public class Room implements Closeable {
 
     }
 
-    public void sendParticipantNames(UserSession user) throws IOException {
+    public void sendParticipantNames(RoomUserSession user) throws IOException {
 
         final JsonArray participantsArray = new JsonArray();
-        for (final UserSession participant : this.getParticipants()) {
+        for (final RoomUserSession participant : this.getParticipants()) {
             if (!participant.equals(user)) {
                 final JsonObject participantJson = new JsonObject();
                 participantJson.addProperty("uuid", participant.getUuid());
@@ -143,11 +137,11 @@ public class Room implements Closeable {
         user.sendMessage(existingParticipantsMsg);
     }
 
-    public Collection<UserSession> getParticipants() {
+    public Collection<RoomUserSession> getParticipants() {
         return participants.values();
     }
 
-    public UserSession getParticipant(String uuid) {
+    public RoomUserSession getParticipant(String uuid) {
         return participants.get(uuid);
     }
 
@@ -155,7 +149,7 @@ public class Room implements Closeable {
 
     @Override
     public void close() {
-        for (final UserSession user : participants.values()) {
+        for (final RoomUserSession user : participants.values()) {
             try {
                 user.close();
             } catch (IOException e) {
@@ -225,6 +219,17 @@ public class Room implements Closeable {
                     }
                 }
         );
+    }
+
+    private String getUserUuid(WebSocketSession session) {
+        String uuid;
+        Optional<CustomUserDetails> optUser = authInfoService.getWebsocketUser(session);
+        if (optUser.isPresent()) {
+            uuid = optUser.get().getUuid();
+        } else {
+            uuid = UUID.randomUUID().toString();
+        }
+        return uuid;
     }
 
 }

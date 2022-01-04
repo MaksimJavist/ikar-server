@@ -1,9 +1,7 @@
 package com.ikar.ikarserver.backend.configuration;
 
-import com.ikar.ikarserver.backend.domain.kurento.RoomManager;
+import com.ikar.ikarserver.backend.handler.ConferenceHandler;
 import com.ikar.ikarserver.backend.handler.RoomHandler;
-import com.ikar.ikarserver.backend.service.RoomChatMessageService;
-import lombok.RequiredArgsConstructor;
 import org.kurento.client.KurentoClient;
 import org.kurento.client.KurentoClientBuilder;
 import org.springframework.context.annotation.Bean;
@@ -19,9 +17,11 @@ import org.springframework.web.socket.server.standard.ServletServerContainerFact
 public class KurentoConfiguration implements WebSocketConfigurer {
 
     private final RoomHandler roomHandler;
+    private final ConferenceHandler conferenceHandler;
 
-    public KurentoConfiguration(@Lazy RoomHandler roomHandler) {
+    public KurentoConfiguration(@Lazy RoomHandler roomHandler, @Lazy ConferenceHandler conferenceHandler) {
         this.roomHandler = roomHandler;
+        this.conferenceHandler = conferenceHandler;
     }
 
     @Bean
@@ -38,7 +38,9 @@ public class KurentoConfiguration implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(roomHandler, "/groupcall").setAllowedOriginPatterns("*");
+        registry.addHandler(roomHandler, "/groupcall")
+                .addHandler(conferenceHandler, "/conference")
+                .setAllowedOriginPatterns("*");
     }
 
 }

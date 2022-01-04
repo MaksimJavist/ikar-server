@@ -2,6 +2,7 @@ package com.ikar.ikarserver.backend.service;
 
 import com.ikar.ikarserver.backend.domain.AuthInfo;
 import com.ikar.ikarserver.backend.domain.AuthUserInfo;
+import com.ikar.ikarserver.backend.domain.CustomUserDetails;
 import lombok.NonNull;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -13,6 +14,6 @@ public interface AuthInfoService {
 
     AuthInfo getAuthInfo();
 
-    Optional<String> getWebsocketUserUuid(@NonNull WebSocketSession session);
+    Optional<CustomUserDetails> getWebsocketUser(@NonNull WebSocketSession session);
 
 }

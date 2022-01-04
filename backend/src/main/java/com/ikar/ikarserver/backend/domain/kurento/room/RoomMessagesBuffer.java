@@ -1,4 +1,4 @@
-package com.ikar.ikarserver.backend.domain.kurento;
+package com.ikar.ikarserver.backend.domain.kurento.room;
 
 import com.ikar.ikarserver.backend.domain.entity.ChatMessage;
 import com.ikar.ikarserver.backend.domain.entity.RoomChatMessage;

@@ -10,6 +10,12 @@ const createNewRoom = () =>
         method: 'GET'
     })
 
+const createNewConference = () =>
+    axiosInstance({
+        url: '/api/conference/create',
+        method: 'GET'
+    })
+
 const getAuthInfo = () =>
     axiosInstance({
         url: '/api/auth/info',
@@ -18,5 +24,6 @@ const getAuthInfo = () =>
 
 export default {
     createNewRoom,
+    createNewConference,
     getAuthInfo
 }

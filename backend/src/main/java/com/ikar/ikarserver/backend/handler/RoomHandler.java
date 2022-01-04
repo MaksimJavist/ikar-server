@@ -3,10 +3,10 @@ package com.ikar.ikarserver.backend.handler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.ikar.ikarserver.backend.domain.kurento.Room;
-import com.ikar.ikarserver.backend.domain.kurento.RoomManager;
-import com.ikar.ikarserver.backend.domain.kurento.UserRegistry;
-import com.ikar.ikarserver.backend.domain.kurento.UserSession;
+import com.ikar.ikarserver.backend.domain.kurento.room.Room;
+import com.ikar.ikarserver.backend.domain.kurento.room.RoomManager;
+import com.ikar.ikarserver.backend.domain.kurento.room.RoomUserRegistry;
+import com.ikar.ikarserver.backend.domain.kurento.room.RoomUserSession;
 import com.ikar.ikarserver.backend.dto.ChatMessageDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,13 +28,13 @@ public class RoomHandler extends TextWebSocketHandler {
     private static final Gson gson = new GsonBuilder().create();
 
     private final RoomManager roomManager;
-    private final UserRegistry registry;
+    private final RoomUserRegistry registry;
 
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         final JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
 
-        final UserSession user = registry.getBySession(session);
+        final RoomUserSession user = registry.getBySession(session);
 
         if (user != null) {
             log.debug("Incoming message from user '{}': {}", user.getName(), jsonMessage);
@@ -48,7 +48,7 @@ public class RoomHandler extends TextWebSocketHandler {
                 break;
             case "receiveVideoFrom":
                 final String senderUuid = jsonMessage.get("uuid").getAsString();
-                final UserSession sender = registry.getBySessionAndUuid(senderUuid, session);
+                final RoomUserSession sender = registry.getBySessionAndUuid(senderUuid, session);
                 final String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
                 user.receiveVideoFrom(sender, sdpOffer);
                 break;
@@ -65,7 +65,7 @@ public class RoomHandler extends TextWebSocketHandler {
                 }
                 break;
             case "sendChat":
-                UserSession messageSender = registry.getBySession(session);
+                RoomUserSession messageSender = registry.getBySession(session);
                 Room room = roomManager.getRoom(messageSender.getRoomUuid());
                 String chatMessage = jsonMessage.get("message").getAsString();
                 room.sendNewMessage(
@@ -84,7 +84,7 @@ public class RoomHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        UserSession user = registry.removeBySession(session);
+        RoomUserSession user = registry.removeBySession(session);
         roomManager.getRoom(user.getRoomUuid()).leave(user);
     }
 
@@ -94,11 +94,11 @@ public class RoomHandler extends TextWebSocketHandler {
         log.info("PARTICIPANT {}: trying to join room {}", name, roomName);
 
         Room room = roomManager.getRoom(roomName);
-        final UserSession user = room.join(name, session);
+        final RoomUserSession user = room.join(name, session);
         registry.register(user, room);
     }
 
-    private void leaveRoom(UserSession user) throws IOException {
+    private void leaveRoom(RoomUserSession user) throws IOException {
         final Room room = roomManager.getRoom(user.getRoomUuid());
         room.leave(user);
         if (room.getParticipants().isEmpty()) {

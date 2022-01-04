@@ -31,12 +31,12 @@ public class AuthInfoServiceImpl implements AuthInfoService {
     }
 
     @Override
-    public Optional<String> getWebsocketUserUuid(@NonNull WebSocketSession session) {
+    public Optional<CustomUserDetails> getWebsocketUser(@NonNull WebSocketSession session) {
         if (session.getPrincipal() == null) {
             return Optional.empty();
         }
         CustomUserDetails details = getCustomUserDetailsFromSocketSession(session);
-        return Optional.of(details.getUuid());
+        return Optional.of(details);
     }
 
     private AuthInfo createAuthInfo(Authentication authentication) {

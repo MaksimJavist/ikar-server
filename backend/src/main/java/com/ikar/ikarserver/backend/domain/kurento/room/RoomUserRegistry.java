@@ -1,4 +1,4 @@
-package com.ikar.ikarserver.backend.domain.kurento;
+package com.ikar.ikarserver.backend.domain.kurento.room;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
@@ -6,23 +6,23 @@ import org.springframework.web.socket.WebSocketSession;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-public class UserRegistry {
+public class RoomUserRegistry {
 
     private final ConcurrentHashMap<String, Room> roomBySessionId = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, UserSession> usersBySessionId = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, RoomUserSession> usersBySessionId = new ConcurrentHashMap<>();
 
-    public void register(UserSession user, Room room) {
+    public void register(RoomUserSession user, Room room) {
         String sessionId = user.getSession().getId();
         usersBySessionId.put(sessionId, user);
         roomBySessionId.put(sessionId, room);
     }
 
-    public UserSession getBySessionAndUuid(String uuid, WebSocketSession session) {
+    public RoomUserSession getBySessionAndUuid(String uuid, WebSocketSession session) {
         final Room room = roomBySessionId.get(session.getId());
         return room.getParticipant(uuid);
     }
 
-    public UserSession getBySession(WebSocketSession session) {
+    public RoomUserSession getBySession(WebSocketSession session) {
         return usersBySessionId.get(session.getId());
     }
 
@@ -31,8 +31,8 @@ public class UserRegistry {
         return room.existParticipant(uuid);
     }
 
-    public UserSession removeBySession(WebSocketSession session) {
-        final UserSession user = getBySession(session);
+    public RoomUserSession removeBySession(WebSocketSession session) {
+        final RoomUserSession user = getBySession(session);
         final String sessionId = session.getId();
         roomBySessionId.remove(sessionId);
         usersBySessionId.remove(sessionId);

@@ -1,4 +1,4 @@
-package com.ikar.ikarserver.backend.domain.kurento;
+package com.ikar.ikarserver.backend.domain.kurento.room;
 
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
-public class UserSession implements Closeable {
+public class RoomUserSession implements Closeable {
 
     private final String uuid;
     private final String name;
@@ -30,8 +30,8 @@ public class UserSession implements Closeable {
     private final WebRtcEndpoint outgoingMedia;
     private final ConcurrentMap<String, WebRtcEndpoint> incomingMedia = new ConcurrentHashMap<>();
 
-    public UserSession(String uuid, final String name, String roomUuid, final WebSocketSession session,
-                       MediaPipeline pipeline) {
+    public RoomUserSession(String uuid, final String name, String roomUuid, final WebSocketSession session,
+                           MediaPipeline pipeline) {
         this.uuid = uuid;
         this.pipeline = pipeline;
         this.name = name;
@@ -84,7 +84,7 @@ public class UserSession implements Closeable {
         return this.roomUuid;
     }
 
-    public void receiveVideoFrom(UserSession sender, String sdpOffer) throws IOException {
+    public void receiveVideoFrom(RoomUserSession sender, String sdpOffer) throws IOException {
         log.info("USER {}: connecting with {} in room {}", this.name, sender.getUuid(), this.roomUuid);
 
         log.trace("USER {}: SdpOffer for {} is {}", this.name, sender.getUuid(), sdpOffer);
@@ -102,7 +102,7 @@ public class UserSession implements Closeable {
         this.getEndpointForUser(sender).gatherCandidates();
     }
 
-    private WebRtcEndpoint getEndpointForUser(final UserSession sender) {
+    private WebRtcEndpoint getEndpointForUser(final RoomUserSession sender) {
         if (sender.getUuid().equals(uuid)) {
             log.debug("PARTICIPANT {}: configuring loopback", this.name);
             return outgoingMedia;
@@ -143,7 +143,7 @@ public class UserSession implements Closeable {
         return incoming;
     }
 
-    public void cancelVideoFrom(final UserSession sender) {
+    public void cancelVideoFrom(final RoomUserSession sender) {
         this.cancelVideoFrom(sender.getUuid());
     }
 
@@ -156,12 +156,12 @@ public class UserSession implements Closeable {
             @Override
             public void onSuccess(Void result) throws Exception {
                 log.trace("PARTICIPANT {}: Released successfully incoming EP for {}",
-                        UserSession.this.uuid, uuid);
+                        RoomUserSession.this.uuid, uuid);
             }
 
             @Override
             public void onError(Throwable cause) throws Exception {
-                log.warn("PARTICIPANT {}: Could not release incoming EP for {}", UserSession.this.uuid,
+                log.warn("PARTICIPANT {}: Could not release incoming EP for {}", RoomUserSession.this.uuid,
                         uuid);
             }
         });
@@ -181,12 +181,12 @@ public class UserSession implements Closeable {
                 @Override
                 public void onSuccess(Void result) throws Exception {
                     log.trace("PARTICIPANT {}: Released successfully incoming EP for {}",
-                            UserSession.this.uuid, remoteParticipantUuid);
+                            RoomUserSession.this.uuid, remoteParticipantUuid);
                 }
 
                 @Override
                 public void onError(Throwable cause) throws Exception {
-                    log.warn("PARTICIPANT {}: Could not release incoming EP for {}", UserSession.this.uuid,
+                    log.warn("PARTICIPANT {}: Could not release incoming EP for {}", RoomUserSession.this.uuid,
                             remoteParticipantUuid);
                 }
             });
@@ -196,12 +196,12 @@ public class UserSession implements Closeable {
 
             @Override
             public void onSuccess(Void result) throws Exception {
-                log.trace("PARTICIPANT {}: Released outgoing EP", UserSession.this.name);
+                log.trace("PARTICIPANT {}: Released outgoing EP", RoomUserSession.this.name);
             }
 
             @Override
             public void onError(Throwable cause) throws Exception {
-                log.warn("USER {}: Could not release outgoing EP", UserSession.this.name);
+                log.warn("USER {}: Could not release outgoing EP", RoomUserSession.this.name);
             }
         });
     }
@@ -235,10 +235,10 @@ public class UserSession implements Closeable {
         if (this == obj) {
             return true;
         }
-        if (obj == null || !(obj instanceof UserSession)) {
+        if (obj == null || !(obj instanceof RoomUserSession)) {
             return false;
         }
-        UserSession other = (UserSession) obj;
+        RoomUserSession other = (RoomUserSession) obj;
         boolean eq = uuid.equals(other.uuid);
         eq &= roomUuid.equals(other.roomUuid);
         return eq;

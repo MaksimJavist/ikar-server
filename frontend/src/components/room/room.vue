@@ -114,12 +114,6 @@
                             </div>
                         </div>
                     </span>
-<!--                    <div class="text-left">-->
-<!--                        <div class="m-2 p-2 w-auto  d-inline-block rounded text-left" style="max-width: 75%">-->
-<!--                            <strong>Максим Короткий:</strong>-->
-<!--                            <div>Сооьщение, полученное от пользователя, контент 1, контент 2</div>-->
-<!--                        </div>-->
-<!--                    </div>-->
                 </div>
                 <b-form-input class="mb-2" v-model="chatInputText" placeholder="Введите сообщение:"></b-form-input>
                 <b-button
@@ -138,8 +132,8 @@
 <script>
 import Participant from '@/util/Participant'
 import ParticipantMixin from "@/mixin/ParticipantMixin"
-import ParticipantLocal from "@/components/room/participant-local"
-import ParticipantRemote from "@/components/room/participant-remote"
+import ParticipantLocal from "@/components/room/participant/participant-local"
+import ParticipantRemote from "@/components/room/participant/participant-remote"
 import api from '@/api'
 
 export default {
@@ -153,13 +147,13 @@ export default {
     ],
     data() {
         return {
+            socket: null,
             joinFrameVisible: true,
             userName: null,
             roomName: null,
             localParticipantUuid: null,
             participants: [],
             chatMessages: [],
-            socket: null,
             authenticatedUser: false,
             microEnable: true,
             videoEnable: true,
@@ -194,9 +188,6 @@ export default {
         videoEnable: function (newVal) {
             this.getLocalParticipant.rtcPeer.videoEnabled = newVal
         }
-        // chatMessages: function () {
-        //
-        // }
     },
     computed: {
         getLocalParticipant: function () {
