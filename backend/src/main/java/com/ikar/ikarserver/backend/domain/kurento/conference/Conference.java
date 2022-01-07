@@ -20,6 +20,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.ikar.ikarserver.backend.util.Messages.*;
+
 @Slf4j
 @Getter
 @Setter
@@ -42,7 +44,11 @@ public class Conference implements Closeable {
         }
     }
 
-    public ConferenceUserSession registerViewer(WebSocketSession session, String name) throws IOException {
+    public ConferenceUserSession registerViewer(WebSocketSession session, String name) throws IOException, ConferenceException {
+        if (viewers.containsKey(session.getId())) {
+            throw new ConferenceException(CONFERENCE_VIEWED_EXCEPTION);
+        }
+
         String uuid = getUserUuid(session);
         ConferenceUserSession viewer = new ConferenceUserSession(uuid, name, identifier, session);
         viewers.put(session.getId(), viewer);
@@ -55,10 +61,10 @@ public class Conference implements Closeable {
             throws IOException {
         ConferenceUserSession user = viewers.get(session.getId());
         if (user == null) {
-            rejectViewer(session, "Пользователь еще не зарегистрирован в конференции");
+            rejectViewer(session, CONFERENCE_USER_NOT_FOUND);
         }
         if (presenter == null) {
-            rejectViewer(session, "Сейчас нет активного презентующего.");
+            rejectViewer(session, CONFERENCE_NOT_ACTIVE_PRESENTER);
         } else {
             newViewer(session, jsonMessage);
         }
@@ -67,7 +73,7 @@ public class Conference implements Closeable {
     public void onIceCandidate(WebSocketSession session, JsonObject candidate) {
         ConferenceUserSession user = getUserBySession(session);
 
-        if (user != null) {
+        if (user != null && user.getWebRtcEndpoint() != null) {
             IceCandidate cand =
                     new IceCandidate(candidate.get("candidate").getAsString(), candidate.get("sdpMid")
                             .getAsString(), candidate.get("sdpMLineIndex").getAsInt());
@@ -80,10 +86,6 @@ public class Conference implements Closeable {
             return presenter;
         }
         return viewers.get(session.getId());
-    }
-
-    public void removeUserBySession(WebSocketSession session) throws IOException {
-        leave(session);
     }
 
     public synchronized void stopCommunication(WebSocketSession session) throws IOException, ConferenceException {
@@ -100,7 +102,7 @@ public class Conference implements Closeable {
             viewers.put(presenter.getSession().getId(), presenter);
             presenter = null;
         } else {
-            throw new ConferenceException("Вы не являетесь презентующим");
+            throw new ConferenceException(CONFERENCE_DOES_NOT_PRESENTER);
         }
     }
 
@@ -126,9 +128,8 @@ public class Conference implements Closeable {
     private void newPresenter(WebSocketSession session, JsonObject message) throws IOException {
         presenter = viewers.get(session.getId());
         viewers.remove(session.getId());
-        presenter.setWebRtcEndpoint(new WebRtcEndpoint.Builder(pipeline).build());
-
-        WebRtcEndpoint presenterWebRtc = presenter.getWebRtcEndpoint();
+        WebRtcEndpoint presenterWebRtc = new WebRtcEndpoint.Builder(pipeline).build();
+        presenter.setWebRtcEndpoint(presenterWebRtc);
 
         presenterWebRtc.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
 
@@ -167,16 +168,11 @@ public class Conference implements Closeable {
         JsonObject response = new JsonObject();
         response.addProperty("id", "presenterResponse");
         response.addProperty("response", "rejected");
-        response.addProperty("message", "В настоящее время презентующим выступает другой пользователь");
+        response.addProperty("message", CONFERENCE_PRESENTER_BUSY);
         session.sendMessage(new TextMessage(response.toString()));
     }
 
     private void newViewer(WebSocketSession session, JsonObject jsonMessage) throws IOException {
-        if (viewers.containsKey(session.getId())) {
-            rejectViewer(session, "Вы уже просматриваете эту конференцию.");
-            return;
-        }
-
         ConferenceUserSession viewer = viewers.get(session.getId());
         WebRtcEndpoint nextWebRtc = new WebRtcEndpoint.Builder(pipeline).build();
 
@@ -196,7 +192,6 @@ public class Conference implements Closeable {
                 }
             }
         });
-
         viewer.setWebRtcEndpoint(nextWebRtc);
         presenter.getWebRtcEndpoint().connect(nextWebRtc);
         String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();

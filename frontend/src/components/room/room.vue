@@ -31,7 +31,7 @@
                 </b-col>
             </b-row>
             <b-row v-if="getLocalParticipant" class="h-25 justify-content-center" align-v="center">
-                <b-col cols="3" class="h-50">
+                <b-col cols="5" class="h-50">
                     <b-card class="h-100 border border-info" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
                         <div id="microButton" class="d-inline-block " style="margin: 0 10px">
                             <b-button v-if="microEnable"
@@ -258,7 +258,6 @@ export default {
             const participantUuid = message.registeredUuid
             const participantName = message.registeredName
             this.chatMessages = this.chatMessages.concat(message.messages)
-            console.log(this.chatMessages)
             const participant = new Participant(participantUuid, participantName, this.socket)
             const video = participant.video
 

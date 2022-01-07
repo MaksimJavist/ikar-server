@@ -33,62 +33,61 @@ public class ConferenceHandler extends TextWebSocketHandler {
     private final Gson gson = new GsonBuilder().create();
 
     @Override
-    public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    public void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
         JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
         log.debug("Incoming message from session '{}': {}", session.getId(), jsonMessage);
 
-        switch (jsonMessage.get("id").getAsString()) {
-            case "registerViewer": {
-                String name = jsonMessage.get("name").getAsString();
-                String conferenceIdentifier = jsonMessage.get("conference").getAsString();
-                Conference conference = getConferenceByIdentifier(conferenceIdentifier);
-                ConferenceUserSession user = conference.registerViewer(session, name);
-                userRegistry.register(user, conference);
-                log.info("VIEWER: trying to join conference {}", conference.getIdentifier());
-                break;
-            }
-            case "presenter":
-                try {
+        try {
+            switch (jsonMessage.get("id").getAsString()) {
+                case "registerViewer": {
+                    String name = jsonMessage.get("name").getAsString();
+                    String conferenceIdentifier = jsonMessage.get("conference").getAsString();
+                    Conference conference = getConferenceByIdentifier(conferenceIdentifier);
+                    ConferenceUserSession user = conference.registerViewer(session, name);
+                    userRegistry.register(user, conference);
+                    log.info("VIEWER: trying to join conference {}", conference.getIdentifier());
+                    break;
+                }
+                case "presenter": {
                     Conference conference = getConferenceBySession(session);
                     conference.presenter(session, jsonMessage);
-                } catch (Throwable t) {
-                    handleErrorResponse(t, session, "presenterResponse");
+                    break;
                 }
-                break;
-            case "viewer":
-                try {
+                case "viewer": {
                     Conference conference = getConferenceBySession(session);
                     conference.viewer(session, jsonMessage);
-                } catch (Throwable t) {
-                    handleErrorResponse(t, session, "viewerResponse");
+                    break;
                 }
-                break;
-            case "onIceCandidate": {
-                Conference conference = getConferenceBySession(session);
-                JsonObject candidate = jsonMessage.get("candidate").getAsJsonObject();
-                conference.onIceCandidate(session, candidate);
-                break;
+                case "onIceCandidate": {
+                    Conference conference = getConferenceBySession(session);
+                    JsonObject candidate = jsonMessage.get("candidate").getAsJsonObject();
+                    conference.onIceCandidate(session, candidate);
+                    break;
+                }
+                case "stopCommunication": {
+                    Conference conference = getConferenceBySession(session);
+                    conference.stopCommunication(session);
+                }
+                case "leave": {
+                    Conference conference = getConferenceBySession(session);
+                    conference.leave(session);
+                    break;
+                }
+                default:
+                    break;
             }
-            case "stopCommunication": {
-                Conference conference = getConferenceBySession(session);
-                conference.stopCommunication(session);
-            }
-            case "leave":
-                Conference conference = getConferenceBySession(session);
-                conference.leave(session);
-                break;
-            default:
-                break;
+        } catch (Exception e) {
+            handleErrorResponse(e.getMessage(), session);
         }
+
     }
 
-    private void handleErrorResponse(Throwable throwable, WebSocketSession session, String responseId)
+    private void handleErrorResponse(String message, WebSocketSession session)
             throws IOException {
-        log.error(throwable.getMessage(), throwable);
+        log.error(message);
         JsonObject response = new JsonObject();
-        response.addProperty("id", responseId);
-        response.addProperty("response", "rejected");
-        response.addProperty("message", throwable.getMessage());
+        response.addProperty("id", "errorResponse");
+        response.addProperty("message", message);
         session.sendMessage(new TextMessage(response.toString()));
     }
 
@@ -107,8 +106,8 @@ public class ConferenceHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        userRegistry.removeBySession(session);
         Conference conference = getConferenceBySession(session);
         conference.leave(session);
+        userRegistry.removeBySession(session);
     }
 }
