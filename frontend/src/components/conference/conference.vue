@@ -139,8 +139,13 @@ export default {
             })
     },
     beforeDestroy() {
-        this.dispose()
-        this.socket.close()
+        if (this.webRtcPeer !== null) {
+            this.webRtcPeer.dispose()
+        }
+        if (this.socket !== null) {
+            this.socket.close()
+        }
+
     },
     methods: {
         connectConference: function () {
@@ -204,21 +209,21 @@ export default {
             })
         },
         presenter: function () {
-            const constraints = {
-                audio : true,
-                video : {
-                    mandatory : {
-                        maxWidth : screen.width,
-                        maxHeight: screen.height,
-                        maxFrameRate : 15,
-                        minFrameRate : 15
-                    }
-                }
-            }
+            // const constraints = {
+            //     audio : true,
+            //     video : {
+            //         mandatory : {
+            //             maxWidth : screen.width,
+            //             maxHeight: screen.height,
+            //             maxFrameRate : 15,
+            //             minFrameRate : 15
+            //         }
+            //     }
+            // }
 
             const options = {
                 localVideo: this.$refs.conferenceVideo,
-                mediaConstraints: constraints,
+                // mediaConstraints: constraints,
                 onicecandidate: this.onIceCandidate
             }
 
@@ -229,6 +234,22 @@ export default {
                         return console.error(error)
                     }
                     this.generateOffer(onOfferPresenterCallback)
+                })
+        },
+        viewer: function () {
+            const options = {
+                localVideo: this.$refs.conferenceVideo,
+                // mediaConstraints: constraints,
+                onicecandidate: this.onIceCandidate
+            }
+
+            const onOfferViewerCallback = this.onOfferViewer
+            this.webRtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options,
+                function(error) {
+                    if (error) {
+                        return console.error(error)
+                    }
+                    this.generateOffer(onOfferViewerCallback)
                 })
         },
         onOfferPresenter: function (error, offerSdp) {
@@ -256,20 +277,21 @@ export default {
                 })
             }
         },
-        viewer: function () {
-            const options = {
-                remoteVideo: this.$refs.conferenceVideo,
-                onicecandidate: this.onIceCandidate
-            }
-
-            const offerCallback = this.onOfferViewer
-            this.webRtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options,
-                function(error) {
-                    if (error) {
+        viewerResponse: function (response) {
+            if (response.response === "accepted") {
+                this.isStreamConference = true
+                this.webRtcPeer.processAnswer(response.sdpAnswer, function(error) {
+                    if (error)
                         return console.error(error)
-                    }
-                    this.generateOffer(offerCallback)
                 })
+            } else {
+                this.webRtcPeer.dispose()
+                this.webRtcPeer = null
+                this.$bvToast.toast(response.message, {
+                    variant: 'info',
+                    solid: true
+                })
+            }
         },
         onIceCandidate: function (candidate) {
             const message = {
@@ -287,22 +309,6 @@ export default {
         },
         showPeer: function () {
             console.log(this.webRtcPeer)
-        },
-        viewerResponse: function (response) {
-            if (response.response === "accepted") {
-                this.isStreamConference = true
-                this.webRtcPeer.processAnswer(response.sdpAnswer, function(error) {
-                    if (error)
-                        return console.error(error)
-                })
-            } else {
-                this.webRtcPeer.dispose()
-                this.webRtcPeer = null
-                this.$bvToast.toast(response.message, {
-                    variant: 'info',
-                    solid: true
-                })
-            }
         },
         sendMessage: function (message) {
             const jsonMessage = JSON.stringify(message)

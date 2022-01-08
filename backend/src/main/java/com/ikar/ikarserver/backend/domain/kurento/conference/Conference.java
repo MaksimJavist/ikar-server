@@ -164,17 +164,10 @@ public class Conference implements Closeable {
         sendNewPresenterForAllRegisteredViewers(presenter.getName());
     }
 
-    private void rejectPresenter(WebSocketSession session) throws IOException {
-        JsonObject response = new JsonObject();
-        response.addProperty("id", "presenterResponse");
-        response.addProperty("response", "rejected");
-        response.addProperty("message", CONFERENCE_PRESENTER_BUSY);
-        session.sendMessage(new TextMessage(response.toString()));
-    }
-
     private void newViewer(WebSocketSession session, JsonObject jsonMessage) throws IOException {
         ConferenceUserSession viewer = viewers.get(session.getId());
         WebRtcEndpoint nextWebRtc = new WebRtcEndpoint.Builder(pipeline).build();
+        viewer.setWebRtcEndpoint(nextWebRtc);
 
         nextWebRtc.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
 
@@ -192,8 +185,7 @@ public class Conference implements Closeable {
                 }
             }
         });
-        viewer.setWebRtcEndpoint(nextWebRtc);
-        presenter.getWebRtcEndpoint().connect(nextWebRtc);
+//        presenter.getWebRtcEndpoint().connect(nextWebRtc);
         String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
         String sdpAnswer = nextWebRtc.processOffer(sdpOffer);
 
@@ -206,6 +198,14 @@ public class Conference implements Closeable {
             viewer.sendMessage(response);
         }
         nextWebRtc.gatherCandidates();
+    }
+
+    private void rejectPresenter(WebSocketSession session) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("id", "presenterResponse");
+        response.addProperty("response", "rejected");
+        response.addProperty("message", CONFERENCE_PRESENTER_BUSY);
+        session.sendMessage(new TextMessage(response.toString()));
     }
 
     private void rejectViewer(WebSocketSession session, String message) throws IOException {
