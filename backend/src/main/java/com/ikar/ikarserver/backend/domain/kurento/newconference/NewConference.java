@@ -161,12 +161,41 @@ public class NewConference implements Closeable {
         }
     }
 
+    private void sendNewPresenterForAllRegisteredViewers(String presenterName) throws IOException {
+        JsonObject message = new JsonObject();
+        message.addProperty("id", "newPresenter");
+        message.addProperty("message", "Пользователь " + presenterName + " начал трансляцию");
+        String jsonString = message.toString();
+        for (UserSession viewer : viewers.values()) {
+            viewer.getSession().sendMessage(new TextMessage(jsonString));
+        }
+    }
+
     private void rejectViewer(WebSocketSession session, String message) throws IOException {
         JsonObject response = new JsonObject();
         response.addProperty("id", "viewerResponse");
         response.addProperty("response", "rejected");
         response.addProperty("message", message);
         session.sendMessage(new TextMessage(response.toString()));
+    }
+
+    public synchronized void leave(WebSocketSession session) throws IOException {
+        String sessionId = session.getId();
+        if (presenter != null && presenter.getSession().getId().equals(sessionId)) {
+            for (UserSession viewer : viewers.values()) {
+                JsonObject response = new JsonObject();
+                response.addProperty("id", "presenterLeave");
+                viewer.sendMessage(response);
+                viewer.getWebRtcEndpoint().release();
+            }
+            presenter.close();
+            presenter = null;
+        } else if (viewers.containsKey(sessionId)) {
+            if (viewers.get(sessionId).getWebRtcEndpoint() != null) {
+                viewers.get(sessionId).getWebRtcEndpoint().release();
+            }
+            viewers.remove(sessionId);
+        }
     }
 
     public synchronized void stop(WebSocketSession session) throws IOException {
@@ -195,20 +224,20 @@ public class NewConference implements Closeable {
     public void addIceCandidate(JsonObject jsonMessage, WebSocketSession session) {
         JsonObject candidate = jsonMessage.get("candidate").getAsJsonObject();
 
-        UserSession user = null;
-        if (presenter != null) {
-            if (presenter.getSession() == session) {
-                user = presenter;
-            } else {
-                user = viewers.get(session.getId());
-            }
-        }
+        UserSession user = getUserBySession(session);
         if (user != null) {
             IceCandidate cand =
                     new IceCandidate(candidate.get("candidate").getAsString(), candidate.get("sdpMid")
                             .getAsString(), candidate.get("sdpMLineIndex").getAsInt());
             user.addCandidate(cand);
         }
+    }
+
+    private UserSession getUserBySession(WebSocketSession session) {
+        if (presenter != null && presenter.getSession() == session) {
+            return presenter;
+        }
+        return viewers.get(session.getId());
     }
 
     private String getUserUuid(WebSocketSession session) {

@@ -82,7 +82,7 @@ public class Conference implements Closeable {
     }
 
     public ConferenceUserSession getUserBySession(WebSocketSession session) {
-        if (presenter != null && session.getId().equals(session.getId())) {
+        if (presenter != null && presenter.getSession() == session) {
             return presenter;
         }
         return viewers.get(session.getId());
