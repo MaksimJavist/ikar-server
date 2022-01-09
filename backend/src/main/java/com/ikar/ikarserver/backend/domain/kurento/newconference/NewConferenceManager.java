@@ -26,7 +26,7 @@ public class NewConferenceManager {
     public String createConference() {
         final String identifier = identifierService.generateIdentifierRoom();
         log.info("Creation conference with identifier {}", identifier);
-        final NewConference conference = new NewConference(identifier, kurentoClient);
+        final NewConference conference = new NewConference(identifier, authInfoService, kurentoClient);
         conferences.put(identifier, conference);
         return identifier;
     }

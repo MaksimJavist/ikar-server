@@ -2,9 +2,7 @@ package com.ikar.ikarserver.backend.domain.kurento.newconference;
 
 import com.google.gson.JsonObject;
 import com.ikar.ikarserver.backend.domain.CustomUserDetails;
-import com.ikar.ikarserver.backend.domain.kurento.conference.ConferenceUserSession;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
-import com.ikar.ikarserver.backend.util.ConferenceSender;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -35,7 +33,6 @@ public class NewConference {
     private UserSession presenterUserSession;
 
     public UserSession registerViewer(WebSocketSession session) {
-        String uuid = getUserUuid(session);
         UserSession viewer = new UserSession(session);
         viewers.put(session.getId(), viewer);
         return viewer;
@@ -103,20 +100,9 @@ public class NewConference {
                     "No active sender now. Become sender or . Try again later ...");
             session.sendMessage(new TextMessage(response.toString()));
         } else {
-//            if (viewers.containsKey(session.getId())) {
-//                JsonObject response = new JsonObject();
-//                response.addProperty("id", "viewerResponse");
-//                response.addProperty("response", "rejected");
-//                response.addProperty("message", "You are already viewing in this session. "
-//                        + "Use a different browser to add additional viewers.");
-//                session.sendMessage(new TextMessage(response.toString()));
-//                return;
-//            }
             UserSession viewer = viewers.get(session.getId());
-            viewers.put(session.getId(), viewer);
 
             WebRtcEndpoint nextWebRtc = new WebRtcEndpoint.Builder(pipeline).build();
-
             nextWebRtc.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
 
                 @Override

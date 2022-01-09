@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.ikar.ikarserver.backend.domain.kurento.newconference.NewConference;
 import com.ikar.ikarserver.backend.domain.kurento.newconference.NewConferenceManager;
+import com.ikar.ikarserver.backend.exception.websocket.ConferenceException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,8 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+
+import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_NOT_FOUND;
 
 @Slf4j
 @Component
@@ -28,55 +31,53 @@ public class NewConferenceHandler extends TextWebSocketHandler {
         JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
         log.debug("Incoming message from session '{}': {}", session.getId(), jsonMessage);
 
-        switch (jsonMessage.get("id").getAsString()) {
-            case "registerViewer": {
-                NewConference conference = getConferenceByIdentifier(jsonMessage.get("conference").getAsString());
-                conference.registerViewer(session);
-            }
-            case "presenter":
-                try {
+        try {
+            switch (jsonMessage.get("id").getAsString()) {
+                case "registerViewer": {
+                    NewConference conference = getConferenceByIdentifier(jsonMessage.get("conference").getAsString());
+                    conference.registerViewer(session);
+                    break;
+                }
+                case "presenter": {
                     NewConference conference = getConferenceByIdentifier(jsonMessage.get("conference").getAsString());
                     conference.presenter(session, jsonMessage);
-                } catch (Throwable t) {
-                    handleErrorResponse(t, session, "presenterResponse");
+                    break;
                 }
-                break;
-            case "viewer":
-                try {
+                case "viewer": {
                     NewConference conference = getConferenceByIdentifier(jsonMessage.get("conference").getAsString());
                     conference.viewer(session, jsonMessage);
-                } catch (Throwable t) {
-                    handleErrorResponse(t, session, "viewerResponse");
+                    break;
                 }
-                break;
-            case "onIceCandidate": {
-                NewConference conference = getConferenceByIdentifier(jsonMessage.get("conference").getAsString());
-                conference.addIceCandidate(jsonMessage, session);
-                break;
+                case "onIceCandidate": {
+                    NewConference conference = getConferenceByIdentifier(jsonMessage.get("conference").getAsString());
+                    conference.addIceCandidate(jsonMessage, session);
+                    break;
+                }
+                case "stop": {
+                    NewConference conference = getConferenceByIdentifier(jsonMessage.get("conference").getAsString());
+                    conference.stop(session);
+                    break;
+                }
+                default:
+                    break;
             }
-            case "stop": {
-                NewConference conference = getConferenceByIdentifier(jsonMessage.get("conference").getAsString());
-                conference.stop(session);
-                break;
-            }
-            default:
-                break;
+        } catch (Exception e) {
+            handleErrorResponse(e.getMessage(), session);
         }
     }
 
-    private void handleErrorResponse(Throwable throwable, WebSocketSession session, String responseId)
+    private void handleErrorResponse(String message, WebSocketSession session)
             throws IOException {
-//        stop(session);
-//        log.error(throwable.getMessage(), throwable);
-//        JsonObject response = new JsonObject();
-//        response.addProperty("id", responseId);
-//        response.addProperty("response", "rejected");
-//        response.addProperty("message", throwable.getMessage());
-//        session.sendMessage(new TextMessage(response.toString()));
+        log.error(message);
+        JsonObject response = new JsonObject();
+        response.addProperty("id", "errorResponse");
+        response.addProperty("message", message);
+        session.sendMessage(new TextMessage(response.toString()));
     }
 
-    private NewConference getConferenceByIdentifier(String identifier) {
-        return conferenceManager.getConference(identifier).get();
+    private NewConference getConferenceByIdentifier(String identifier) throws ConferenceException {
+        return conferenceManager.getConference(identifier)
+                .orElseThrow(ConferenceException.supplier(CONFERENCE_NOT_FOUND));
     }
 
 //    @Override

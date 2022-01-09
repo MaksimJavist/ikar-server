@@ -76,6 +76,11 @@ export default {
     methods: {
         setSettingSocket: function () {
             this.webSocket.onmessage = this.handleMessage
+            const message = {
+                id: "registerViewer",
+                conference: this.identifierConference
+            }
+            this.sendMessage(message)
         },
         handleMessage: function (message) {
             const parsedMessage = JSON.parse(message.data)
@@ -140,6 +145,7 @@ export default {
             }
         },
         onOfferPresenter: function (error, offerSdp) {
+            console.log("DSFSDFSDF")
             if (error)
                 return console.error('Error generating the offer')
             console.info('Invoking SDP offer callback function ' + location.host)
@@ -152,6 +158,7 @@ export default {
         },
         viewer: function () {
             if (!this.webRtcPeer) {
+                console.log(this.video)
                 const options = {
                     remoteVideo : this.video,
                     onicecandidate : this.onIceCandidate
@@ -196,6 +203,7 @@ export default {
             this.dispose()
         },
         sendMessage: function (message) {
+            console.log(message)
             const jsonMessage = JSON.stringify(message)
             console.log('Sending message: ' + jsonMessage)
             console.log(this.webSocket)
