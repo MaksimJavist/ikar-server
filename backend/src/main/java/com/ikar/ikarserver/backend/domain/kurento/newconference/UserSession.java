@@ -8,11 +8,12 @@ import org.kurento.client.WebRtcEndpoint;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 @Slf4j
 @RequiredArgsConstructor
-public class UserSession {
+public class UserSession implements Closeable {
 
     private final WebSocketSession session;
     private WebRtcEndpoint webRtcEndpoint;
@@ -38,9 +39,11 @@ public class UserSession {
         webRtcEndpoint.addIceCandidate(candidate);
     }
 
-    public void closeWebRtcConnection() {
+    @Override
+    public void close() {
         if (webRtcEndpoint != null) {
             webRtcEndpoint.release();
+            webRtcEndpoint = null;
         }
     }
 
