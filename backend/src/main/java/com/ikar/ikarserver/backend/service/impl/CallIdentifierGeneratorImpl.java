@@ -1,6 +1,6 @@
 package com.ikar.ikarserver.backend.service.impl;
 
-import com.ikar.ikarserver.backend.service.RoomIdentifierGenerator;
+import com.ikar.ikarserver.backend.service.CallIdentifierGenerator;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.impl.auth.DigestScheme;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -11,7 +11,7 @@ import java.security.MessageDigest;
 import java.time.Instant;
 
 @Component
-public final class RoomIdentifierGeneratorImpl implements RoomIdentifierGenerator {
+public final class CallIdentifierGeneratorImpl implements CallIdentifierGenerator {
 
     private final String HEX_FORMAT = "%02x";
 

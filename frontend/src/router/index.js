@@ -2,7 +2,8 @@ import VueRouter from "vue-router"
 
 import CreateCall from '@/components/manage/create-call'
 import Room from '@/components/room/room'
-import Conference from "@/components/conference/conference"
+import Conference from '@/components/conference/conference'
+import TestBag from "@/components/conference/test-bag"
 
 export default new VueRouter({
     base: '/',
@@ -22,6 +23,11 @@ export default new VueRouter({
             path: '/conference/:conferenceId',
             name: 'conference',
             component: Conference
+        },
+        {
+            path: '/newconference/:identifier',
+            name: 'testBag',
+            component: TestBag
         }
     ]
 })

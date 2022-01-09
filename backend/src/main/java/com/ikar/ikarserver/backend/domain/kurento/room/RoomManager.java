@@ -2,7 +2,7 @@ package com.ikar.ikarserver.backend.domain.kurento.room;
 
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.RoomChatMessageService;
-import com.ikar.ikarserver.backend.service.RoomIdentifierGenerator;
+import com.ikar.ikarserver.backend.service.CallIdentifierGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.KurentoClient;
@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentMap;
 public class RoomManager {
 
     private final KurentoClient kurento;
-    private final RoomIdentifierGenerator identifierService;
+    private final CallIdentifierGenerator identifierService;
     private final AuthInfoService authInfoService;
     private final RoomChatMessageService service;
     private final ConcurrentMap<String, Room> rooms = new ConcurrentHashMap<>();

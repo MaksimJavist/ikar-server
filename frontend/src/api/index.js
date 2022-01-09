@@ -12,7 +12,7 @@ const createNewRoom = () =>
 
 const createNewConference = () =>
     axiosInstance({
-        url: '/api/conference/create',
+        url: '/api/newconference/create',
         method: 'GET'
     })
 

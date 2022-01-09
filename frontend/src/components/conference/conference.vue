@@ -111,7 +111,7 @@
 
 <script>
 import api from "@/api"
-import kurentoUtils from 'kurento-utils'
+import KurentoUtils from 'kurento-utils'
 
 export default {
     name: "conference",
@@ -180,7 +180,10 @@ export default {
                 this.newPresenter(parsedMessage)
                 break
             case 'iceCandidate':
-                this.iceCandidate(parsedMessage)
+                this.webRtcPeer.addIceCandidate(parsedMessage.candidate, function(error) {
+                    if (error)
+                        return console.error('Error adding candidate: ' + error)
+                })
                 break
             case 'errorResponse':
                 this.errorResponse(parsedMessage.message)
@@ -228,7 +231,7 @@ export default {
             }
 
             const onOfferPresenterCallback = this.onOfferPresenter
-            this.webRtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options,
+            this.webRtcPeer = new KurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options,
                 function(error) {
                     if (error) {
                         return console.error(error)
@@ -244,7 +247,7 @@ export default {
             }
 
             const onOfferViewerCallback = this.onOfferViewer
-            this.webRtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options,
+            this.webRtcPeer = new KurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options,
                 function(error) {
                     if (error) {
                         return console.error(error)

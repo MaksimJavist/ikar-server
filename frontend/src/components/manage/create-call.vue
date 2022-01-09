@@ -30,7 +30,7 @@ export default {
         createConference: function () {
             api.createNewConference()
                 .then(resp => {
-                    this.$router.push(`/conference/${resp.data}`)
+                    this.$router.push(`/newconference/${resp.data}`)
                 })
         }
     }
