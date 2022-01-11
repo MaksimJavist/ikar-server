@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.ikar.ikarserver.backend.domain.CustomUserDetails;
 import com.ikar.ikarserver.backend.domain.kurento.conference.ConferenceUserSession;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
+import com.ikar.ikarserver.backend.util.ConferenceSender;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -36,10 +37,29 @@ public class NewConference implements Closeable {
     private MediaPipeline pipeline;
     private UserSession presenter;
 
-    public UserSession registerViewer(WebSocketSession session) {
+    public UserSession registerViewer(WebSocketSession session) throws IOException {
         UserSession viewer = new UserSession(session);
         viewers.put(session.getId(), viewer);
+        ConferenceSender.sendViewerRegisterSuccess(viewer);
         return viewer;
+    }
+
+    public void viewerConnectPermission(WebSocketSession session) throws IOException {
+        UserSession user = viewers.get(session.getId());
+        if (presenter != null) {
+            ConferenceSender.sendAcceptViewerConnectPermissionResponse(user);
+        } else {
+            ConferenceSender.sendRejectViewerConnectPermissionResponse(user);
+        }
+    }
+
+    public void presenterConnectPermission(WebSocketSession session) throws IOException {
+        UserSession user = viewers.get(session.getId());
+        if (presenter != null) {
+            ConferenceSender.sendRejectPresenterConnectPermissionResponse(user);
+        } else {
+            ConferenceSender.sendAcceptPresenterConnectPermissionResponse(user);
+        }
     }
 
     public synchronized void presenter(final WebSocketSession session, JsonObject jsonMessage)
@@ -57,118 +77,93 @@ public class NewConference implements Closeable {
         if (user == null) {
             rejectViewer(session, CONFERENCE_USER_NOT_FOUND);
         }
-        if (presenter == null) {
-            rejectViewer(session, CONFERENCE_NOT_ACTIVE_PRESENTER);
-        } else {
-            newViewer(session, jsonMessage);
-        }
+        newViewer(session, jsonMessage);
     }
 
     private void rejectPresenter(WebSocketSession session) throws IOException {
-        JsonObject response = new JsonObject();
-        response.addProperty("id", "presenterResponse");
-        response.addProperty("response", "rejected");
-        response.addProperty("message", CONFERENCE_PRESENTER_BUSY);
-        session.sendMessage(new TextMessage(response.toString()));
+        UserSession user = viewers.get(session.getId());
+        ConferenceSender.sendRejectPresenterResponse(user);
     }
 
     private void newPresenter(final WebSocketSession session, JsonObject jsonMessage)
             throws IOException {
-            final String sessionId = session.getId();
-            presenter = viewers.get(sessionId);
-            viewers.remove(sessionId);
+        final String sessionId = session.getId();
+        presenter = viewers.get(sessionId);
+        viewers.remove(sessionId);
 
-            pipeline = kurento.createMediaPipeline();
-            presenter.setWebRtcEndpoint(new WebRtcEndpoint.Builder(pipeline).build());
+        pipeline = kurento.createMediaPipeline();
+        presenter.setWebRtcEndpoint(new WebRtcEndpoint.Builder(pipeline).build());
 
-            WebRtcEndpoint presenterWebRtc = presenter.getWebRtcEndpoint();
+        WebRtcEndpoint presenterWebRtc = presenter.getWebRtcEndpoint();
 
-            presenterWebRtc.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
+        presenterWebRtc.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
 
-                @Override
-                public void onEvent(IceCandidateFoundEvent event) {
-                    JsonObject response = new JsonObject();
-                    response.addProperty("id", "iceCandidate");
-                    response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
-                    try {
-                        synchronized (session) {
-                            session.sendMessage(new TextMessage(response.toString()));
-                        }
-                    } catch (IOException e) {
-                        log.debug(e.getMessage());
+            @Override
+            public void onEvent(IceCandidateFoundEvent event) {
+                JsonObject response = new JsonObject();
+                response.addProperty("id", "iceCandidate");
+                response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
+                try {
+                    synchronized (session) {
+                        session.sendMessage(new TextMessage(response.toString()));
                     }
+                } catch (IOException e) {
+                    log.debug(e.getMessage());
                 }
-            });
-
-            String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
-            String sdpAnswer = presenterWebRtc.processOffer(sdpOffer);
-
-            JsonObject response = new JsonObject();
-            response.addProperty("id", "presenterResponse");
-            response.addProperty("response", "accepted");
-            response.addProperty("sdpAnswer", sdpAnswer);
-
-            synchronized (session) {
-                presenter.sendMessage(response);
             }
-            presenterWebRtc.gatherCandidates();
+        });
+
+        String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
+        String sdpAnswer = presenterWebRtc.processOffer(sdpOffer);
+
+        JsonObject response = new JsonObject();
+        response.addProperty("id", "presenterResponse");
+        response.addProperty("response", "accepted");
+        response.addProperty("sdpAnswer", sdpAnswer);
+
+        synchronized (session) {
+            presenter.sendMessage(response);
+        }
+        presenterWebRtc.gatherCandidates();
+        ConferenceSender.sendNewPresenterForAllViewers(viewers.values(), "Иван иванов");
     }
 
     private void newViewer(final WebSocketSession session, JsonObject jsonMessage)
             throws IOException {
-        if (presenter == null || presenter.getWebRtcEndpoint() == null) {
-            JsonObject response = new JsonObject();
-            response.addProperty("id", "viewerResponse");
-            response.addProperty("response", "rejected");
-            response.addProperty("message",
-                    "No active sender now. Become sender or . Try again later ...");
-            session.sendMessage(new TextMessage(response.toString()));
-        } else {
-            UserSession viewer = viewers.get(session.getId());
+        UserSession viewer = viewers.get(session.getId());
 
-            WebRtcEndpoint nextWebRtc = new WebRtcEndpoint.Builder(pipeline).build();
-            nextWebRtc.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
+        WebRtcEndpoint nextWebRtc = new WebRtcEndpoint.Builder(pipeline).build();
+        nextWebRtc.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
 
-                @Override
-                public void onEvent(IceCandidateFoundEvent event) {
-                    JsonObject response = new JsonObject();
-                    response.addProperty("id", "iceCandidate");
-                    response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
-                    try {
-                        synchronized (session) {
-                            session.sendMessage(new TextMessage(response.toString()));
-                        }
-                    } catch (IOException e) {
-                        log.debug(e.getMessage());
+            @Override
+            public void onEvent(IceCandidateFoundEvent event) {
+                JsonObject response = new JsonObject();
+                response.addProperty("id", "iceCandidate");
+                response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
+                try {
+                    synchronized (session) {
+                        session.sendMessage(new TextMessage(response.toString()));
                     }
+                } catch (IOException e) {
+                    log.debug(e.getMessage());
                 }
-            });
-
-            viewer.setWebRtcEndpoint(nextWebRtc);
-            presenter.getWebRtcEndpoint().connect(nextWebRtc);
-            String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
-            String sdpAnswer = nextWebRtc.processOffer(sdpOffer);
-
-            JsonObject response = new JsonObject();
-            response.addProperty("id", "viewerResponse");
-            response.addProperty("response", "accepted");
-            response.addProperty("sdpAnswer", sdpAnswer);
-
-            synchronized (session) {
-                viewer.sendMessage(response);
             }
-            nextWebRtc.gatherCandidates();
-        }
-    }
+        });
 
-    private void sendNewPresenterForAllRegisteredViewers(String presenterName) throws IOException {
-        JsonObject message = new JsonObject();
-        message.addProperty("id", "newPresenter");
-        message.addProperty("message", "Пользователь " + presenterName + " начал трансляцию");
-        String jsonString = message.toString();
-        for (UserSession viewer : viewers.values()) {
-            viewer.getSession().sendMessage(new TextMessage(jsonString));
+        viewer.setWebRtcEndpoint(nextWebRtc);
+        presenter.getWebRtcEndpoint().connect(nextWebRtc);
+        String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
+        String sdpAnswer = nextWebRtc.processOffer(sdpOffer);
+
+        JsonObject response = new JsonObject();
+        response.addProperty("id", "viewerResponse");
+        response.addProperty("response", "accepted");
+        response.addProperty("sdpAnswer", sdpAnswer);
+
+        synchronized (session) {
+            viewer.sendMessage(response);
         }
+        nextWebRtc.gatherCandidates();
     }
 
     private void rejectViewer(WebSocketSession session, String message) throws IOException {
@@ -185,14 +180,15 @@ public class NewConference implements Closeable {
             for (UserSession viewer : viewers.values()) {
                 JsonObject response = new JsonObject();
                 response.addProperty("id", "presenterLeave");
+                response.addProperty("message", "Пользователь " + "Иван Иванов" + " прекратил трансляцию.");
                 viewer.sendMessage(response);
-                viewer.getWebRtcEndpoint().release();
+                viewer.close();
             }
             presenter.close();
             presenter = null;
         } else if (viewers.containsKey(sessionId)) {
             if (viewers.get(sessionId).getWebRtcEndpoint() != null) {
-                viewers.get(sessionId).getWebRtcEndpoint().release();
+                viewers.get(sessionId).close();
             }
             viewers.remove(sessionId);
         }

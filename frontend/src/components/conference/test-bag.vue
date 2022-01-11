@@ -13,7 +13,7 @@
                                 <b-button
                                     pill
                                     v-b-tooltip.hover
-                                    @click="presenter"
+                                    @click="presenterConnectPermission"
                                     title="Начать показ"
                                     variant="outline-success">
                                         Презентующий
@@ -87,11 +87,26 @@ export default {
             console.info('Received message: ' + message.data)
 
             switch (parsedMessage.id) {
+            case 'viewerRegistered':
+                this.viewerConnectPermission()
+                break
+            case 'viewerConnectPermissionResponse':
+                this.viewerConnectPermissionResponse(parsedMessage)
+                break
+            case 'presenterConnectPermissionResponse':
+                this.presenterConnectPermissionResponse(parsedMessage)
+                break
             case 'presenterResponse':
                 this.presenterResponse(parsedMessage)
                 break
             case 'viewerResponse':
                 this.viewerResponse(parsedMessage)
+                break
+            case 'newPresenter':
+                this.newPresenterConference(parsedMessage)
+                break
+            case 'presenterLeave':
+                this.presenterLeave(parsedMessage)
                 break
             case 'iceCandidate':
                 this.webRtcPeer.addIceCandidate(parsedMessage.candidate, function(error) {
@@ -105,6 +120,56 @@ export default {
             default:
                 console.error('Unrecognized message', parsedMessage)
             }
+        },
+        presenterLeave: function (message) {
+            this.$bvToast.toast(message.message, {
+                variant: 'info',
+                solid: true
+            })
+            this.webRtcPeer.dispose()
+            this.webRtcPeer = null
+        },
+        viewerConnectPermission: function () {
+            const message = {
+                id : 'viewerConnectPermission',
+                conference: this.identifierConference
+            }
+            this.sendMessage(message)
+        },
+        viewerConnectPermissionResponse: function (message) {
+            if (message.response === 'accepted') {
+                this.viewer()
+            } else {
+                this.$bvToast.toast(message.message, {
+                    variant: 'info',
+                    solid: true
+                })
+            }
+        },
+        presenterConnectPermission: function () {
+            const message = {
+                id : 'presenterConnectPermission',
+                conference: this.identifierConference
+            }
+            this.sendMessage(message)
+        },
+        presenterConnectPermissionResponse: function (message) {
+            console.log(message)
+            if (message.response === 'accepted') {
+                this.presenter()
+            } else {
+                this.$bvToast.toast(message.message, {
+                    variant: 'info',
+                    solid: true
+                })
+            }
+        },
+        newPresenterConference: function (message) {
+            this.$bvToast.toast(message.message, {
+                variant: 'info',
+                solid: true
+            })
+            this.viewerConnectPermission()
         },
         presenterResponse: function (message) {
             if (message.response != 'accepted') {
@@ -145,7 +210,6 @@ export default {
             }
         },
         onOfferPresenter: function (error, offerSdp) {
-            console.log("DSFSDFSDF")
             if (error)
                 return console.error('Error generating the offer')
             console.info('Invoking SDP offer callback function ' + location.host)
@@ -202,11 +266,14 @@ export default {
             this.sendMessage(message)
             this.dispose()
         },
+        errorResponse: function (message) {
+            this.$bvToast.toast(message, {
+                variant: 'danger',
+                solid: true
+            })
+        },
         sendMessage: function (message) {
-            console.log(message)
             const jsonMessage = JSON.stringify(message)
-            console.log('Sending message: ' + jsonMessage)
-            console.log(this.webSocket)
             this.webSocket.send(jsonMessage)
         },
         dispose: function () {

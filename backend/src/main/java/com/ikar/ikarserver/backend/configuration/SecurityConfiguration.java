@@ -36,7 +36,14 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter implemen
                 .logout()
                     .logoutUrl("/logout")
                     .logoutSuccessUrl("/login")
-                    .deleteCookies("JSESSIONID");
+                    .deleteCookies("JSESSIONID")
+                    .and()
+                .rememberMe()
+                    .rememberMeCookieName("ikarcallserver")
+                    .tokenValiditySeconds(86400)
+                    .alwaysRemember(true)
+                    .useSecureCookie(true)
+                    .userDetailsService(userDetailsService);
     }
 
     @Override
