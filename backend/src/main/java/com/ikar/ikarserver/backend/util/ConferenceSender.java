@@ -5,6 +5,8 @@ import com.ikar.ikarserver.backend.domain.kurento.conference.ConferenceUserSessi
 import com.ikar.ikarserver.backend.domain.kurento.newconference.UserSession;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -24,6 +26,8 @@ public final class ConferenceSender {
     public static void sendViewerRegisterSuccess(UserSession userSession) throws IOException {
         JsonObject message = new JsonObject();
         message.addProperty("id", "viewerRegistered");
+        message.addProperty("uuid", userSession.getUuid());
+        message.addProperty("username", userSession.getUsername());
         userSession.sendMessage(message);
     }
 
@@ -77,5 +81,46 @@ public final class ConferenceSender {
         }
     }
 
+    public static void sendPresenterResponseSdpAnswer(UserSession presenter, String sdpAnswer) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("id", "presenterResponse");
+        response.addProperty("response", "accepted");
+        response.addProperty("sdpAnswer", sdpAnswer);
+        presenter.sendMessage(response);
+    }
+
+    public static void sendViewerResponseSdpAnswer(UserSession viewer, String sdpAnswer) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("id", "viewerResponse");
+        response.addProperty("response", "accepted");
+        response.addProperty("sdpAnswer", sdpAnswer);
+        viewer.sendMessage(response);
+    }
+
+    public static void sendRejectViewerResponse(WebSocketSession session, String message) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("id", "viewerResponse");
+        response.addProperty("response", "rejected");
+        response.addProperty("message", message);
+        session.sendMessage(
+                new TextMessage(
+                        response.toString()
+                )
+        );
+    }
+
+    public static void sendPresenterLeaveForViewer(UserSession viewer, String presenterName) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("id", "presenterLeave");
+        response.addProperty("message", "Презентующий " + presenterName + " покинул трансляцию.");
+        viewer.sendMessage(response);
+    }
+
+    public static void sendPresenterStopForViewer(UserSession viewer, String presenterName) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("id", "stopCommunication");
+        response.addProperty("message", "Пользователь " + presenterName + " прекратил трансляцию.");
+        viewer.sendMessage(response);
+    }
 
 }

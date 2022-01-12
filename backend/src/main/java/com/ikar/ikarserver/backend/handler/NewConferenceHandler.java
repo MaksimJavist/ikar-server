@@ -39,37 +39,38 @@ public class NewConferenceHandler extends TextWebSocketHandler {
             switch (jsonMessage.get("id").getAsString()) {
                 case "registerViewer": {
                     NewConference conference = getConferenceByIdentifier(jsonMessage.get("conference").getAsString());
-                    UserSession registeredUser = conference.registerViewer(session);
+                    String name = jsonMessage.get("name").getAsString();
+                    UserSession registeredUser = conference.registerViewer(session, name);
                     userRegistry.register(registeredUser, conference);
                     break;
                 }
                 case "viewerConnectPermission": {
-                    NewConference conference = getConferenceByIdentifier(jsonMessage.get("conference").getAsString());
+                    NewConference conference = userRegistry.getConferenceBySession(session);
                     conference.viewerConnectPermission(session);
                     break;
                 }
                 case "viewer": {
-                    NewConference conference = getConferenceByIdentifier(jsonMessage.get("conference").getAsString());
+                    NewConference conference = userRegistry.getConferenceBySession(session);
                     conference.viewer(session, jsonMessage);
                     break;
                 }
                 case "presenterConnectPermission": {
-                    NewConference conference = getConferenceByIdentifier(jsonMessage.get("conference").getAsString());
+                    NewConference conference = userRegistry.getConferenceBySession(session);
                     conference.presenterConnectPermission(session);
                     break;
                 }
                 case "presenter": {
-                    NewConference conference = getConferenceByIdentifier(jsonMessage.get("conference").getAsString());
+                    NewConference conference = userRegistry.getConferenceBySession(session);
                     conference.presenter(session, jsonMessage);
                     break;
                 }
                 case "onIceCandidate": {
-                    NewConference conference = getConferenceByIdentifier(jsonMessage.get("conference").getAsString());
+                    NewConference conference = userRegistry.getConferenceBySession(session);
                     conference.addIceCandidate(jsonMessage, session);
                     break;
                 }
                 case "stop": {
-                    NewConference conference = getConferenceByIdentifier(jsonMessage.get("conference").getAsString());
+                    NewConference conference = userRegistry.getConferenceBySession(session);
                     conference.stop(session);
                     break;
                 }

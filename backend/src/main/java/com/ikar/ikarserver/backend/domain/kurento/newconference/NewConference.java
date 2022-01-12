@@ -2,7 +2,6 @@ package com.ikar.ikarserver.backend.domain.kurento.newconference;
 
 import com.google.gson.JsonObject;
 import com.ikar.ikarserver.backend.domain.CustomUserDetails;
-import com.ikar.ikarserver.backend.domain.kurento.conference.ConferenceUserSession;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.util.ConferenceSender;
 import lombok.Getter;
@@ -20,7 +19,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.ikar.ikarserver.backend.util.Messages.*;
+import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_USER_NOT_FOUND;
 
 @Slf4j
 @Getter
@@ -30,15 +29,15 @@ public class NewConference implements Closeable {
 
     private final String identifier;
     private final ConcurrentHashMap<String, UserSession> viewers = new ConcurrentHashMap<>();
-
-    private final AuthInfoService authInfoService;
-    private final KurentoClient kurento;
-
-    private MediaPipeline pipeline;
     private UserSession presenter;
 
-    public UserSession registerViewer(WebSocketSession session) throws IOException {
-        UserSession viewer = new UserSession(session);
+    private final AuthInfoService authInfoService;
+
+    private final MediaPipeline pipeline;
+
+    public UserSession registerViewer(WebSocketSession session, String username) throws IOException {
+        String uuid = getUserUuid(session);
+        UserSession viewer = new UserSession(uuid, username, session);
         viewers.put(session.getId(), viewer);
         ConferenceSender.sendViewerRegisterSuccess(viewer);
         return viewer;
@@ -66,16 +65,17 @@ public class NewConference implements Closeable {
             throws IOException {
         if (presenter == null) {
             newPresenter(session, jsonMessage);
-        } else {
-            rejectPresenter(session);
+            return;
         }
+        rejectPresenter(session);
     }
 
     public synchronized void viewer(final WebSocketSession session, JsonObject jsonMessage)
             throws IOException {
         UserSession user = viewers.get(session.getId());
         if (user == null) {
-            rejectViewer(session, CONFERENCE_USER_NOT_FOUND);
+            ConferenceSender.sendRejectViewerResponse(session, CONFERENCE_USER_NOT_FOUND);
+            return;
         }
         newViewer(session, jsonMessage);
     }
@@ -90,39 +90,17 @@ public class NewConference implements Closeable {
         final String sessionId = session.getId();
         presenter = viewers.get(sessionId);
         viewers.remove(sessionId);
-
-        pipeline = kurento.createMediaPipeline();
         presenter.setWebRtcEndpoint(new WebRtcEndpoint.Builder(pipeline).build());
-
         WebRtcEndpoint presenterWebRtc = presenter.getWebRtcEndpoint();
-
-        presenterWebRtc.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-
-            @Override
-            public void onEvent(IceCandidateFoundEvent event) {
-                JsonObject response = new JsonObject();
-                response.addProperty("id", "iceCandidate");
-                response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
-                try {
-                    synchronized (session) {
-                        session.sendMessage(new TextMessage(response.toString()));
-                    }
-                } catch (IOException e) {
-                    log.debug(e.getMessage());
-                }
-            }
-        });
+        presenterWebRtc.addIceCandidateFoundListener(
+                getCandidateEventListener(session)
+        );
 
         String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
         String sdpAnswer = presenterWebRtc.processOffer(sdpOffer);
 
-        JsonObject response = new JsonObject();
-        response.addProperty("id", "presenterResponse");
-        response.addProperty("response", "accepted");
-        response.addProperty("sdpAnswer", sdpAnswer);
-
         synchronized (session) {
-            presenter.sendMessage(response);
+            ConferenceSender.sendPresenterResponseSdpAnswer(presenter, sdpAnswer);
         }
         presenterWebRtc.gatherCandidates();
         ConferenceSender.sendNewPresenterForAllViewers(viewers.values(), "Иван иванов");
@@ -133,87 +111,48 @@ public class NewConference implements Closeable {
         UserSession viewer = viewers.get(session.getId());
 
         WebRtcEndpoint nextWebRtc = new WebRtcEndpoint.Builder(pipeline).build();
-        nextWebRtc.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-
-            @Override
-            public void onEvent(IceCandidateFoundEvent event) {
-                JsonObject response = new JsonObject();
-                response.addProperty("id", "iceCandidate");
-                response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
-                try {
-                    synchronized (session) {
-                        session.sendMessage(new TextMessage(response.toString()));
-                    }
-                } catch (IOException e) {
-                    log.debug(e.getMessage());
-                }
-            }
-        });
+        nextWebRtc.addIceCandidateFoundListener(
+                getCandidateEventListener(session)
+        );
 
         viewer.setWebRtcEndpoint(nextWebRtc);
         presenter.getWebRtcEndpoint().connect(nextWebRtc);
         String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
         String sdpAnswer = nextWebRtc.processOffer(sdpOffer);
 
-        JsonObject response = new JsonObject();
-        response.addProperty("id", "viewerResponse");
-        response.addProperty("response", "accepted");
-        response.addProperty("sdpAnswer", sdpAnswer);
-
         synchronized (session) {
-            viewer.sendMessage(response);
+            ConferenceSender.sendViewerResponseSdpAnswer(viewer, sdpAnswer);
         }
         nextWebRtc.gatherCandidates();
     }
 
-    private void rejectViewer(WebSocketSession session, String message) throws IOException {
-        JsonObject response = new JsonObject();
-        response.addProperty("id", "viewerResponse");
-        response.addProperty("response", "rejected");
-        response.addProperty("message", message);
-        session.sendMessage(new TextMessage(response.toString()));
-    }
-
     public synchronized void leave(WebSocketSession session) throws IOException {
         String sessionId = session.getId();
-        if (presenter != null && presenter.getSession().getId().equals(sessionId)) {
+        if (isPresenter(sessionId)) {
             for (UserSession viewer : viewers.values()) {
-                JsonObject response = new JsonObject();
-                response.addProperty("id", "presenterLeave");
-                response.addProperty("message", "Пользователь " + "Иван Иванов" + " прекратил трансляцию.");
-                viewer.sendMessage(response);
+                ConferenceSender.sendPresenterLeaveForViewer(viewer, presenter.getUsername());
                 viewer.close();
             }
             presenter.close();
             presenter = null;
         } else if (viewers.containsKey(sessionId)) {
-            if (viewers.get(sessionId).getWebRtcEndpoint() != null) {
-                viewers.get(sessionId).close();
-            }
+            closePeerConnection(sessionId);
             viewers.remove(sessionId);
         }
     }
 
     public synchronized void stop(WebSocketSession session) throws IOException {
         String sessionId = session.getId();
-        if (presenter != null && presenter.getSession().getId().equals(sessionId)) {
+        if (isPresenter(sessionId)) {
             for (UserSession viewer : viewers.values()) {
-                JsonObject response = new JsonObject();
-                response.addProperty("id", "stopCommunication");
-                viewer.sendMessage(response);
+                ConferenceSender.sendPresenterStopForViewer(viewer, presenter.getUsername());
+                viewer.close();
             }
-
-            log.info("Releasing media pipeline");
-            if (pipeline != null) {
-                pipeline.release();
-            }
-            pipeline = null;
+            viewers.put(session.getId(), presenter);
+            presenter.close();
             presenter = null;
         } else if (viewers.containsKey(sessionId)) {
-            if (viewers.get(sessionId).getWebRtcEndpoint() != null) {
-                viewers.get(sessionId).getWebRtcEndpoint().release();
-            }
-            viewers.remove(sessionId);
+            closePeerConnection(sessionId);
         }
     }
 
@@ -236,6 +175,17 @@ public class NewConference implements Closeable {
         return viewers.get(session.getId());
     }
 
+    private boolean isPresenter(String sessionId) {
+        return presenter != null && presenter.getSession().getId().equals(sessionId);
+    }
+
+    private void closePeerConnection(String sessionId) {
+        final UserSession user = viewers.get(sessionId);
+        if (user != null && user.getWebRtcEndpoint() != null) {
+            user.close();
+        }
+    }
+
     private String getUserUuid(WebSocketSession session) {
         String uuid;
         Optional<CustomUserDetails> optUser = authInfoService.getWebsocketUser(session);
@@ -245,6 +195,21 @@ public class NewConference implements Closeable {
             uuid = UUID.randomUUID().toString();
         }
         return uuid;
+    }
+
+    private EventListener<IceCandidateFoundEvent> getCandidateEventListener(WebSocketSession session) {
+        return event -> {
+            JsonObject response = new JsonObject();
+            response.addProperty("id", "iceCandidate");
+            response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
+            try {
+                synchronized (session) {
+                    session.sendMessage(new TextMessage(response.toString()));
+                }
+            } catch (IOException e) {
+                log.debug(e.getMessage());
+            }
+        };
     }
 
     @Override

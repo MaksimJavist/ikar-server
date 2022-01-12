@@ -1,14 +1,30 @@
 <template>
-    <b-container class="vh-100" fluid>
-        <b-row class="pt-3 justify-content-center" style="height: 80%; max-height: 80%">
-            <b-col cols="10" style="max-height: 100%">
-                <video id="video" ref="conferenceVideo" style="max-height: 100%; object-fit: cover; border-width: medium !important;" autoplay class="w-100 rounded border border-info"></video>
-            </b-col>
-        </b-row>
-        <b-row class="pb-2 justify-content-center" align-v="center" style="height: 20%">
-            <b-col cols="6" style="height: 65%">
-                <b-card no-body class="h-100 border border-info justify-content-center" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
-                    <div class="d-inline-block" style="margin: 0 10px">
+    <div>
+        <b-container fluid v-if="joinFrameVisible">
+            <b-row class="vh-100 justify-content-center" align-v="center">
+                <b-col cols="4">
+                    <b-card title="Присоедениться к конференции" align="center">
+                        <b-form-input v-if="!authenticatedUser"
+                                      class="mt-3 mb-3 text-center"
+                                      v-model="userName"
+                                      placeholder="Введите имя"/>
+                        <b-button class="w-50" @click="connectConference" variant="outline-success" pill>
+                            Присоедениться
+                        </b-button>
+                    </b-card>
+                </b-col>
+            </b-row>
+        </b-container>
+        <b-container class="vh-100" v-show="isRegisteredInConference" fluid>
+            <b-row class="pt-3 justify-content-center" style="height: 80%; max-height: 80%">
+                <b-col cols="10" style="max-height: 100%">
+                    <video id="video" ref="conferenceVideo" style="max-height: 100%; object-fit: cover; border-width: medium !important;" autoplay class="w-100 rounded border border-info"></video>
+                </b-col>
+            </b-row>
+            <b-row class="pb-2 justify-content-center" align-v="center" style="height: 20%">
+                <b-col cols="6" style="height: 65%">
+                    <b-card no-body class="h-100 border border-info justify-content-center" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
+                        <div class="d-inline-block" style="margin: 0 10px">
                             <span class="buttonGroup">
                                 <b-button
                                     pill
@@ -38,7 +54,7 @@
                                         Отсоединиться
                                     </b-button>
                             </span>
-                        <span class="buttonGroup">
+                            <span class="buttonGroup">
                                 <b-button
                                     pill
                                     @click="showPeer"
@@ -48,37 +64,56 @@
                                         Peer
                                     </b-button>
                             </span>
-                    </div>
-                </b-card>
-            </b-col>
-        </b-row>
-    </b-container>
+                        </div>
+                    </b-card>
+                </b-col>
+            </b-row>
+        </b-container>
+    </div>
 </template>
 
 <script>
 import KurentoUtils from 'kurento-utils'
+import api from '@/api'
 
 export default {
     name: "test-bag",
     data () {
         return {
-            webSocket: new WebSocket('ws://localhost:8080/newconference'),
+            uuid: null,
+            webSocket: null,
             video: null,
             webRtcPeer: null,
             userName: null,
-            identifierConference: this.$route.params.identifier
+            identifierConference: this.$route.params.identifier,
+            authenticatedUser: false,
+            isRegisteredInConference: false,
+            joinFrameVisible: true
         }
     },
-    mounted() {
-        this.video = this.$refs.conferenceVideo
-        this.webSocket.onopen = this.setSettingSocket
+    beforeCreate() {
+        api.getAuthInfo()
+            .then(resp => {
+                const { data } = resp
+                if (data.authenticated) {
+                    const { firstName, secondName } = data
+                    this.authenticatedUser = true
+                    this.userName = `${firstName} ${secondName}`
+                }
+            })
     },
     methods: {
+        connectConference: function () {
+            this.webSocket = new WebSocket('ws://localhost:8080/newconference')
+            this.webSocket.onopen = this.setSettingSocket
+        },
         setSettingSocket: function () {
+            this.joinFrameVisible = false
             this.webSocket.onmessage = this.handleMessage
             const message = {
                 id: "registerViewer",
-                conference: this.identifierConference
+                conference: this.identifierConference,
+                name: this.userName
             }
             this.sendMessage(message)
         },
@@ -88,7 +123,7 @@ export default {
 
             switch (parsedMessage.id) {
             case 'viewerRegistered':
-                this.viewerConnectPermission()
+                this.viewerRegistered(parsedMessage)
                 break
             case 'viewerConnectPermissionResponse':
                 this.viewerConnectPermissionResponse(parsedMessage)
@@ -121,6 +156,16 @@ export default {
                 console.error('Unrecognized message', parsedMessage)
             }
         },
+        viewerRegistered: function (message) {
+            this.isRegisteredInConference = true
+            this.uuid = message.uuid
+            this.userName = message.username
+            this.$bvToast.toast(message.message, {
+                variant: 'info',
+                solid: true
+            })
+            this.viewerConnectPermission()
+        },
         presenterLeave: function (message) {
             this.$bvToast.toast(message.message, {
                 variant: 'info',
@@ -131,8 +176,7 @@ export default {
         },
         viewerConnectPermission: function () {
             const message = {
-                id : 'viewerConnectPermission',
-                conference: this.identifierConference
+                id : 'viewerConnectPermission'
             }
             this.sendMessage(message)
         },
@@ -148,8 +192,7 @@ export default {
         },
         presenterConnectPermission: function () {
             const message = {
-                id : 'presenterConnectPermission',
-                conference: this.identifierConference
+                id : 'presenterConnectPermission'
             }
             this.sendMessage(message)
         },
@@ -196,7 +239,7 @@ export default {
         presenter: function () {
             if (!this.webRtcPeer) {
                 const options = {
-                    localVideo : this.video,
+                    localVideo : this.$refs.conferenceVideo,
                     onicecandidate : this.onIceCandidate
                 }
                 const onOfferPresenterCallback = this.onOfferPresenter
@@ -212,19 +255,16 @@ export default {
         onOfferPresenter: function (error, offerSdp) {
             if (error)
                 return console.error('Error generating the offer')
-            console.info('Invoking SDP offer callback function ' + location.host)
             const message = {
                 id : 'presenter',
-                conference: this.identifierConference,
                 sdpOffer : offerSdp
             }
             this.sendMessage(message)
         },
         viewer: function () {
             if (!this.webRtcPeer) {
-                console.log(this.video)
                 const options = {
-                    remoteVideo : this.video,
+                    remoteVideo : this.$refs.conferenceVideo,
                     onicecandidate : this.onIceCandidate
                 }
                 const onOfferViewerCallback = this.onOfferViewer
@@ -243,7 +283,6 @@ export default {
             console.info('Invoking SDP offer callback function ' + location.host)
             const message = {
                 id : 'viewer',
-                conference: this.identifierConference,
                 sdpOffer : offerSdp
             }
             this.sendMessage(message)
@@ -253,7 +292,6 @@ export default {
 
             const message = {
                 id : 'onIceCandidate',
-                conference: this.identifierConference,
                 candidate : candidate
             }
             this.sendMessage(message)
@@ -261,7 +299,6 @@ export default {
         stop: function () {
             const message = {
                 id : 'stop',
-                conference: this.identifierConference,
             }
             this.sendMessage(message)
             this.dispose()

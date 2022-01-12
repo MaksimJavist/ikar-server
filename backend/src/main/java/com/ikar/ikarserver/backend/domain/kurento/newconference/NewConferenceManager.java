@@ -1,6 +1,5 @@
 package com.ikar.ikarserver.backend.domain.kurento.newconference;
 
-import com.ikar.ikarserver.backend.domain.kurento.conference.Conference;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.CallIdentifierGenerator;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +25,7 @@ public class NewConferenceManager {
     public String createConference() {
         final String identifier = identifierService.generateIdentifierRoom();
         log.info("Creation conference with identifier {}", identifier);
-        final NewConference conference = new NewConference(identifier, authInfoService, kurentoClient);
+        final NewConference conference = new NewConference(identifier, authInfoService, kurentoClient.createMediaPipeline());
         conferences.put(identifier, conference);
         return identifier;
     }
