@@ -15,6 +15,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,11 +30,13 @@ public class NewConference implements Closeable {
 
     private final String identifier;
     private final ConcurrentHashMap<String, UserSession> viewers = new ConcurrentHashMap<>();
-    private UserSession presenter;
+    private final LocalDateTime creationTime = LocalDateTime.now();
 
     private final AuthInfoService authInfoService;
 
     private final MediaPipeline pipeline;
+
+    private UserSession presenter;
 
     public UserSession registerViewer(WebSocketSession session, String username) throws IOException {
         String uuid = getUserUuid(session);
@@ -103,7 +106,10 @@ public class NewConference implements Closeable {
             ConferenceSender.sendPresenterResponseSdpAnswer(presenter, sdpAnswer);
         }
         presenterWebRtc.gatherCandidates();
-        ConferenceSender.sendNewPresenterForAllViewers(viewers.values(), "Иван иванов");
+
+        synchronized (presenter) {
+            ConferenceSender.sendNewPresenterForAllViewers(viewers.values(), presenter.getUsername());
+        }
     }
 
     private void newViewer(final WebSocketSession session, JsonObject jsonMessage)
@@ -121,7 +127,7 @@ public class NewConference implements Closeable {
         String sdpAnswer = nextWebRtc.processOffer(sdpOffer);
 
         synchronized (session) {
-            ConferenceSender.sendViewerResponseSdpAnswer(viewer, sdpAnswer);
+            ConferenceSender.sendViewerResponseSdpAnswer(viewer, presenter.getUsername(), sdpAnswer);
         }
         nextWebRtc.gatherCandidates();
     }
@@ -130,7 +136,9 @@ public class NewConference implements Closeable {
         String sessionId = session.getId();
         if (isPresenter(sessionId)) {
             for (UserSession viewer : viewers.values()) {
-                ConferenceSender.sendPresenterLeaveForViewer(viewer, presenter.getUsername());
+                synchronized (viewer) {
+                    ConferenceSender.sendPresenterLeaveForViewer(viewer, presenter.getUsername());
+                }
                 viewer.close();
             }
             presenter.close();
@@ -145,7 +153,9 @@ public class NewConference implements Closeable {
         String sessionId = session.getId();
         if (isPresenter(sessionId)) {
             for (UserSession viewer : viewers.values()) {
-                ConferenceSender.sendPresenterStopForViewer(viewer, presenter.getUsername());
+                synchronized (viewer) {
+                    ConferenceSender.sendPresenterStopForViewer(viewer, presenter.getUsername());
+                }
                 viewer.close();
             }
             viewers.put(session.getId(), presenter);

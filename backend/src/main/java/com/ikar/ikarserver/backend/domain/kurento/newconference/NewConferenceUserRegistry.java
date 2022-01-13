@@ -21,8 +21,10 @@ public class NewConferenceUserRegistry {
         conferenceBySessionId.put(sessionId, conference);
     }
 
-    public NewConference getConferenceBySession(WebSocketSession session) {
-        return conferenceBySessionId.get(session.getId());
+    public Optional<NewConference> getConferenceBySession(WebSocketSession session) {
+        return Optional.ofNullable(
+                conferenceBySessionId.get(session.getId())
+        );
     }
 
     public Optional<UserSession> getBySession(WebSocketSession session) {

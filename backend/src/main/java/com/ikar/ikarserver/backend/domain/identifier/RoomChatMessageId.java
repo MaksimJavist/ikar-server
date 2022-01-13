@@ -1,4 +1,4 @@
-package com.ikar.ikarserver.backend.domain.entity;
+package com.ikar.ikarserver.backend.domain.identifier;
 
 import lombok.Getter;
 import lombok.Setter;

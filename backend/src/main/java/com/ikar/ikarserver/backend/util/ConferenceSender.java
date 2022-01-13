@@ -89,10 +89,11 @@ public final class ConferenceSender {
         presenter.sendMessage(response);
     }
 
-    public static void sendViewerResponseSdpAnswer(UserSession viewer, String sdpAnswer) throws IOException {
+    public static void sendViewerResponseSdpAnswer(UserSession viewer, String presenterName, String sdpAnswer) throws IOException {
         JsonObject response = new JsonObject();
         response.addProperty("id", "viewerResponse");
         response.addProperty("response", "accepted");
+        response.addProperty("message", presenterName + " ведет трансляцию");
         response.addProperty("sdpAnswer", sdpAnswer);
         viewer.sendMessage(response);
     }

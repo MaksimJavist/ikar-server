@@ -17,14 +17,67 @@
         </b-container>
         <b-container class="vh-100" v-show="isRegisteredInConference" fluid>
             <b-row class="pt-3 justify-content-center" style="height: 80%; max-height: 80%">
-                <b-col cols="10" style="max-height: 100%">
+                <b-col cols="10" style="max-height: 100%" v-show="isActivePresentation">
                     <video id="video" ref="conferenceVideo" style="max-height: 100%; object-fit: cover; border-width: medium !important;" autoplay class="w-100 rounded border border-info"></video>
+                </b-col>
+                <b-col cols="10" v-if="!isActivePresentation">
+                    <b-card no-body class="h-100 border border-info justify-content-center" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
+                        <h5>Пока никто не начал конференцию</h5>
+                    </b-card>
                 </b-col>
             </b-row>
             <b-row class="pb-2 justify-content-center" align-v="center" style="height: 20%">
                 <b-col cols="6" style="height: 65%">
                     <b-card no-body class="h-100 border border-info justify-content-center" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
                         <div class="d-inline-block" style="margin: 0 10px">
+                            <span v-if="isPresenter">
+                                <span class="buttonGroup">
+                                    <b-button
+                                        v-if="onAudioFlag"
+                                        v-b-tooltip.hover
+                                        title="Выключить микрофон"
+                                        variant="outline-success"
+                                        @click="changeEnableAudio(false)">
+                                        <b-icon-mic/>
+                                    </b-button>
+                                    <b-button
+                                        v-else
+                                        v-b-tooltip.hover
+                                        title="Включить микрофон"
+                                        variant="outline-danger"
+                                        @click="changeEnableAudio(true)">
+                                        <b-icon-mic-mute/>
+                                    </b-button>
+                                </span>
+                                <span class="buttonGroup">
+                                    <b-button
+                                        v-if="onVideoFlag"
+                                        v-b-tooltip.hover
+                                        title="Выключить камеру"
+                                        variant="outline-success"
+                                        @click="changeEnableVideo(false)">
+                                        <b-icon-camera-video/>
+                                    </b-button>
+                                    <b-button
+                                        v-else
+                                        v-b-tooltip.hover
+                                        title="Включить камеру"
+                                        variant="outline-danger"
+                                        @click="changeEnableVideo(true)">
+                                        <b-icon-camera-video-off/>
+                                    </b-button>
+                                </span>
+                                <span class="buttonGroup">
+                                    <b-button
+                                        pill
+                                        v-b-tooltip.hover
+                                        title="Начать показ"
+                                        variant="outline-success"
+                                        @click="stop">
+                                        Прекратить показ
+                                    </b-button>
+                                </span>
+                            </span>
                             <span class="buttonGroup">
                                 <b-button
                                     pill
@@ -32,38 +85,10 @@
                                     @click="presenterConnectPermission"
                                     title="Начать показ"
                                     variant="outline-success">
-                                        Презентующий
+                                        Начать показ
                                     </b-button>
                             </span>
-                            <span class="buttonGroup">
-                                <b-button
-                                    pill
-                                    v-b-tooltip.hover
-                                    @click="viewer"
-                                    title="Начать показ"
-                                    variant="outline-success">
-                                        Просматривающий
-                                    </b-button>
-                            </span>
-                            <span class="buttonGroup">
-                                <b-button
-                                    pill
-                                    v-b-tooltip.hover
-                                    title="Начать показ"
-                                    variant="outline-success">
-                                        Отсоединиться
-                                    </b-button>
-                            </span>
-                            <span class="buttonGroup">
-                                <b-button
-                                    pill
-                                    @click="showPeer"
-                                    v-b-tooltip.hover
-                                    title="Начать показ"
-                                    variant="outline-success">
-                                        Peer
-                                    </b-button>
-                            </span>
+
                         </div>
                     </b-card>
                 </b-col>
@@ -86,9 +111,15 @@ export default {
             webRtcPeer: null,
             userName: null,
             identifierConference: this.$route.params.identifier,
+
             authenticatedUser: false,
             isRegisteredInConference: false,
-            joinFrameVisible: true
+            joinFrameVisible: true,
+            isActivePresentation: false,
+            isPresenter: false,
+
+            onAudioFlag: true,
+            onVideoFlag: true
         }
     },
     beforeCreate() {
@@ -101,6 +132,18 @@ export default {
                     this.userName = `${firstName} ${secondName}`
                 }
             })
+    },
+    watch: {
+        onAudioFlag: function (newVal) {
+            if (this.webRtcPeer) {
+                this.webRtcPeer.audioEnabled = newVal
+            }
+        },
+        onVideoFlag: function (newVal) {
+            if (this.webRtcPeer) {
+                this.webRtcPeer.videoEnabled = newVal
+            }
+        }
     },
     methods: {
         connectConference: function () {
@@ -119,7 +162,6 @@ export default {
         },
         handleMessage: function (message) {
             const parsedMessage = JSON.parse(message.data)
-            console.info('Received message: ' + message.data)
 
             switch (parsedMessage.id) {
             case 'viewerRegistered':
@@ -150,7 +192,7 @@ export default {
                 })
                 break
             case 'stopCommunication':
-                this.dispose()
+                this.stopCommunication(parsedMessage)
                 break
             default:
                 console.error('Unrecognized message', parsedMessage)
@@ -167,10 +209,12 @@ export default {
             this.viewerConnectPermission()
         },
         presenterLeave: function (message) {
+            console.log(message)
             this.$bvToast.toast(message.message, {
                 variant: 'info',
                 solid: true
             })
+            this.isActivePresentation = false
             this.webRtcPeer.dispose()
             this.webRtcPeer = null
         },
@@ -197,7 +241,6 @@ export default {
             this.sendMessage(message)
         },
         presenterConnectPermissionResponse: function (message) {
-            console.log(message)
             if (message.response === 'accepted') {
                 this.presenter()
             } else {
@@ -219,6 +262,8 @@ export default {
                 const errorMsg = message.message ? message.message : 'Unknow error'
                 console.info('Call not accepted for the following reason: ' + errorMsg)
             } else {
+                this.isPresenter = true
+                this.isActivePresentation = true
                 this.webRtcPeer.processAnswer(message.sdpAnswer, function(error) {
                     if (error)
                         return console.error(error)
@@ -230,6 +275,7 @@ export default {
                 const errorMsg = message.message ? message.message : 'Unknow error'
                 console.info('Call not accepted for the following reason: ' + errorMsg)
             } else {
+                this.isActivePresentation = true
                 this.webRtcPeer.processAnswer(message.sdpAnswer, function(error) {
                     if (error)
                         return console.error(error)
@@ -240,7 +286,16 @@ export default {
             if (!this.webRtcPeer) {
                 const options = {
                     localVideo : this.$refs.conferenceVideo,
-                    onicecandidate : this.onIceCandidate
+                    onicecandidate : this.onIceCandidate,
+                    audio : this.onAudioFlag,
+                    video : {
+                        mandatory : {
+                            maxWidth : screen.width,
+                            maxHeight: screen.height,
+                            maxFrameRate : 15,
+                            minFrameRate : 15
+                        }
+                    }
                 }
                 const onOfferPresenterCallback = this.onOfferPresenter
                 this.webRtcPeer = new KurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options,
@@ -265,7 +320,15 @@ export default {
             if (!this.webRtcPeer) {
                 const options = {
                     remoteVideo : this.$refs.conferenceVideo,
-                    onicecandidate : this.onIceCandidate
+                    onicecandidate : this.onIceCandidate,
+                    video : {
+                        mandatory : {
+                            maxWidth : screen.width,
+                            maxHeight: screen.height,
+                            maxFrameRate : 15,
+                            minFrameRate : 15
+                        }
+                    }
                 }
                 const onOfferViewerCallback = this.onOfferViewer
                 this.webRtcPeer = new KurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options,
@@ -297,10 +360,20 @@ export default {
             this.sendMessage(message)
         },
         stop: function () {
+            this.isPresenter = false
+            this.isActivePresentation = false
             const message = {
-                id : 'stop',
+                id : 'stop'
             }
             this.sendMessage(message)
+            this.dispose()
+        },
+        stopCommunication: function ({message}) {
+            this.isActivePresentation = false
+            this.$bvToast.toast(message, {
+                variant: 'info',
+                solid: true
+            })
             this.dispose()
         },
         errorResponse: function (message) {
@@ -319,8 +392,37 @@ export default {
                 this.webRtcPeer = null
             }
         },
-        showPeer: function () {
-            console.log(this.webRtcPeer)
+        changeEnableAudio: function (value) {
+            if (this.webRtcPeer) {
+                this.onAudioFlag = value
+                if (value) {
+                    this.$bvToast.toast('Микрофон включен', {
+                        variant: 'info',
+                        solid: true
+                    })
+                } else {
+                    this.$bvToast.toast('Микрофон выключен', {
+                        variant: 'info',
+                        solid: true
+                    })
+                }
+            }
+        },
+        changeEnableVideo: function (value) {
+            if (this.webRtcPeer) {
+                this.onVideoFlag = value
+                if (value) {
+                    this.$bvToast.toast('Видео включено', {
+                        variant: 'info',
+                        solid: true
+                    })
+                } else {
+                    this.$bvToast.toast('Видео выключено', {
+                        variant: 'info',
+                        solid: true
+                    })
+                }
+            }
         }
     }
 }

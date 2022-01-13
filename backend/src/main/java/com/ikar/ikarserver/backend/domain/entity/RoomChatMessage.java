@@ -1,5 +1,6 @@
 package com.ikar.ikarserver.backend.domain.entity;
 
+import com.ikar.ikarserver.backend.domain.identifier.RoomChatMessageId;
 import lombok.Getter;
 import lombok.Setter;
 

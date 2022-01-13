@@ -17,6 +17,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_NOT_FOUND;
 
@@ -45,33 +46,36 @@ public class NewConferenceHandler extends TextWebSocketHandler {
                     break;
                 }
                 case "viewerConnectPermission": {
-                    NewConference conference = userRegistry.getConferenceBySession(session);
+                    NewConference conference = getConference(session);
                     conference.viewerConnectPermission(session);
                     break;
                 }
                 case "viewer": {
-                    NewConference conference = userRegistry.getConferenceBySession(session);
+                    NewConference conference = getConference(session);
                     conference.viewer(session, jsonMessage);
                     break;
                 }
                 case "presenterConnectPermission": {
-                    NewConference conference = userRegistry.getConferenceBySession(session);
+                    NewConference conference = getConference(session);
                     conference.presenterConnectPermission(session);
                     break;
                 }
                 case "presenter": {
-                    NewConference conference = userRegistry.getConferenceBySession(session);
+                    NewConference conference = getConference(session);
                     conference.presenter(session, jsonMessage);
                     break;
                 }
                 case "onIceCandidate": {
-                    NewConference conference = userRegistry.getConferenceBySession(session);
+                    NewConference conference = getConference(session);
                     conference.addIceCandidate(jsonMessage, session);
                     break;
                 }
                 case "stop": {
-                    NewConference conference = userRegistry.getConferenceBySession(session);
+                    NewConference conference = getConference(session);
                     conference.stop(session);
+                    break;
+                }
+                case "sendChat": {
                     break;
                 }
                 default:
@@ -96,10 +100,17 @@ public class NewConferenceHandler extends TextWebSocketHandler {
                 .orElseThrow(ConferenceException.supplier(CONFERENCE_NOT_FOUND));
     }
 
+    private NewConference getConference(WebSocketSession session) throws ConferenceException {
+        return userRegistry.getConferenceBySession(session)
+                .orElseThrow(ConferenceException.supplier(CONFERENCE_NOT_FOUND));
+    }
+
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        NewConference conference = userRegistry.getConferenceBySession(session);
-        conference.leave(session);
+        Optional<NewConference> opt = userRegistry.getConferenceBySession(session);
+        if (opt.isPresent()) {
+            opt.get().leave(session);
+        }
         userRegistry.removeBySession(session);
     }
 
