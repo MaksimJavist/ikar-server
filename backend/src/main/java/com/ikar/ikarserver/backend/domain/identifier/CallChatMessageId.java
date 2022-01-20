@@ -7,10 +7,10 @@ import java.io.Serializable;
 
 @Getter
 @Setter
-public class RoomChatMessageId implements Serializable {
+public class CallChatMessageId implements Serializable {
 
     private String uuid;
 
-    private String roomIdentifier;
+    private String callIdentifier;
 
 }

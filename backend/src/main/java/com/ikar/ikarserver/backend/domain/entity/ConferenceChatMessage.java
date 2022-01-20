@@ -9,7 +9,6 @@ import javax.persistence.Table;
 @Getter
 @Setter
 @Entity
-@Table(name = "room_chat_messages")
-public class RoomChatMessage extends ChatMessage {
-
+@Table(name = "conference_chat_messages")
+public class ConferenceChatMessage extends ChatMessage {
 }

@@ -6,6 +6,8 @@ import com.ikar.ikarserver.backend.domain.AuthUserInfo;
 import com.ikar.ikarserver.backend.domain.CustomUserDetails;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import lombok.NonNull;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.RememberMeAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -77,6 +79,6 @@ public class AuthInfoServiceImpl implements AuthInfoService {
     }
 
     private CustomUserDetails getCustomUserDetailsFromSocketSession(WebSocketSession session) {
-        return (CustomUserDetails) ((UsernamePasswordAuthenticationToken) session.getPrincipal()).getPrincipal();
+        return (CustomUserDetails) ((AbstractAuthenticationToken) session.getPrincipal()).getPrincipal();
     }
 }

@@ -2,7 +2,10 @@ package com.ikar.ikarserver.backend.domain.kurento.newconference;
 
 import com.google.gson.JsonObject;
 import com.ikar.ikarserver.backend.domain.CustomUserDetails;
+import com.ikar.ikarserver.backend.dto.ChatMessageDto;
+import com.ikar.ikarserver.backend.exception.websocket.ConferenceException;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
+import com.ikar.ikarserver.backend.service.ConferenceChatMessageService;
 import com.ikar.ikarserver.backend.util.ConferenceSender;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -16,33 +19,53 @@ import org.springframework.web.socket.WebSocketSession;
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_USER_EXIST;
 import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_USER_NOT_FOUND;
 
 @Slf4j
 @Getter
 @Setter
-@RequiredArgsConstructor
 public class NewConference implements Closeable {
 
     private final String identifier;
+    private final AuthInfoService authInfoService;
+    private final ConferenceChatMessageService messageService;
+    private final MediaPipeline pipeline;
+    private final ConferenceMessageBuffer messageBuffer;
+
     private final ConcurrentHashMap<String, UserSession> viewers = new ConcurrentHashMap<>();
     private final LocalDateTime creationTime = LocalDateTime.now();
-
-    private final AuthInfoService authInfoService;
-
-    private final MediaPipeline pipeline;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private UserSession presenter;
 
-    public UserSession registerViewer(WebSocketSession session, String username) throws IOException {
+    public NewConference(String identifier, AuthInfoService authInfoService, ConferenceChatMessageService messageService, MediaPipeline pipeline) {
+        this.identifier = identifier;
+        this.authInfoService = authInfoService;
+        this.messageService = messageService;
+        this.pipeline = pipeline;
+        this.messageBuffer = new ConferenceMessageBuffer(messageService, identifier);
+    }
+
+    public UserSession registerViewer(WebSocketSession session, String username) throws IOException, ConferenceException {
+        if (getUserBySession(session) != null) {
+            throw new ConferenceException(CONFERENCE_USER_EXIST);
+        }
         String uuid = getUserUuid(session);
         UserSession viewer = new UserSession(uuid, username, session);
         viewers.put(session.getId(), viewer);
-        ConferenceSender.sendViewerRegisterSuccess(viewer);
+        ConferenceSender.sendViewerRegisterSuccess(
+                viewer,
+                messageBuffer.getAllConferenceMessagesForSend()
+        );
         return viewer;
     }
 
@@ -132,6 +155,25 @@ public class NewConference implements Closeable {
         nextWebRtc.gatherCandidates();
     }
 
+    public void addIceCandidate(JsonObject jsonMessage, WebSocketSession session) {
+        JsonObject candidate = jsonMessage.get("candidate").getAsJsonObject();
+
+        UserSession user = getUserBySession(session);
+        if (user != null) {
+            IceCandidate cand =
+                    new IceCandidate(candidate.get("candidate").getAsString(), candidate.get("sdpMid")
+                            .getAsString(), candidate.get("sdpMLineIndex").getAsInt());
+            user.addCandidate(cand);
+        }
+    }
+
+    public void sendNewMessage(ChatMessageDto chatMessage) throws IOException {
+        executor.submit(
+                () -> messageBuffer.addNewMessageInBuffer(chatMessage)
+        );
+        sendAllUsersNewChatMessage(chatMessage);
+    }
+
     public synchronized void leave(WebSocketSession session) throws IOException {
         String sessionId = session.getId();
         if (isPresenter(sessionId)) {
@@ -166,16 +208,12 @@ public class NewConference implements Closeable {
         }
     }
 
-    public void addIceCandidate(JsonObject jsonMessage, WebSocketSession session) {
-        JsonObject candidate = jsonMessage.get("candidate").getAsJsonObject();
-
-        UserSession user = getUserBySession(session);
-        if (user != null) {
-            IceCandidate cand =
-                    new IceCandidate(candidate.get("candidate").getAsString(), candidate.get("sdpMid")
-                            .getAsString(), candidate.get("sdpMLineIndex").getAsInt());
-            user.addCandidate(cand);
+    private void sendAllUsersNewChatMessage(ChatMessageDto chatMessage) throws IOException {
+        final List<UserSession> allUsersForSend = new ArrayList<>(viewers.values());
+        if (presenter != null) {
+            allUsersForSend.add(presenter);
         }
+        ConferenceSender.sendAllUsersNewChatMessage(chatMessage, allUsersForSend);
     }
 
     private UserSession getUserBySession(WebSocketSession session) {

@@ -7,6 +7,7 @@ import com.ikar.ikarserver.backend.domain.kurento.newconference.NewConference;
 import com.ikar.ikarserver.backend.domain.kurento.newconference.NewConferenceManager;
 import com.ikar.ikarserver.backend.domain.kurento.newconference.NewConferenceUserRegistry;
 import com.ikar.ikarserver.backend.domain.kurento.newconference.UserSession;
+import com.ikar.ikarserver.backend.dto.ChatMessageDto;
 import com.ikar.ikarserver.backend.exception.websocket.ConferenceException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +18,11 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_NOT_FOUND;
+import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_USER_NOT_EXIST;
 
 @Slf4j
 @Component
@@ -70,14 +73,26 @@ public class NewConferenceHandler extends TextWebSocketHandler {
                     conference.addIceCandidate(jsonMessage, session);
                     break;
                 }
+                case "sendChat": {
+                    UserSession user = getUserBySession(session);
+                    NewConference conference = getConference(session);
+                    String chatMessage = jsonMessage.get("message").getAsString();
+                    conference.sendNewMessage(
+                            new ChatMessageDto(
+                                    user.getUuid(),
+                                    user.getUsername(),
+                                    LocalDateTime.now(),
+                                    chatMessage
+                            )
+                    );
+                    break;
+                }
                 case "stop": {
                     NewConference conference = getConference(session);
                     conference.stop(session);
                     break;
                 }
-                case "sendChat": {
-                    break;
-                }
+
                 default:
                     break;
             }
@@ -93,6 +108,11 @@ public class NewConferenceHandler extends TextWebSocketHandler {
         response.addProperty("id", "errorResponse");
         response.addProperty("message", message);
         session.sendMessage(new TextMessage(response.toString()));
+    }
+
+    private UserSession getUserBySession(WebSocketSession session) throws ConferenceException {
+        return userRegistry.getBySession(session)
+                .orElseThrow(ConferenceException.supplier(CONFERENCE_USER_NOT_EXIST));
     }
 
     private NewConference getConferenceByIdentifier(String identifier) throws ConferenceException {

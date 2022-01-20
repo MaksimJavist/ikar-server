@@ -91,7 +91,6 @@
                                 variant="outline-info"
                                 v-b-tooltip.hover
                                 title="Открыть чат"
-                                v-clipboard:copy="getRoomFullReference()"
                                 @click="switchChatVisible">
                                 <b-icon-chat-dots/>
                             </b-button>

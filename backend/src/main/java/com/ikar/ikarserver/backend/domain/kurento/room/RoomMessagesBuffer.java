@@ -15,22 +15,13 @@ import java.util.stream.Collectors;
 public class RoomMessagesBuffer {
 
     private final RoomChatMessageService messageService;
-    private final String roomUuid;
+    private final String roomIdentifier;
     private final List<ChatMessageDto> buffer = new CopyOnWriteArrayList<>();
-
-    private static ChatMessageDto convertChatMessagesToDto(ChatMessage message) {
-        ChatMessageDto messageDto = new ChatMessageDto();
-        messageDto.setSenderUuid(message.getSenderUuid());
-        messageDto.setSender(message.getSenderName());
-        messageDto.setTimeMessage(message.getDateTimeMessage());
-        messageDto.setMessage(message.getText());
-        return messageDto;
-    }
 
     public List<ChatMessageDto> getAllRoomMessages() {
         synchronized (buffer) {
             List<ChatMessageDto> roomMessages = messageService
-                    .getAllMessagesByUuid(roomUuid)
+                    .getAllMessagesByUuid(roomIdentifier)
                     .stream().map(RoomMessagesBuffer::convertChatMessagesToDto)
                     .collect(Collectors.toList());
             roomMessages.addAll(buffer);
@@ -49,6 +40,15 @@ public class RoomMessagesBuffer {
         }
     }
 
+    private static ChatMessageDto convertChatMessagesToDto(ChatMessage message) {
+        ChatMessageDto messageDto = new ChatMessageDto();
+        messageDto.setSenderUuid(message.getSenderUuid());
+        messageDto.setSender(message.getSenderName());
+        messageDto.setTimeMessage(message.getDateTimeMessage());
+        messageDto.setMessage(message.getText());
+        return messageDto;
+    }
+
     private List<RoomChatMessage> getConvertedMessages() {
         return buffer.stream()
                 .map(message -> {
@@ -57,7 +57,7 @@ public class RoomMessagesBuffer {
                             UUID.randomUUID().toString()
                     );
                     chatMessage.setSenderUuid(message.getSenderUuid());
-                    chatMessage.setRoomIdentifier(roomUuid);
+                    chatMessage.setCallIdentifier(roomIdentifier);
                     chatMessage.setDateTimeMessage(message.getTimeMessage());
                     chatMessage.setSenderName(message.getSender());
                     chatMessage.setText(message.getMessage());

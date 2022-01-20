@@ -88,17 +88,28 @@
                                         Начать показ
                                     </b-button>
                             </span>
-
+                            <span>
+                                <b-button
+                                    variant="outline-info"
+                                    v-b-tooltip.hover
+                                    title="Открыть чат"
+                                    @click="switchChatVisible">
+                                    <b-icon-chat-dots/>
+                                </b-button>
+                            </span>
                         </div>
                     </b-card>
                 </b-col>
             </b-row>
+            <Chat v-show="isChatVisible" :sender-uuid="uuid" :chat-messages="chatMessages" @send-chat="sendChatMessage"/>
         </b-container>
     </div>
 </template>
 
 <script>
+import Chat from '@/components/chat'
 import KurentoUtils from 'kurento-utils'
+import WebRtcPeer from '@/util/WebRtcPeer'
 import api from '@/api'
 
 export default {
@@ -111,16 +122,21 @@ export default {
             webRtcPeer: null,
             userName: null,
             identifierConference: this.$route.params.identifier,
+            chatMessages: [],
 
             authenticatedUser: false,
             isRegisteredInConference: false,
             joinFrameVisible: true,
             isActivePresentation: false,
             isPresenter: false,
+            isChatVisible: false,
 
             onAudioFlag: true,
             onVideoFlag: true
         }
+    },
+    components: {
+        Chat
     },
     beforeCreate() {
         api.getAuthInfo()
@@ -191,6 +207,9 @@ export default {
                         return console.error('Error adding candidate: ' + error)
                 })
                 break
+            case 'newChatMessage':
+                this.newChatMessage(parsedMessage.data)
+                break
             case 'stopCommunication':
                 this.stopCommunication(parsedMessage)
                 break
@@ -202,6 +221,7 @@ export default {
             this.isRegisteredInConference = true
             this.uuid = message.uuid
             this.userName = message.username
+            this.chatMessages = this.chatMessages.concat(message.messages)
             this.$bvToast.toast(message.message, {
                 variant: 'info',
                 solid: true
@@ -298,7 +318,7 @@ export default {
                     }
                 }
                 const onOfferPresenterCallback = this.onOfferPresenter
-                this.webRtcPeer = new KurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options,
+                this.webRtcPeer = new WebRtcPeer.WebRtcPeerSendonly(options,
                     function(error) {
                         if (error) {
                             return console.error(error)
@@ -376,6 +396,16 @@ export default {
             })
             this.dispose()
         },
+        sendChatMessage: function (chatMessage) {
+            const message = {
+                id: 'sendChat',
+                message: chatMessage
+            }
+            this.sendMessage(message)
+        },
+        newChatMessage: function (chatMessage) {
+            this.chatMessages.push(chatMessage)
+        },
         errorResponse: function (message) {
             this.$bvToast.toast(message, {
                 variant: 'danger',
@@ -423,6 +453,9 @@ export default {
                     })
                 }
             }
+        },
+        switchChatVisible: function () {
+            this.isChatVisible = !this.isChatVisible
         }
     }
 }

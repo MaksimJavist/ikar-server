@@ -22,7 +22,7 @@ public class RoomChatMessageServiceImpl implements RoomChatMessageService {
 
     @Override
     public List<RoomChatMessage> getAllMessagesByUuid(@NonNull String roomUuid) {
-        return repository.getAllByRoomIdentifierOrderByDateTimeMessageDesc(roomUuid);
+        return repository.getAllByCallIdentifierOrderByDateTimeMessageDesc(roomUuid);
     }
 
 }

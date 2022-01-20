@@ -1,0 +1,14 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="12-01-2022-rename-key-room-chat-messages" author="mkorotkiy">
+        <renameColumn tableName="room_chat_messages" oldColumnName="room_identifier" newColumnName="call_identifier"/>
+    </changeSet>
+
+    <changeSet id="12-01-2022-rename-key-conference-chat-messages" author="mkorotkiy">
+        <renameColumn tableName="conference_chat_messages" oldColumnName="conference_identifier" newColumnName="call_identifier"/>
+    </changeSet>
+
+</databaseChangeLog>

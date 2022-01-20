@@ -2,6 +2,7 @@ package com.ikar.ikarserver.backend.domain.kurento.newconference;
 
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.CallIdentifierGenerator;
+import com.ikar.ikarserver.backend.service.ConferenceChatMessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.KurentoClient;
@@ -20,12 +21,13 @@ public class NewConferenceManager {
     private final CallIdentifierGenerator identifierService;
     private final AuthInfoService authInfoService;
     private final KurentoClient kurentoClient;
+    private final ConferenceChatMessageService messageService;
     private final ConcurrentMap<String, NewConference> conferences = new ConcurrentHashMap<>();
 
     public String createConference() {
         final String identifier = identifierService.generateIdentifierRoom();
         log.info("Creation conference with identifier {}", identifier);
-        final NewConference conference = new NewConference(identifier, authInfoService, kurentoClient.createMediaPipeline());
+        final NewConference conference = new NewConference(identifier, authInfoService, messageService, kurentoClient.createMediaPipeline());
         conferences.put(identifier, conference);
         return identifier;
     }

@@ -1,8 +1,11 @@
 package com.ikar.ikarserver.backend.util;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.ikar.ikarserver.backend.domain.kurento.conference.ConferenceUserSession;
+import com.ikar.ikarserver.backend.domain.kurento.newconference.ConferenceMessageBuffer;
 import com.ikar.ikarserver.backend.domain.kurento.newconference.UserSession;
+import com.ikar.ikarserver.backend.dto.ChatMessageDto;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.web.socket.TextMessage;
@@ -10,6 +13,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_NOT_ACTIVE_PRESENTER;
 import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_PRESENTER_BUSY;
@@ -23,11 +27,12 @@ public final class ConferenceSender {
         userSession.sendMessage(message);
     }
 
-    public static void sendViewerRegisterSuccess(UserSession userSession) throws IOException {
+    public static void sendViewerRegisterSuccess(UserSession userSession, JsonArray chatMessages) throws IOException {
         JsonObject message = new JsonObject();
         message.addProperty("id", "viewerRegistered");
         message.addProperty("uuid", userSession.getUuid());
         message.addProperty("username", userSession.getUsername());
+        message.add("messages", chatMessages);
         userSession.sendMessage(message);
     }
 
@@ -122,6 +127,17 @@ public final class ConferenceSender {
         response.addProperty("id", "stopCommunication");
         response.addProperty("message", "Пользователь " + presenterName + " прекратил трансляцию.");
         viewer.sendMessage(response);
+    }
+
+    public static void sendAllUsersNewChatMessage(ChatMessageDto chatMessageDto, List<UserSession> users) throws IOException {
+        final JsonObject dataMessage = ConferenceMessageBuffer.convertChatMessageToJson(chatMessageDto);
+        final JsonObject response = new JsonObject();
+        response.addProperty("id", "newChatMessage");
+        response.add("data", dataMessage);
+
+        for (UserSession user : users) {
+            user.sendMessage(response);
+        }
     }
 
 }
