@@ -17,13 +17,18 @@
         </b-container>
         <b-container class="vh-100" fluid v-else>
             <b-row class="h-75 pt-4 justify-content-center">
-                <b-col cols="12">
+                <b-col cols="10">
+                    <b-card no-body class="h-100 border border-info justify-content-center" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
+                        <h5>Пока никто не начал трансляцию</h5>
+                    </b-card>
+                </b-col>
+                <b-col cols="2">
                     <b-card class="h-100 pl-2 pr-2 overflow-auto border border-info" style="background-color: #e1e2e3; border-width: medium !important;" title="Участники:" align="center">
-                        <b-row class="h-100">
-                            <b-col cols="3" class="h-50 p-1" v-if="getLocalParticipant">
+                        <b-row>
+                            <b-col cols="12" class="h-50 p-1" v-if="getLocalParticipant">
                                 <ParticipantLocal :participant="getLocalParticipant.getObject()"/>
                             </b-col>
-                            <b-col cols="3" class="h-50 p-1" v-for="(participant, index) in getRemoteParticipants" :key="index">
+                            <b-col cols="12" class="h-50 p-1" v-for="(participant, index) in getRemoteParticipants" :key="index">
                                 <ParticipantRemote :participant="participant.getObject()"/>
                             </b-col>
                         </b-row>
@@ -98,37 +103,39 @@
                     </b-card>
                 </b-col>
             </b-row>
-            <b-card v-if="chatVisible"
-                 class="h-50 w-25 border border-primary position-fixed rounded text-center"
-                 style="border-width: medium !important; bottom: 3%; right: 3%; background-color: #e1e2e3;">
-                <h3>Чат</h3>
-                <div ref="chatDiv" class="mb-4 bg-white text-white rounded overflow-auto" style="height: 65%">
-                    <span v-for="(message, index) in chatMessages" :key="index">
-                        <div :class="message.senderUuid === localParticipantUuid ? 'text-right' : 'text-left'">
-                            <div class="m-2 p-2 w-auto d-inline-block rounded text-left"
-                                 :class="message.senderUuid === localParticipantUuid ? 'bg-success' : 'bg-dark'"
-                                 style="max-width: 75%">
-                                <strong>{{ message.senderName}}:</strong>
-                                <div>{{ message.text }}</div>
-                            </div>
-                        </div>
-                    </span>
-                </div>
-                <b-form-input class="mb-2" v-model="chatInputText" placeholder="Введите сообщение:"></b-form-input>
-                <b-button
-                    class="w-100"
-                    variant="outline-info"
-                    v-b-tooltip.hover
-                    title="Отправить сообщение"
-                    @click="sendChatMessage">
-                    Отправить
-                </b-button>
-            </b-card>
+            <Chat v-show="chatVisible" :sender-uuid="localParticipantUuid" :chat-messages="chatMessages" @send-chat="sendChatMessage"/>
+<!--            <b-card v-if="chatVisible"-->
+<!--                 class="h-50 w-25 border border-primary position-fixed rounded text-center"-->
+<!--                 style="border-width: medium !important; bottom: 3%; right: 3%; background-color: #e1e2e3;">-->
+<!--                <h3>Чат</h3>-->
+<!--                <div ref="chatDiv" class="mb-4 bg-white text-white rounded overflow-auto" style="height: 65%">-->
+<!--                    <span v-for="(message, index) in chatMessages" :key="index">-->
+<!--                        <div :class="message.senderUuid === localParticipantUuid ? 'text-right' : 'text-left'">-->
+<!--                            <div class="m-2 p-2 w-auto d-inline-block rounded text-left"-->
+<!--                                 :class="message.senderUuid === localParticipantUuid ? 'bg-success' : 'bg-dark'"-->
+<!--                                 style="max-width: 75%">-->
+<!--                                <strong>{{ message.senderName}}:</strong>-->
+<!--                                <div>{{ message.text }}</div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </span>-->
+<!--                </div>-->
+<!--                <b-form-input class="mb-2" v-model="chatInputText" placeholder="Введите сообщение:"></b-form-input>-->
+<!--                <b-button-->
+<!--                    class="w-100"-->
+<!--                    variant="outline-info"-->
+<!--                    v-b-tooltip.hover-->
+<!--                    title="Отправить сообщение"-->
+<!--                    @click="sendChatMessage">-->
+<!--                    Отправить-->
+<!--                </b-button>-->
+<!--            </b-card>-->
         </b-container>
     </div>
 </template>
 
 <script>
+import Chat from '@/components/chat'
 import Participant from '@/util/Participant'
 import ParticipantMixin from "@/mixin/ParticipantMixin"
 import ParticipantLocal from "@/components/room/participant/participant-local"
@@ -139,7 +146,8 @@ export default {
     name: "room",
     components: {
         ParticipantLocal,
-        ParticipantRemote
+        ParticipantRemote,
+        Chat
     },
     mixins: [
         ParticipantMixin
@@ -170,10 +178,6 @@ export default {
                     this.userName = `${firstName} ${secondName}`
                 }
             })
-    },
-    updated: function () {
-        const chatElement = this.$refs.chatDiv
-        chatElement.scrollTop = chatElement.scrollHeight
     },
     beforeDestroy() {
         if (this.socket) {
@@ -347,13 +351,12 @@ export default {
                 })
             }
         },
-        sendChatMessage: function () {
+        sendChatMessage: function (chatMessage) {
             const message = {
                 id: 'sendChat',
-                message: this.chatInputText
+                message: chatMessage
             }
-            this.socket.send(JSON.stringify(message))
-            this.chatInputText = null
+            this.sendMessage(message)
         },
         switchChatVisible: function () {
             this.chatVisible = !this.chatVisible

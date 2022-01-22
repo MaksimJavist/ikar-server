@@ -49,7 +49,6 @@ public class Room implements Closeable {
     }
 
     public RoomUserSession join(String userName, WebSocketSession session) throws IOException {
-        log.info("ROOM {}: adding participant {}", this.uuid, userName);
         String uuid = getUserUuid(session);
         final RoomUserSession participant = new RoomUserSession(uuid, userName, this.uuid, session, this.pipeline);
         joinRoom(participant);

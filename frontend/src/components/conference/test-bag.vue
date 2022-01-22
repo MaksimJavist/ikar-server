@@ -71,7 +71,7 @@
                                     <b-button
                                         pill
                                         v-b-tooltip.hover
-                                        title="Начать показ"
+                                        title="Прекратить показ"
                                         variant="outline-success"
                                         @click="stop">
                                         Прекратить показ
@@ -304,24 +304,28 @@ export default {
         },
         presenter: function () {
             if (!this.webRtcPeer) {
+                const constraints = {
+                    audio : this.onAudioFlag,
+                    video : {
+                        width: screen.width,
+                        height: screen.height,
+                        maxFrameRate: 30,
+                        minFrameRate: 15
+                    },
+                }
+
                 const options = {
                     localVideo : this.$refs.conferenceVideo,
                     onicecandidate : this.onIceCandidate,
-                    audio : this.onAudioFlag,
-                    video : {
-                        mandatory : {
-                            maxWidth : screen.width,
-                            maxHeight: screen.height,
-                            maxFrameRate : 15,
-                            minFrameRate : 15
-                        }
-                    }
+                    mediaConstraints: constraints,
+                    sendSource: 'screen'
                 }
                 const onOfferPresenterCallback = this.onOfferPresenter
+                const disposePeerCallback = this.dispose
                 this.webRtcPeer = new WebRtcPeer.WebRtcPeerSendonly(options,
                     function(error) {
                         if (error) {
-                            return console.error(error)
+                            return disposePeerCallback()
                         }
                         this.generateOffer(onOfferPresenterCallback)
                     })

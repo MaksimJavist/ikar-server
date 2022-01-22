@@ -1,8 +1,8 @@
 <template>
-    <div class="h-100 w-100 bg-primary rounded text-center" >
+    <div class="w-100 bg-primary rounded text-center" >
         <div ref="videoWrapper" class="rounded" style="height: 85%">
         </div>
-        <p @click="showRtcPeer">{{ participant.name }}</p>
+        <p style="padding-bottom: 2px" @click="showRtcPeer">{{ participant.name }}</p>
     </div>
 </template>
 

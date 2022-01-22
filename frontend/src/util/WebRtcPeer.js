@@ -732,17 +732,36 @@ function WebRtcPeer(mode, options, callback) {
                 }).catch(callback)
             }
         }
+        function getDisplay(constraints) {
+            if (constraints === undefined) {
+                constraints = MEDIA_CONSTRAINTS;
+            }
+            navigator.mediaDevices.getDisplayMedia(constraints).then(function (screenStream) {
+                navigator.mediaDevices.getUserMedia({audio: true, video: false})
+                    .then(microStream => {
+                        const microMediaStream = new MediaStream([microStream.getAudioTracks()[0]]);
+
+                        const audioContext = new AudioContext();
+                        const audioSourceMicro = audioContext.createMediaStreamSource(microMediaStream);
+                        const destination = audioContext.createMediaStreamDestination();
+                        audioSourceMicro.connect(destination);
+
+                        if (screenStream.getAudioTracks()[0]) {
+                            const screenAudioMediaStream = new MediaStream([screenStream.getAudioTracks()[0]]);
+                            const audioSourceSystem = audioContext.createMediaStreamSource(screenAudioMediaStream);
+                            audioSourceSystem.connect(destination);
+                        }
+
+                        videoStream = new MediaStream([screenStream.getVideoTracks()[0]]);
+                        audioStream = new MediaStream([destination.stream.getAudioTracks()[0]]);
+                        start();
+                    })
+            }).catch(callback);
+        }
         if (sendSource === 'webcam') {
             getMedia(mediaConstraints)
         } else {
-            getScreenConstraints(sendSource, function (error, constraints_) {
-                if (error)
-                    return callback(error)
-
-                constraints = [mediaConstraints]
-                constraints.unshift(constraints_)
-                getMedia(recursive.apply(undefined, constraints))
-            }, guid)
+            getDisplay(mediaConstraints)
         }
     } else {
         setTimeout(start, 0)
