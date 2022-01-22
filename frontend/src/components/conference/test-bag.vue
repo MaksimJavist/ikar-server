@@ -108,7 +108,6 @@
 
 <script>
 import Chat from '@/components/chat'
-import KurentoUtils from 'kurento-utils'
 import WebRtcPeer from '@/util/WebRtcPeer'
 import api from '@/api'
 
@@ -355,7 +354,7 @@ export default {
                     }
                 }
                 const onOfferViewerCallback = this.onOfferViewer
-                this.webRtcPeer = new KurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options,
+                this.webRtcPeer = new WebRtcPeer.WebRtcPeerRecvonly(options,
                     function(error) {
                         if (error) {
                             return console.error(error)

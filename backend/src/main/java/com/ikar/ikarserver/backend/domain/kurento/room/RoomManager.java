@@ -44,9 +44,9 @@ public class RoomManager {
     }
 
     public void removeRoom(Room room) {
-        this.rooms.remove(room.getUuid());
+        this.rooms.remove(room.getIdentifier());
         room.close();
-        log.info("Room {} removed and closed", room.getUuid());
+        log.info("Room {} removed and closed", room.getIdentifier());
     }
 
 }

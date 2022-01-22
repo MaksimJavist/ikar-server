@@ -1,14 +1,13 @@
 package com.ikar.ikarserver.backend.domain.kurento.room;
 
 import com.google.gson.JsonObject;
+import com.ikar.ikarserver.backend.util.RoomSender;
 import lombok.extern.slf4j.Slf4j;
-import org.kurento.client.Continuation;
 import org.kurento.client.EventListener;
 import org.kurento.client.IceCandidate;
 import org.kurento.client.IceCandidateFoundEvent;
 import org.kurento.client.MediaPipeline;
 import org.kurento.client.WebRtcEndpoint;
-import org.kurento.jsonrpc.JsonUtils;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -39,24 +38,9 @@ public class RoomUserSession implements Closeable {
         this.roomUuid = roomUuid;
         this.outgoingMedia = new WebRtcEndpoint.Builder(pipeline).build();
 
-        this.outgoingMedia.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-
-            @Override
-            public void onEvent(IceCandidateFoundEvent event) {
-                JsonObject response = new JsonObject();
-                response.addProperty("id", "iceCandidate");
-                response.addProperty("uuid", uuid);
-                response.addProperty("name", name);
-                response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
-                try {
-                    synchronized (session) {
-                        session.sendMessage(new TextMessage(response.toString()));
-                    }
-                } catch (IOException e) {
-                    log.debug(e.getMessage());
-                }
-            }
-        });
+        this.outgoingMedia.addIceCandidateFoundListener(
+                getIceCandidateFoundEventListener(RoomUserSession.this)
+        );
     }
 
     public String getUuid() {
@@ -75,18 +59,12 @@ public class RoomUserSession implements Closeable {
         return session;
     }
 
-    /**
-     * The room to which the user is currently attending.
-     *
-     * @return The room
-     */
     public String getRoomUuid() {
         return this.roomUuid;
     }
 
     public void receiveVideoFrom(RoomUserSession sender, String sdpOffer) throws IOException {
         log.info("USER {}: connecting with {} in room {}", this.name, sender.getUuid(), this.roomUuid);
-
         log.trace("USER {}: SdpOffer for {} is {}", this.name, sender.getUuid(), sdpOffer);
 
         final String ipSdpAnswer = this.getEndpointForUser(sender).processOffer(sdpOffer);
@@ -98,7 +76,6 @@ public class RoomUserSession implements Closeable {
 
         log.trace("USER {}: SdpAnswer for {} is {}", this.name, sender.getName(), ipSdpAnswer);
         this.sendMessage(scParams);
-        log.debug("gather candidates");
         this.getEndpointForUser(sender).gatherCandidates();
     }
 
@@ -108,102 +85,35 @@ public class RoomUserSession implements Closeable {
             return outgoingMedia;
         }
 
-        log.debug("PARTICIPANT {}: receiving video from {}", this.name, sender.getName());
-
         WebRtcEndpoint incoming = incomingMedia.get(sender.getUuid());
         if (incoming == null) {
-            log.debug("PARTICIPANT {}: creating new endpoint for {}", this.name, sender.getName());
             incoming = new WebRtcEndpoint.Builder(pipeline).build();
-
-            incoming.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-
-                @Override
-                public void onEvent(IceCandidateFoundEvent event) {
-                    JsonObject response = new JsonObject();
-                    response.addProperty("id", "iceCandidate");
-                    response.addProperty("uuid", sender.getUuid());
-                    response.addProperty("name", sender.getName());
-                    response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
-                    try {
-                        synchronized (session) {
-                            session.sendMessage(new TextMessage(response.toString()));
-                        }
-                    } catch (IOException e) {
-                        log.debug(e.getMessage());
-                    }
-                }
-            });
-
+            incoming.addIceCandidateFoundListener(
+                    getIceCandidateFoundEventListener(sender)
+            );
             incomingMedia.put(sender.getUuid(), incoming);
         }
-
         log.debug("PARTICIPANT {}: obtained endpoint for {}", this.name, sender.getUuid());
         sender.getOutgoingWebRtcPeer().connect(incoming);
 
         return incoming;
     }
 
-    public void cancelVideoFrom(final RoomUserSession sender) {
-        this.cancelVideoFrom(sender.getUuid());
-    }
-
     public void cancelVideoFrom(final String uuid) {
         log.debug("PARTICIPANT {}: canceling video reception from {}", this.uuid, uuid);
         final WebRtcEndpoint incoming = incomingMedia.remove(uuid);
-
-        log.debug("PARTICIPANT {}: removing endpoint for {}", this.uuid, uuid);
-        incoming.release(new Continuation<Void>() {
-            @Override
-            public void onSuccess(Void result) throws Exception {
-                log.trace("PARTICIPANT {}: Released successfully incoming EP for {}",
-                        RoomUserSession.this.uuid, uuid);
-            }
-
-            @Override
-            public void onError(Throwable cause) throws Exception {
-                log.warn("PARTICIPANT {}: Could not release incoming EP for {}", RoomUserSession.this.uuid,
-                        uuid);
-            }
-        });
+        incoming.release();
     }
 
     @Override
     public void close() throws IOException {
         log.debug("PARTICIPANT {}: Releasing resources", this.uuid);
         for (final String remoteParticipantUuid : incomingMedia.keySet()) {
-
-            log.trace("PARTICIPANT {}: Released incoming EP for {}", this.uuid, remoteParticipantUuid);
-
             final WebRtcEndpoint ep = this.incomingMedia.get(remoteParticipantUuid);
-
-            ep.release(new Continuation<Void>() {
-
-                @Override
-                public void onSuccess(Void result) throws Exception {
-                    log.trace("PARTICIPANT {}: Released successfully incoming EP for {}",
-                            RoomUserSession.this.uuid, remoteParticipantUuid);
-                }
-
-                @Override
-                public void onError(Throwable cause) throws Exception {
-                    log.warn("PARTICIPANT {}: Could not release incoming EP for {}", RoomUserSession.this.uuid,
-                            remoteParticipantUuid);
-                }
-            });
+            ep.release();
         }
 
-        outgoingMedia.release(new Continuation<Void>() {
-
-            @Override
-            public void onSuccess(Void result) throws Exception {
-                log.trace("PARTICIPANT {}: Released outgoing EP", RoomUserSession.this.name);
-            }
-
-            @Override
-            public void onError(Throwable cause) throws Exception {
-                log.warn("USER {}: Could not release outgoing EP", RoomUserSession.this.name);
-            }
-        });
+        outgoingMedia.release();
     }
 
     public void sendMessage(JsonObject message) throws IOException {
@@ -224,13 +134,25 @@ public class RoomUserSession implements Closeable {
         }
     }
 
+    private EventListener<IceCandidateFoundEvent> getIceCandidateFoundEventListener(RoomUserSession sender) {
+        return event -> {
+            try {
+                synchronized (session) {
+                    RoomSender.sendIceCandidate(sender, event);
+                }
+            } catch (IOException e) {
+                log.debug(e.getMessage());
+            }
+        };
+    }
+
     @Override
     public boolean equals(Object obj) {
 
         if (this == obj) {
             return true;
         }
-        if (obj == null || !(obj instanceof RoomUserSession)) {
+        if (!(obj instanceof RoomUserSession)) {
             return false;
         }
         RoomUserSession other = (RoomUserSession) obj;

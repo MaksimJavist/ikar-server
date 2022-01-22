@@ -6,6 +6,7 @@ import com.ikar.ikarserver.backend.domain.CustomUserDetails;
 import com.ikar.ikarserver.backend.dto.ChatMessageDto;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.RoomChatMessageService;
+import com.ikar.ikarserver.backend.util.RoomSender;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.Continuation;
 import org.kurento.client.MediaPipeline;
@@ -28,19 +29,19 @@ public class Room implements Closeable {
 
     private final RoomMessagesBuffer messageBuffer;
     private final MediaPipeline pipeline;
-    private final String uuid;
+    private final String identifier;
     private final AuthInfoService authInfoService;
 
     public Room(String roomName, MediaPipeline pipeline, RoomChatMessageService messageService, AuthInfoService authInfoService) {
-        this.uuid = roomName;
+        this.identifier = roomName;
         this.pipeline = pipeline;
         this.authInfoService = authInfoService;
-        this.messageBuffer = new RoomMessagesBuffer(messageService, uuid);
+        this.messageBuffer = new RoomMessagesBuffer(messageService, identifier);
         log.info("ROOM {} has been created", roomName);
     }
 
-    public String getUuid() {
-        return uuid;
+    public String getIdentifier() {
+        return identifier;
     }
 
     @PreDestroy
@@ -50,7 +51,7 @@ public class Room implements Closeable {
 
     public RoomUserSession join(String userName, WebSocketSession session) throws IOException {
         String uuid = getUserUuid(session);
-        final RoomUserSession participant = new RoomUserSession(uuid, userName, this.uuid, session, this.pipeline);
+        final RoomUserSession participant = new RoomUserSession(uuid, userName, this.identifier, session, this.pipeline);
         joinRoom(participant);
         participants.put(participant.getUuid(), participant);
         sendParticipantNames(participant);
@@ -58,40 +59,20 @@ public class Room implements Closeable {
     }
 
     public void leave(RoomUserSession user) throws IOException {
-        log.debug("PARTICIPANT {}: Leaving room {}", user.getName(), this.uuid);
+        log.debug("PARTICIPANT {}: Leaving room {}", user.getName(), this.identifier);
         this.removeParticipant(user.getUuid());
         user.close();
     }
 
-    private Collection<String> joinRoom(RoomUserSession newParticipant) throws IOException {
-        final JsonObject newParticipantJson = new JsonObject();
-        newParticipantJson.addProperty("uuid", newParticipant.getUuid());
-        newParticipantJson.addProperty("name", newParticipant.getName());
-
-        final JsonObject newParticipantMsg = new JsonObject();
-        newParticipantMsg.addProperty("id", "newParticipantArrived");
-        newParticipantMsg.add("data", newParticipantJson);
-
-        final List<String> participantsList = new ArrayList<>(participants.values().size());
-        log.debug("ROOM {}: notifying other participants of new participant {}", uuid,
+    private void joinRoom(RoomUserSession newParticipant) throws IOException {
+        log.debug("ROOM {}: notifying other participants of new participant {}", identifier,
                 newParticipant.getName());
-
-        for (final RoomUserSession participant : participants.values()) {
-            try {
-                participant.sendMessage(newParticipantMsg);
-            } catch (final IOException e) {
-                log.debug("ROOM {}: participant {} could not be notified", uuid, participant.getName(), e);
-            }
-            participantsList.add(participant.getUuid());
-        }
-
-        return participantsList;
+        RoomSender.sendNewParticipantArrived(newParticipant, participants.values());
     }
 
     private void removeParticipant(String uuid) throws IOException {
         participants.remove(uuid);
-
-        log.debug("ROOM {}: notifying all users that {} is leaving the room", this.uuid, uuid);
+        log.debug("ROOM {}: notifying all users that {} is leaving the room", this.identifier, uuid);
 
         final List<String> unnotifiedParticipants = new ArrayList<>();
         final JsonObject participantLeftJson = new JsonObject();
@@ -107,14 +88,13 @@ public class Room implements Closeable {
         }
 
         if (!unnotifiedParticipants.isEmpty()) {
-            log.debug("ROOM {}: The users {} could not be notified that {} left the room", this.uuid,
-                    unnotifiedParticipants, this.uuid);
+            log.debug("ROOM {}: The users {} could not be notified that {} left the room", this.identifier,
+                    unnotifiedParticipants, this.identifier);
         }
 
     }
 
     public void sendParticipantNames(RoomUserSession user) throws IOException {
-
         final JsonArray participantsArray = new JsonArray();
         for (final RoomUserSession participant : this.getParticipants()) {
             if (!participant.equals(user)) {
@@ -125,15 +105,7 @@ public class Room implements Closeable {
                 participantsArray.add(participantJson);
             }
         }
-        final JsonObject existingParticipantsMsg = new JsonObject();
-        existingParticipantsMsg.addProperty("id", "existingParticipants");
-        existingParticipantsMsg.addProperty("registeredName", user.getName());
-        existingParticipantsMsg.addProperty("registeredUuid", user.getUuid());
-        existingParticipantsMsg.add("messages", getAllRoomMessages());
-        existingParticipantsMsg.add("data", participantsArray);
-        log.debug("PARTICIPANT {}: sending a list of {} participants", user.getUuid(),
-                participantsArray.size());
-        user.sendMessage(existingParticipantsMsg);
+        RoomSender.sendExistingParticipants(user, participantsArray, getAllRoomMessages());
     }
 
     public Collection<RoomUserSession> getParticipants() {
@@ -152,34 +124,19 @@ public class Room implements Closeable {
             try {
                 user.close();
             } catch (IOException e) {
-                log.debug("ROOM {}: Could not invoke close on participant {}", this.uuid, user.getName(),
-                        e);
+                log.debug("ROOM {}: Could not invoke close on participant {}", this.identifier, user.getName(), e);
             }
         }
-
         participants.clear();
-
-        pipeline.release(new Continuation<Void>() {
-
-            @Override
-            public void onSuccess(Void result) throws Exception {
-                log.trace("ROOM {}: Released Pipeline", Room.this.uuid);
-            }
-
-            @Override
-            public void onError(Throwable cause) throws Exception {
-                log.warn("PARTICIPANT {}: Could not release Pipeline", Room.this.uuid);
-            }
-        });
-
-        log.debug("Room {} closed", this.uuid);
+        pipeline.release();
+        log.debug("Room {} closed", this.identifier);
     }
 
     public void sendNewMessage(ChatMessageDto message) {
         executor.submit(
                 () -> messageBuffer.addNewMessageInBuffer(message)
         );
-        sendMessageAllParticipants(message);
+        RoomSender.sendNewChatMessageForAllParticipants(message, participants.values());
     }
 
     private JsonArray getAllRoomMessages() {
@@ -197,27 +154,6 @@ public class Room implements Closeable {
         });
 
         return array;
-    }
-
-    private void sendMessageAllParticipants(ChatMessageDto message) {
-        final JsonObject dataMessage = new JsonObject();
-        dataMessage.addProperty("senderUuid", message.getSenderUuid());
-        dataMessage.addProperty("senderName", message.getSender());
-        dataMessage.addProperty("time", message.getTimeMessage().toString());
-        dataMessage.addProperty("text", message.getMessage());
-
-        final JsonObject newChatMessage = new JsonObject();
-        newChatMessage.addProperty("id", "newChatMessage");
-        newChatMessage.add("data", dataMessage);
-        participants.values().forEach(
-                participant -> {
-                    try {
-                        participant.sendMessage(newChatMessage);
-                    } catch (IOException e) {
-                        log.warn("ERROR SEND MESSAGE: \"{}\" from {}", message.getMessage(), message.getSender());
-                    }
-                }
-        );
     }
 
     private String getUserUuid(WebSocketSession session) {
