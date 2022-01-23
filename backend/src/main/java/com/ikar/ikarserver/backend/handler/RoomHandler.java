@@ -33,52 +33,49 @@ public class RoomHandler extends TextWebSocketHandler {
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         final JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
-
         final RoomUserSession user = registry.getBySession(session);
 
-        if (user != null) {
-            log.debug("Incoming message from user '{}': {}", user.getName(), jsonMessage);
-        } else {
-            log.debug("Incoming message from new user: {}", jsonMessage);
-        }
+        try {
+            switch (jsonMessage.get("id").getAsString()) {
+                case "joinRoom":
+                    joinRoom(jsonMessage, session);
+                    break;
+                case "receiveVideoFrom":
+                    final String senderUuid = jsonMessage.get("uuid").getAsString();
+                    final RoomUserSession sender = registry.getBySessionAndUuid(senderUuid, session);
+                    final String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
+                    user.receiveVideoFrom(sender, sdpOffer);
+                    break;
+                case "leaveRoom":
+                    leaveRoom(user);
+                    break;
+                case "onIceCandidate":
+                    JsonObject candidate = jsonMessage.get("candidate").getAsJsonObject();
 
-        switch (jsonMessage.get("id").getAsString()) {
-            case "joinRoom":
-                joinRoom(jsonMessage, session);
-                break;
-            case "receiveVideoFrom":
-                final String senderUuid = jsonMessage.get("uuid").getAsString();
-                final RoomUserSession sender = registry.getBySessionAndUuid(senderUuid, session);
-                final String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
-                user.receiveVideoFrom(sender, sdpOffer);
-                break;
-            case "leaveRoom":
-                leaveRoom(user);
-                break;
-            case "onIceCandidate":
-                JsonObject candidate = jsonMessage.get("candidate").getAsJsonObject();
-
-                if (user != null) {
-                    IceCandidate cand = new IceCandidate(candidate.get("candidate").getAsString(),
-                            candidate.get("sdpMid").getAsString(), candidate.get("sdpMLineIndex").getAsInt());
-                    user.addCandidate(cand, jsonMessage.get("uuid").getAsString());
-                }
-                break;
-            case "sendChat":
-                RoomUserSession messageSender = registry.getBySession(session);
-                Room room = roomManager.getRoom(messageSender.getRoomUuid());
-                String chatMessage = jsonMessage.get("message").getAsString();
-                room.sendNewMessage(
-                        new ChatMessageDto(
-                                messageSender.getUuid(),
-                                messageSender.getName(),
-                                LocalDateTime.now(),
-                                chatMessage
-                        )
-                );
-                break;
-            default:
-                break;
+                    if (user != null) {
+                        IceCandidate cand = new IceCandidate(candidate.get("candidate").getAsString(),
+                                candidate.get("sdpMid").getAsString(), candidate.get("sdpMLineIndex").getAsInt());
+                        user.addCandidate(cand, jsonMessage.get("uuid").getAsString());
+                    }
+                    break;
+                case "sendChat":
+                    RoomUserSession messageSender = registry.getBySession(session);
+                    Room room = roomManager.getRoom(messageSender.getRoomUuid());
+                    String chatMessage = jsonMessage.get("message").getAsString();
+                    room.sendNewMessage(
+                            new ChatMessageDto(
+                                    messageSender.getUuid(),
+                                    messageSender.getName(),
+                                    LocalDateTime.now(),
+                                    chatMessage
+                            )
+                    );
+                    break;
+                default:
+                    break;
+            }
+        } catch (Exception e) {
+            handleErrorResponse(e.getMessage(), session);
         }
     }
 
@@ -86,6 +83,14 @@ public class RoomHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         RoomUserSession user = registry.removeBySession(session);
         roomManager.getRoom(user.getRoomUuid()).leave(user);
+    }
+
+    private void handleErrorResponse(String message, WebSocketSession session) throws IOException {
+        log.error(message);
+        JsonObject response = new JsonObject();
+        response.addProperty("id", "errorResponse");
+        response.addProperty("message", message);
+        session.sendMessage(new TextMessage(response.toString()));
     }
 
     private void joinRoom(JsonObject params, WebSocketSession session) throws IOException {

@@ -104,32 +104,6 @@
                 </b-col>
             </b-row>
             <Chat v-show="chatVisible" :sender-uuid="localParticipantUuid" :chat-messages="chatMessages" @send-chat="sendChatMessage"/>
-<!--            <b-card v-if="chatVisible"-->
-<!--                 class="h-50 w-25 border border-primary position-fixed rounded text-center"-->
-<!--                 style="border-width: medium !important; bottom: 3%; right: 3%; background-color: #e1e2e3;">-->
-<!--                <h3>Чат</h3>-->
-<!--                <div ref="chatDiv" class="mb-4 bg-white text-white rounded overflow-auto" style="height: 65%">-->
-<!--                    <span v-for="(message, index) in chatMessages" :key="index">-->
-<!--                        <div :class="message.senderUuid === localParticipantUuid ? 'text-right' : 'text-left'">-->
-<!--                            <div class="m-2 p-2 w-auto d-inline-block rounded text-left"-->
-<!--                                 :class="message.senderUuid === localParticipantUuid ? 'bg-success' : 'bg-dark'"-->
-<!--                                 style="max-width: 75%">-->
-<!--                                <strong>{{ message.senderName}}:</strong>-->
-<!--                                <div>{{ message.text }}</div>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </span>-->
-<!--                </div>-->
-<!--                <b-form-input class="mb-2" v-model="chatInputText" placeholder="Введите сообщение:"></b-form-input>-->
-<!--                <b-button-->
-<!--                    class="w-100"-->
-<!--                    variant="outline-info"-->
-<!--                    v-b-tooltip.hover-->
-<!--                    title="Отправить сообщение"-->
-<!--                    @click="sendChatMessage">-->
-<!--                    Отправить-->
-<!--                </b-button>-->
-<!--            </b-card>-->
         </b-container>
     </div>
 </template>
@@ -205,7 +179,6 @@ export default {
     },
     methods: {
         connectRoom: function () {
-            this.joinFrameVisible = false
             this.socket = new WebSocket('ws://localhost:8080/groupcall')
             this.socket.onopen = this.joinRoom
         },
@@ -247,6 +220,7 @@ export default {
             }}
         },
         onExistingParticipants: function (message) {
+            this.joinFrameVisible = false
             const constraints = {
                 audio : true,
                 video : {

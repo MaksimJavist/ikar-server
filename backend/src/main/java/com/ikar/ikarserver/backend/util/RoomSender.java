@@ -65,16 +65,6 @@ public final class RoomSender {
         user.sendMessage(response);
     }
 
-    public static void sendReceiveVideoAnswer(RoomUserSession sender, String sdpAnswer) throws IOException {
-        final JsonObject scParams = new JsonObject();
-        scParams.addProperty("id", "receiveVideoAnswer");
-        scParams.addProperty("uuid", sender.getUuid());
-        scParams.addProperty("name", sender.getName());
-        scParams.addProperty("sdpAnswer", sdpAnswer);
-
-        sender.sendMessage(scParams);
-    }
-
     private static void sendMessageForAllParticipants(JsonObject message,
                                                       Collection<RoomUserSession> participants) {
         for (RoomUserSession participant : participants) {

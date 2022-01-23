@@ -4,18 +4,22 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.ikar.ikarserver.backend.domain.CustomUserDetails;
 import com.ikar.ikarserver.backend.dto.ChatMessageDto;
+import com.ikar.ikarserver.backend.exception.websocket.RoomException;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.RoomChatMessageService;
 import com.ikar.ikarserver.backend.util.RoomSender;
 import lombok.extern.slf4j.Slf4j;
-import org.kurento.client.Continuation;
 import org.kurento.client.MediaPipeline;
 import org.springframework.web.socket.WebSocketSession;
 
 import javax.annotation.PreDestroy;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -51,6 +55,9 @@ public class Room implements Closeable {
 
     public RoomUserSession join(String userName, WebSocketSession session) throws IOException {
         String uuid = getUserUuid(session);
+        if (participants.containsKey(uuid)) {
+            throw new RoomException("Вы уже просматриваете эту конференцию");
+        }
         final RoomUserSession participant = new RoomUserSession(uuid, userName, this.identifier, session, this.pipeline);
         joinRoom(participant);
         participants.put(participant.getUuid(), participant);
@@ -116,7 +123,9 @@ public class Room implements Closeable {
         return participants.get(uuid);
     }
 
-    public boolean existParticipant(String uuid) { return participants.containsKey(uuid); }
+    public boolean existParticipant(String uuid) {
+        return participants.containsKey(uuid);
+    }
 
     @Override
     public void close() {
