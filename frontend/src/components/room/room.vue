@@ -274,6 +274,7 @@ export default {
             })
         },
         sendMessage: function (message) {
+            console.log(message)
             const jsonMessage = JSON.stringify(message)
             this.socket.send(jsonMessage)
         },

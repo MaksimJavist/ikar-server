@@ -15,8 +15,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
-import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_NOT_ACTIVE_PRESENTER;
-import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_PRESENTER_BUSY;
+import static com.ikar.ikarserver.backend.util.Messages.NOT_ACTIVE_PRESENTER;
+import static com.ikar.ikarserver.backend.util.Messages.PRESENTER_BUSY;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ConferenceSender {
@@ -47,7 +47,7 @@ public final class ConferenceSender {
         JsonObject message = new JsonObject();
         message.addProperty("id", "viewerConnectPermissionResponse");
         message.addProperty("response", "reject");
-        message.addProperty("message", CONFERENCE_NOT_ACTIVE_PRESENTER);
+        message.addProperty("message", NOT_ACTIVE_PRESENTER);
 
         session.sendMessage(message);
     }
@@ -64,7 +64,7 @@ public final class ConferenceSender {
         JsonObject message = new JsonObject();
         message.addProperty("id", "presenterConnectPermissionResponse");
         message.addProperty("response", "reject");
-        message.addProperty("message", CONFERENCE_PRESENTER_BUSY);
+        message.addProperty("message", PRESENTER_BUSY);
 
         session.sendMessage(message);
     }
@@ -73,7 +73,7 @@ public final class ConferenceSender {
         JsonObject message = new JsonObject();
         message.addProperty("id", "presenterResponse");
         message.addProperty("response", "rejected");
-        message.addProperty("message", CONFERENCE_PRESENTER_BUSY);
+        message.addProperty("message", PRESENTER_BUSY);
         session.sendMessage(message);
     }
 

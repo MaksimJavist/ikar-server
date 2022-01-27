@@ -64,7 +64,7 @@ public class Conference implements Closeable {
             rejectViewer(session, CONFERENCE_USER_NOT_FOUND);
         }
         if (presenter == null) {
-            rejectViewer(session, CONFERENCE_NOT_ACTIVE_PRESENTER);
+            rejectViewer(session, NOT_ACTIVE_PRESENTER);
         } else {
             newViewer(session, jsonMessage);
         }
@@ -204,7 +204,7 @@ public class Conference implements Closeable {
         JsonObject response = new JsonObject();
         response.addProperty("id", "presenterResponse");
         response.addProperty("response", "rejected");
-        response.addProperty("message", CONFERENCE_PRESENTER_BUSY);
+        response.addProperty("message", PRESENTER_BUSY);
         session.sendMessage(new TextMessage(response.toString()));
     }
 

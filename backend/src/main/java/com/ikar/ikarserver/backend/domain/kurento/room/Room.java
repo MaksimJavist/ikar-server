@@ -10,6 +10,7 @@ import com.ikar.ikarserver.backend.service.RoomChatMessageService;
 import com.ikar.ikarserver.backend.util.RoomSender;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.MediaPipeline;
+import org.kurento.client.WebRtcEndpoint;
 import org.springframework.web.socket.WebSocketSession;
 
 import javax.annotation.PreDestroy;
@@ -25,16 +26,23 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static com.ikar.ikarserver.backend.util.Messages.NOT_ACTIVE_PRESENTER;
+import static com.ikar.ikarserver.backend.util.Messages.PRESENTER_BUSY;
+import static com.ikar.ikarserver.backend.util.Messages.ROOM_USER_NOT_FOUND;
+import static com.ikar.ikarserver.backend.util.Messages.USER_ALREADY_PRESENTER;
+
 @Slf4j
 public class Room implements Closeable {
 
-    private final ConcurrentMap<String, RoomUserSession> participants = new ConcurrentHashMap<>();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-
     private final RoomMessagesBuffer messageBuffer;
     private final MediaPipeline pipeline;
     private final String identifier;
     private final AuthInfoService authInfoService;
+
+    private final ConcurrentMap<String, RoomUserSession> participants = new ConcurrentHashMap<>();
+    private String presenterUuid;
+
 
     public Room(String roomName, MediaPipeline pipeline, RoomChatMessageService messageService, AuthInfoService authInfoService) {
         this.identifier = roomName;
@@ -65,17 +73,93 @@ public class Room implements Closeable {
         return participant;
     }
 
+    private void joinRoom(RoomUserSession newParticipant) throws IOException {
+        log.debug("ROOM {}: notifying other participants of new participant {}", identifier,
+                newParticipant.getName());
+        RoomSender.sendNewParticipantArrived(newParticipant, participants.values());
+    }
+
+    public void presenterConnectPermission(RoomUserSession user) throws IOException {
+        if (presenterUuid != null) {
+            RoomSender.sendRejectPresenterConnectPermissionResponse(user);
+        } else {
+            RoomSender.sendAcceptPresenterConnectPermissionResponse(user);
+        }
+    }
+
+    public void viewerConnectPermission(RoomUserSession user) throws IOException {
+        if (presenterUuid != null) {
+            RoomSender.sendAcceptViewerConnectPermissionResponse(user);
+        } else {
+            RoomSender.sendRejectViewerConnectPermissionResponse(user);
+        }
+    }
+
+    public synchronized void viewer(RoomUserSession user, JsonObject jsonMessage) throws IOException {
+        if (participants.containsKey(user.getUuid())) {
+            RoomSender.sendRejectViewerResponse(user, ROOM_USER_NOT_FOUND);
+            return;
+        }
+        if (presenterUuid != null) {
+            RoomSender.sendRejectViewerResponse(user, NOT_ACTIVE_PRESENTER);
+            return;
+        }
+        connectViewer(user, jsonMessage);
+    }
+
+    private void connectViewer(RoomUserSession viewer, JsonObject jsonMessage) throws IOException {
+        WebRtcEndpoint viewerWebRtc = new WebRtcEndpoint.Builder(pipeline).build();
+        viewerWebRtc.addIceCandidateFoundListener(
+                viewer.getPresentationIceCandidateFoundEventListener()
+        );
+        viewer.setPresenterMediaEndpoint(viewerWebRtc);
+
+        RoomUserSession presenter = participants.get(presenterUuid);
+        WebRtcEndpoint presenterWebRtc = presenter.getPresenterMediaEndpoint();
+        presenterWebRtc.connect(viewerWebRtc);
+
+        String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
+        String sdpAnswer = viewerWebRtc.processOffer(sdpOffer);
+        RoomSender.sendViewerAcceptedResponse(viewer, sdpAnswer);
+        viewerWebRtc.gatherCandidates();
+    }
+
+    public synchronized void presenter(RoomUserSession user, JsonObject jsonMessage) throws IOException {
+        if (presenterUuid != null) {
+            RoomSender.sendPresenterRejectedResponse(user, PRESENTER_BUSY);
+            return;
+        }
+        if (presenterUuid.equals(user.getUuid())) {
+            RoomSender.sendPresenterRejectedResponse(user, USER_ALREADY_PRESENTER);
+            return;
+        }
+        newPresenter(user, jsonMessage);
+    }
+
+    private void newPresenter(RoomUserSession presenter, JsonObject jsonMessage) throws IOException {
+        presenterUuid = presenter.getUuid();
+        final WebRtcEndpoint presenterWebRtc = new WebRtcEndpoint.Builder(pipeline).build();
+
+        presenter.setPresenterMediaEndpoint(presenterWebRtc);
+        presenterWebRtc.addIceCandidateFoundListener(presenter.getPresentationIceCandidateFoundEventListener());
+        presenterWebRtc.gatherCandidates();
+
+        String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
+        String sdpAnswer = presenterWebRtc.processOffer(sdpOffer);
+
+        RoomSender.sendPresenterAcceptedResponse(presenter, sdpAnswer);
+
+        ConcurrentMap<String, RoomUserSession> notifiedParticipants = new ConcurrentHashMap<>(participants);
+        notifiedParticipants.remove(presenterUuid);
+        RoomSender.sendNewPresenterForAllParticipants(presenter, notifiedParticipants.values());
+    }
+
     public void leave(RoomUserSession user) throws IOException {
         log.debug("PARTICIPANT {}: Leaving room {}", user.getName(), this.identifier);
         this.removeParticipant(user.getUuid());
         user.close();
     }
 
-    private void joinRoom(RoomUserSession newParticipant) throws IOException {
-        log.debug("ROOM {}: notifying other participants of new participant {}", identifier,
-                newParticipant.getName());
-        RoomSender.sendNewParticipantArrived(newParticipant, participants.values());
-    }
 
     private void removeParticipant(String uuid) throws IOException {
         participants.remove(uuid);
