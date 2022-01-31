@@ -16,14 +16,15 @@
             </b-row>
         </b-container>
         <b-container class="vh-100" fluid v-else>
-            <b-row class="h-75 pt-4 justify-content-center">
-                <b-col cols="10">
-                    <b-card no-body class="h-100 border border-info justify-content-center" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
+            <b-row class="pt-4 justify-content-center" style="height: 85%">
+                <b-col cols="10 text-center" style="max-height: 100%">
+                    <video v-show="isActivePresentation" id="video" ref="presentationVideo" style="max-height: 100%; object-fit: contain; border-width: medium !important;" autoplay class="rounded border border-info"></video>
+                    <b-card v-show="!isActivePresentation" no-body class="h-100 border border-info justify-content-center" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
                         <h5>Пока никто не начал трансляцию</h5>
                     </b-card>
                 </b-col>
                 <b-col cols="2">
-                    <b-card class="h-100 pl-2 pr-2 overflow-auto border border-info" style="background-color: #e1e2e3; border-width: medium !important;" title="Участники:" align="center">
+                    <b-card class="h-100 pl-1 pr-1 overflow-auto border border-info" style="size: auto; background-color: #e1e2e3; border-width: medium !important;" title="Участники:" align="center">
                         <b-row>
                             <b-col cols="12" class="h-50 p-1" v-if="getLocalParticipant">
                                 <ParticipantLocal :participant="getLocalParticipant.getObject()"/>
@@ -35,70 +36,94 @@
                     </b-card>
                 </b-col>
             </b-row>
-            <b-row v-if="getLocalParticipant" class="h-25 justify-content-center" align-v="center">
-                <b-col cols="5" class="h-50">
-                    <b-card class="h-100 border border-info" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
-                        <div id="microButton" class="d-inline-block " style="margin: 0 10px">
-                            <b-button v-if="microEnable"
-                                      v-b-tooltip.hover
-                                      title="Выключить микрофон"
-                                      @click="changeMicroDisabled(false)"
-                                      variant="outline-success">
-                                <b-icon-mic/>
-                            </b-button>
-                            <b-button
-                                v-else
-                                v-b-tooltip.hover
-                                title="Включить микрофон"
-                                @click="changeMicroDisabled(true)"
-                                variant="outline-danger">
-                                <b-icon-mic-mute/>
-                            </b-button>
-                        </div>
-                        <div id="videoButton" class="d-inline-block" style="margin: 0 10px">
-                            <b-button
-                                v-if="videoEnable"
-                                v-b-tooltip.hover
-                                title="Выключить камеру"
-                                @click="changeVideoEnabled(false)"
-                                variant="outline-success">
-                                <b-icon-camera-video/>
-                            </b-button>
-                            <b-button
-                                v-else
-                                v-b-tooltip.hover
-                                title="Включить камеру"
-                                @click="changeVideoEnabled(true)"
-                                variant="outline-danger">
-                                <b-icon-camera-video-off/>
-                            </b-button>
-                        </div>
-                        <div v-if="false" id="displayButton" class="d-inline-block" style="margin: 0 10px">
-                            <b-button variant="outline-success" @click="sendChatMessage">
-                                <b-icon-display/>
-                            </b-button>
-                            <b-button variant="outline-danger">
-                                <b-icon-display-fill/>
-                            </b-button>
-                        </div>
-                        <div id="shareButton" class="d-inline-block" style="margin: 0 10px">
-                            <b-button
-                                variant="outline-primary"
-                                v-b-tooltip.hover
-                                title="Скопировать ссылку на конференцию"
-                                v-clipboard:copy="getRoomFullReference()"
-                                @click="copyLinkToast">
+            <b-row v-if="getLocalParticipant" class="justify-content-center" align-v="center" style="height: 15%">
+                <b-col cols="7" class="h-75">
+                    <b-card no-body class="h-100 border border-info justify-content-center" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
+                        <div class="d-inline-block" style="margin: 0 10px">
+                            <span class="buttonGroup">
+                                <b-button
+                                    v-if="isPresenter"
+                                    pill
+                                    v-b-tooltip.hover
+                                    @click="stopCommunication"
+                                    title="Прекратить показ"
+                                    variant="outline-danger">
+                                    Прекратить показ
+                                </b-button>
+                                <b-button
+                                    v-else
+                                    pill
+                                    v-b-tooltip.hover
+                                    @click="presenterConnectPermission"
+                                    title="Начать показ"
+                                    variant="outline-success">
+                                    Начать показ
+                                </b-button>
+                            </span>
+                            <span class="buttonGroup">
+                                <b-button v-if="microEnable"
+                                          v-b-tooltip.hover
+                                          title="Выключить микрофон"
+                                          @click="changeMicroDisabled(false)"
+                                          variant="outline-success">
+                                    <b-icon-mic/>
+                                </b-button>
+                                <b-button
+                                    v-else
+                                    v-b-tooltip.hover
+                                    title="Включить микрофон"
+                                    @click="changeMicroDisabled(true)"
+                                    variant="outline-danger">
+                                    <b-icon-mic-mute/>
+                                </b-button>
+                            </span>
+                            <span class="buttonGroup">
+                                <b-button
+                                    v-if="videoEnable"
+                                    v-b-tooltip.hover
+                                    title="Выключить камеру"
+                                    @click="changeVideoEnabled(false)"
+                                    variant="outline-success">
+                                    <b-icon-camera-video/>
+                                </b-button>
+                                <b-button
+                                    v-else
+                                    v-b-tooltip.hover
+                                    title="Включить камеру"
+                                    @click="changeVideoEnabled(true)"
+                                    variant="outline-danger">
+                                    <b-icon-camera-video-off/>
+                                </b-button>
+                            </span>
+                            <span class="buttonGroup">
+                                <b-button
+                                    variant="outline-primary"
+                                    v-b-tooltip.hover
+                                    title="Скопировать ссылку на конференцию"
+                                    v-clipboard:copy="getRoomFullReference()"
+                                    @click="copyLinkToast">
                                 <b-icon-share/>
                             </b-button>
-                        </div>
-                        <div id="chatButton" class="d-inline-block" style="margin: 0 10px">
-                            <b-button
-                                variant="outline-info"
-                                v-b-tooltip.hover
-                                title="Открыть чат"
-                                @click="switchChatVisible">
-                                <b-icon-chat-dots/>
-                            </b-button>
+                            </span>
+                            <span class="buttonGroup">
+                                <b-button
+                                    variant="outline-info"
+                                    v-b-tooltip.hover
+                                    title="Открыть чат"
+                                    @click="switchChatVisible">
+                                    <b-icon-chat-dots/>
+                                </b-button>
+                            </span>
+                            <span class="buttonGroup">
+                                <b-button
+                                    pill
+                                    variant="outline-danger"
+                                    v-b-tooltip.hover
+                                    title="Покинуть комнату"
+                                    @click="exitFromRoom">
+                                    Покинуть комнату
+                                </b-button>
+                            </span>
                         </div>
                     </b-card>
                 </b-col>
@@ -110,10 +135,11 @@
 
 <script>
 import Chat from '@/components/chat'
-import Participant from '@/util/Participant'
-import ParticipantMixin from "@/mixin/ParticipantMixin"
-import ParticipantLocal from "@/components/room/participant/participant-local"
-import ParticipantRemote from "@/components/room/participant/participant-remote"
+import ParticipantMixin from '@/mixin/ParticipantMixin'
+import RoomParticipantsMixin from '@/mixin/room-participants-mixin'
+import RoomConferenceMixin from '@/mixin/room-conference-mixin'
+import ParticipantLocal from '@/components/room/participant/participant-local'
+import ParticipantRemote from '@/components/room/participant/participant-remote'
 import api from '@/api'
 
 export default {
@@ -124,7 +150,9 @@ export default {
         Chat
     },
     mixins: [
-        ParticipantMixin
+        ParticipantMixin,
+        RoomParticipantsMixin,
+        RoomConferenceMixin
     ],
     data() {
         return {
@@ -155,6 +183,7 @@ export default {
     },
     beforeDestroy() {
         if (this.socket) {
+            this.closePeerForAllParticipants()
             this.socket.close()
         }
     },
@@ -214,67 +243,35 @@ export default {
                 candidate.rtcPeer.addIceCandidate(parsedMessage.candidate, this.showErrorCallback)
                 break
             }
-            case 'newChatMessage': {
+            case 'newChatMessage':
                 this.newChatMessage(parsedMessage.data)
                 break
-            }}
-        },
-        onExistingParticipants: function (message) {
-            this.joinFrameVisible = false
-            const constraints = {
-                audio : true,
-                video : {
-                    mandatory : {
-                        maxWidth : 320,
-                        maxFrameRate : 15,
-                        minFrameRate : 15
-                    }
-                }
+            case 'viewerConnectPermissionResponse':
+                this.viewerConnectPermissionResponse(parsedMessage)
+                break
+            case 'presenterConnectPermissionResponse':
+                this.presenterConnectPermissionResponse(parsedMessage)
+                break
+            case 'presenterResponse':
+                this.presenterResponse(parsedMessage)
+                break
+            case 'presentationIceCandidate':
+                this.presentationIceCandidate(parsedMessage)
+                break
+            case 'newPresenter':
+                this.newPresenter(parsedMessage)
+                break
+            case 'viewerResponse':
+                this.viewerResponse(parsedMessage)
+                break
+            case 'presenterStopCommunication':
+                this.presenterStopCommunication(parsedMessage)
+                break
+            default:
+                break
             }
-            this.localParticipantUuid = message.registeredUuid
-            const participantUuid = message.registeredUuid
-            const participantName = message.registeredName
-            this.chatMessages = this.chatMessages.concat(message.messages)
-            const participant = new Participant(participantUuid, participantName, this.socket)
-            const video = participant.video
-
-            const options = {
-                localVideo: video,
-                mediaConstraints: constraints,
-                onicecandidate: participant.onIceCandidate.bind(participant)
-            }
-            participant.rtcPeer = this.createWebRtcPeerForReceiver(options, participant)
-            this.participants.push(participant)
-
-            message.data.forEach(this.receiveVideoFromSender)
-        },
-        onNewParticipant(request) {
-            this.receiveVideoFromSender(request.data)
-        },
-        onParticipantLeft(request) {
-            const indexLeaved = this.participants.findIndex(el => el.uuid === request.uuid)
-            this.participants[indexLeaved].dispose()
-            this.participants.splice(indexLeaved, 1)
-        },
-        receiveVideoFromSender: function (sender) {
-            const participant = new Participant(sender.uuid, sender.name, this.socket)
-            const video = participant.video
-
-            const options = {
-                remoteVideo: video,
-                onicecandidate: participant.onIceCandidate.bind(participant)
-            }
-            participant.rtcPeer = this.createWebRtcPeerForSender(options, participant)
-
-            this.participants.push(participant)
-        },
-        receiveVideoResponse: function (result) {
-            this.participants.find(el => el.uuid === result.uuid).rtcPeer.processAnswer(result.sdpAnswer, function (error) {
-                if (error) return console.error (error)
-            })
         },
         sendMessage: function (message) {
-            console.log(message)
             const jsonMessage = JSON.stringify(message)
             this.socket.send(jsonMessage)
         },
@@ -302,12 +299,12 @@ export default {
             this.microEnable = value
             if (value) {
                 this.$bvToast.toast('Микрофон включен', {
-                    variant: 'success',
+                    variant: 'info',
                     solid: true
                 })
             } else {
                 this.$bvToast.toast('Микрофон выключен', {
-                    variant: 'danger',
+                    variant: 'info',
                     solid: true
                 })
             }
@@ -316,12 +313,12 @@ export default {
             this.videoEnable = value
             if (value) {
                 this.$bvToast.toast('Камера включена', {
-                    variant: 'success',
+                    variant: 'info',
                     solid: true
                 })
             } else {
                 this.$bvToast.toast('Камера выключена', {
-                    variant: 'danger',
+                    variant: 'info',
                     solid: true
                 })
             }
@@ -335,6 +332,27 @@ export default {
         },
         switchChatVisible: function () {
             this.chatVisible = !this.chatVisible
+        },
+        closePeerForAllParticipants: function () {
+            this.participants.forEach(participant => participant.dispose())
+            this.participants = []
+        },
+        exitFromRoom: function () {
+            this.closePeerForAllParticipants()
+            this.refreshStatePresentation()
+            this.socket.close()
+
+            this.socket = null
+            this.joinFrameVisible = true
+            this.roomName = null
+            this.localParticipantUuid = null
+            this.participants = []
+            this.chatMessages = []
+            this.authenticatedUser = false
+            this.microEnable = true
+            this.videoEnable = true
+            this.chatVisible = false
+            this.chatInputText = null
         }
     }
 }

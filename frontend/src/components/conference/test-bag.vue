@@ -228,7 +228,6 @@ export default {
             this.viewerConnectPermission()
         },
         presenterLeave: function (message) {
-            console.log(message)
             this.$bvToast.toast(message.message, {
                 variant: 'info',
                 solid: true
@@ -317,7 +316,7 @@ export default {
                     localVideo : this.$refs.conferenceVideo,
                     onicecandidate : this.onIceCandidate,
                     mediaConstraints: constraints,
-                    sendSource: 'screen'
+                    sendSource: 'conference'
                 }
                 const onOfferPresenterCallback = this.onOfferPresenter
                 const disposePeerCallback = this.dispose
@@ -348,7 +347,7 @@ export default {
                         mandatory : {
                             maxWidth : screen.width,
                             maxHeight: screen.height,
-                            maxFrameRate : 15,
+                            maxFrameRate : 30,
                             minFrameRate : 15
                         }
                     }
@@ -374,8 +373,6 @@ export default {
             this.sendMessage(message)
         },
         onIceCandidate: function (candidate) {
-            console.log("Local candidate" + JSON.stringify(candidate))
-
             const message = {
                 id : 'onIceCandidate',
                 candidate : candidate

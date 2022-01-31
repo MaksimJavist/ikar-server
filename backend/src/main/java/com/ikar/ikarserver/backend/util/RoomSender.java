@@ -11,10 +11,13 @@ import org.kurento.client.IceCandidateFoundEvent;
 import org.kurento.jsonrpc.JsonUtils;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Collection;
 
 import static com.ikar.ikarserver.backend.util.Messages.NOT_ACTIVE_PRESENTER;
 import static com.ikar.ikarserver.backend.util.Messages.PRESENTER_BUSY;
+import static com.ikar.ikarserver.backend.util.Messages.ROOM_NEW_PARTICIPANT_ARRIVED;
+import static com.ikar.ikarserver.backend.util.Messages.USER_IS_BROADCASTING;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -55,7 +58,7 @@ public final class RoomSender {
 
         final JsonObject newParticipantMsg = new JsonObject();
         newParticipantMsg.addProperty("id", "newParticipantArrived");
-        newParticipantMsg.addProperty("message", "Пользователь " + participantArrived.getName() + " поключился к комнате.");
+        newParticipantMsg.addProperty("message", MessageFormat.format(ROOM_NEW_PARTICIPANT_ARRIVED, participantArrived.getName()));
         newParticipantMsg.add("data", newParticipantJson);
 
         sendMessageForAllParticipants(newParticipantMsg, participants);
@@ -88,10 +91,12 @@ public final class RoomSender {
         user.sendMessage(message);
     }
 
-    public static void sendAcceptViewerConnectPermissionResponse(RoomUserSession user) throws IOException {
+    public static void sendAcceptViewerConnectPermissionResponse(RoomUserSession user, String presenterName) throws IOException {
         JsonObject message = new JsonObject();
         message.addProperty("id", "viewerConnectPermissionResponse");
         message.addProperty("response", "accepted");
+        message.addProperty("message", MessageFormat.format(USER_IS_BROADCASTING, presenterName));
+
         user.sendMessage(message);
     }
 
@@ -104,17 +109,9 @@ public final class RoomSender {
         user.sendMessage(message);
     }
 
-    public static void sendRejectViewerResponse(RoomUserSession user, String message) throws IOException {
-        JsonObject response = new JsonObject();
-        response.addProperty("id", "viewerResponse");
-        response.addProperty("response", "rejected");
-        response.addProperty("message", message);
-        user.sendMessage(response);
-    }
-
     public static void sendPresentationIceCandidate(RoomUserSession user, IceCandidateFoundEvent event) throws IOException {
         JsonObject response = new JsonObject();
-        response.addProperty("id", "iceCandidatePresenter");
+        response.addProperty("id", "presentationIceCandidate");
         response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
 
         user.sendMessage(response);
@@ -162,6 +159,14 @@ public final class RoomSender {
         response.addProperty("message", "Пользователь " + presenter.getName() + " начал трансляцию");
 
         sendMessageForAllParticipants(response, participants);
+    }
+
+    public static void sendPresenterStopCommunicationForAllParticipants(String presenterName, Collection<RoomUserSession> participants) {
+        JsonObject message = new JsonObject();
+        message.addProperty("id", "presenterStopCommunication");
+        message.addProperty("message", "Презентующий " + presenterName + " прекратил трансляцию");
+
+        sendMessageForAllParticipants(message, participants);
     }
 
     private static void sendMessageForAllParticipants(JsonObject message,

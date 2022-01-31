@@ -13,24 +13,20 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class LeaveRoomMessageHandler implements RoomMessageHandler {
+public class ViewerMessageHandler implements RoomMessageHandler {
 
     private final RoomManager roomManager;
     private final RoomUserRegistry registry;
 
     @Override
     public void process(JsonObject message, WebSocketSession session) throws IOException {
-        final RoomUserSession user = registry.removeBySession(session);
-        final Room room = roomManager.getRoom(user.getRoomUuid());
-        room.leave(user);
-
-        if (room.getParticipants().isEmpty()) {
-            roomManager.removeRoom(room);
-        }
+        RoomUserSession user = registry.getBySession(session);
+        Room room = roomManager.getRoom(user.getRoomUuid());
+        room.viewer(user, message);
     }
 
     @Override
     public String getProcessedMessage() {
-        return "leaveRoom";
+        return "viewer";
     }
 }

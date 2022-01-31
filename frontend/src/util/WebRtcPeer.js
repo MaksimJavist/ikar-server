@@ -732,7 +732,7 @@ function WebRtcPeer(mode, options, callback) {
                 }).catch(callback)
             }
         }
-        function getDisplay(constraints) {
+        function getDisplayConference(constraints) {
             if (constraints === undefined) {
                 constraints = MEDIA_CONSTRAINTS;
             }
@@ -758,8 +758,19 @@ function WebRtcPeer(mode, options, callback) {
                     })
             }).catch(callback);
         }
+        function getDisplay(constraints) {
+            if (constraints === undefined) {
+                constraints = MEDIA_CONSTRAINTS;
+            }
+            navigator.mediaDevices.getDisplayMedia(constraints).then(function (screenStream) {
+                videoStream = new MediaStream([screenStream.getVideoTracks()[0]]);
+                start();
+            }).catch(callback);
+        }
         if (sendSource === 'webcam') {
             getMedia(mediaConstraints)
+        } else if (sendSource === 'conference') {
+            getDisplayConference(mediaConstraints)
         } else {
             getDisplay(mediaConstraints)
         }

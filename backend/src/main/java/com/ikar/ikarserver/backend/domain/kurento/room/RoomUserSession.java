@@ -122,6 +122,12 @@ public class RoomUserSession implements Closeable {
         }
     }
 
+    public void addPresentationCandidate(IceCandidate candidate) {
+        if (presenterMediaEndpoint != null) {
+            presenterMediaEndpoint.addIceCandidate(candidate);
+        }
+    }
+
     public EventListener<IceCandidateFoundEvent> getPresentationIceCandidateFoundEventListener() {
         return event -> {
             try {

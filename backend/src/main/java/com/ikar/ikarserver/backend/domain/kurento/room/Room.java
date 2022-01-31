@@ -16,20 +16,24 @@ import org.springframework.web.socket.WebSocketSession;
 import javax.annotation.PreDestroy;
 import java.io.Closeable;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import static com.ikar.ikarserver.backend.util.Messages.NOT_ACTIVE_PRESENTER;
 import static com.ikar.ikarserver.backend.util.Messages.PRESENTER_BUSY;
+import static com.ikar.ikarserver.backend.util.Messages.ROOM_PARTICIPANT_LEFT;
 import static com.ikar.ikarserver.backend.util.Messages.ROOM_USER_NOT_FOUND;
-import static com.ikar.ikarserver.backend.util.Messages.USER_ALREADY_PRESENTER;
+import static com.ikar.ikarserver.backend.util.Messages.USER_ARE_NOT_PRESENTER;
 
 @Slf4j
 public class Room implements Closeable {
@@ -74,8 +78,6 @@ public class Room implements Closeable {
     }
 
     private void joinRoom(RoomUserSession newParticipant) throws IOException {
-        log.debug("ROOM {}: notifying other participants of new participant {}", identifier,
-                newParticipant.getName());
         RoomSender.sendNewParticipantArrived(newParticipant, participants.values());
     }
 
@@ -89,19 +91,20 @@ public class Room implements Closeable {
 
     public void viewerConnectPermission(RoomUserSession user) throws IOException {
         if (presenterUuid != null) {
-            RoomSender.sendAcceptViewerConnectPermissionResponse(user);
+            final String presenterName = participants.get(presenterUuid).getName();
+            RoomSender.sendAcceptViewerConnectPermissionResponse(user, presenterName);
         } else {
             RoomSender.sendRejectViewerConnectPermissionResponse(user);
         }
     }
 
     public synchronized void viewer(RoomUserSession user, JsonObject jsonMessage) throws IOException {
-        if (participants.containsKey(user.getUuid())) {
-            RoomSender.sendRejectViewerResponse(user, ROOM_USER_NOT_FOUND);
+        if (!participants.containsKey(user.getUuid())) {
+            RoomSender.sendViewerRejectedResponse(user, ROOM_USER_NOT_FOUND);
             return;
         }
-        if (presenterUuid != null) {
-            RoomSender.sendRejectViewerResponse(user, NOT_ACTIVE_PRESENTER);
+        if (presenterUuid == null) {
+            RoomSender.sendViewerRejectedResponse(user, NOT_ACTIVE_PRESENTER);
             return;
         }
         connectViewer(user, jsonMessage);
@@ -121,16 +124,13 @@ public class Room implements Closeable {
         String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
         String sdpAnswer = viewerWebRtc.processOffer(sdpOffer);
         RoomSender.sendViewerAcceptedResponse(viewer, sdpAnswer);
+
         viewerWebRtc.gatherCandidates();
     }
 
     public synchronized void presenter(RoomUserSession user, JsonObject jsonMessage) throws IOException {
         if (presenterUuid != null) {
             RoomSender.sendPresenterRejectedResponse(user, PRESENTER_BUSY);
-            return;
-        }
-        if (presenterUuid.equals(user.getUuid())) {
-            RoomSender.sendPresenterRejectedResponse(user, USER_ALREADY_PRESENTER);
             return;
         }
         newPresenter(user, jsonMessage);
@@ -142,12 +142,12 @@ public class Room implements Closeable {
 
         presenter.setPresenterMediaEndpoint(presenterWebRtc);
         presenterWebRtc.addIceCandidateFoundListener(presenter.getPresentationIceCandidateFoundEventListener());
-        presenterWebRtc.gatherCandidates();
 
         String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
         String sdpAnswer = presenterWebRtc.processOffer(sdpOffer);
-
         RoomSender.sendPresenterAcceptedResponse(presenter, sdpAnswer);
+
+        presenterWebRtc.gatherCandidates();
 
         ConcurrentMap<String, RoomUserSession> notifiedParticipants = new ConcurrentHashMap<>(participants);
         notifiedParticipants.remove(presenterUuid);
@@ -156,22 +156,41 @@ public class Room implements Closeable {
 
     public void leave(RoomUserSession user) throws IOException {
         log.debug("PARTICIPANT {}: Leaving room {}", user.getName(), this.identifier);
-        this.removeParticipant(user.getUuid());
+        this.removeParticipant(user);
         user.close();
     }
 
+    public void presenterStopCommunication(RoomUserSession user) {
+        final String userUuid = user.getUuid();
+        if (presenterUuid != null && !presenterUuid.equals(userUuid)) {
+            throw new RoomException(USER_ARE_NOT_PRESENTER);
+        }
+        presenterUuid = null;
+        final List<RoomUserSession> notifiedParticipants = participants.entrySet()
+                .stream()
+                .filter(entry -> !entry.getKey().equals(userUuid))
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+        RoomSender.sendPresenterStopCommunicationForAllParticipants(user.getName(), notifiedParticipants);
+    }
 
-    private void removeParticipant(String uuid) throws IOException {
-        participants.remove(uuid);
-        log.debug("ROOM {}: notifying all users that {} is leaving the room", this.identifier, uuid);
+    private void removeParticipant(RoomUserSession user) {
+        final String userUuid = user.getUuid();
+        if (userUuid.equals(presenterUuid)) {
+            presenterStopCommunication(user);
+        }
 
-        final List<String> unnotifiedParticipants = new ArrayList<>();
+        participants.remove(userUuid);
+
         final JsonObject participantLeftJson = new JsonObject();
         participantLeftJson.addProperty("id", "participantLeft");
-        participantLeftJson.addProperty("uuid", uuid);
+        participantLeftJson.addProperty("uuid", userUuid);
+        participantLeftJson.addProperty("message", MessageFormat.format(ROOM_PARTICIPANT_LEFT, user.getName()));
+
+        final List<String> unnotifiedParticipants = new ArrayList<>();
         for (final RoomUserSession participant : participants.values()) {
             try {
-                participant.cancelVideoFrom(uuid);
+                participant.cancelVideoFrom(userUuid);
                 participant.sendMessage(participantLeftJson);
             } catch (final IOException e) {
                 unnotifiedParticipants.add(participant.getUuid());

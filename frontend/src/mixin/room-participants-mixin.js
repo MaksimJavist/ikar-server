@@ -28,8 +28,8 @@ const roomParticipantsMixin = {
             }
             participant.rtcPeer = this.createWebRtcPeerForReceiver(options, participant)
             this.participants.push(participant)
-            console.log(message.data)
             message.data.forEach(this.receiveVideoFromSender)
+            this.viewerConnectPermission()
         },
         receiveVideoFromSender: function (sender) {
             const participant = new Participant(sender.uuid, sender.name, this.socket)
@@ -51,6 +51,10 @@ const roomParticipantsMixin = {
             this.receiveVideoFromSender(request.data)
         },
         onParticipantLeft(request) {
+            this.$bvToast.toast(request.message, {
+                variant: 'info',
+                solid: true
+            })
             const indexLeaved = this.participants.findIndex(el => el.uuid === request.uuid)
             this.participants[indexLeaved].dispose()
             this.participants.splice(indexLeaved, 1)
