@@ -1,4 +1,4 @@
-package com.ikar.ikarserver.backend.domain.kurento.newconference;
+package com.ikar.ikarserver.backend.domain.kurento.conference;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;

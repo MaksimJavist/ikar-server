@@ -2,9 +2,8 @@ package com.ikar.ikarserver.backend.util;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.ikar.ikarserver.backend.domain.kurento.conference.ConferenceMessageBuffer;
 import com.ikar.ikarserver.backend.domain.kurento.conference.ConferenceUserSession;
-import com.ikar.ikarserver.backend.domain.kurento.newconference.ConferenceMessageBuffer;
-import com.ikar.ikarserver.backend.domain.kurento.newconference.UserSession;
 import com.ikar.ikarserver.backend.dto.ChatMessageDto;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -30,7 +29,7 @@ public final class ConferenceSender {
         userSession.sendMessage(message);
     }
 
-    public static void sendViewerRegisterSuccess(UserSession userSession, JsonArray chatMessages) throws IOException {
+    public static void sendViewerRegisterSuccess(ConferenceUserSession userSession, JsonArray chatMessages) throws IOException {
         JsonObject message = new JsonObject();
         message.addProperty("id", "viewerRegistered");
         message.addProperty("uuid", userSession.getUuid());
@@ -39,7 +38,7 @@ public final class ConferenceSender {
         userSession.sendMessage(message);
     }
 
-    public static void sendAcceptViewerConnectPermissionResponse(UserSession session, String presenterName) throws IOException {
+    public static void sendAcceptViewerConnectPermissionResponse(ConferenceUserSession session, String presenterName) throws IOException {
         JsonObject message = new JsonObject();
         message.addProperty("id", "viewerConnectPermissionResponse");
         message.addProperty("response", "accepted");
@@ -47,7 +46,7 @@ public final class ConferenceSender {
         session.sendMessage(message);
     }
 
-    public static void sendRejectViewerConnectPermissionResponse(UserSession session) throws IOException {
+    public static void sendRejectViewerConnectPermissionResponse(ConferenceUserSession session) throws IOException {
         JsonObject message = new JsonObject();
         message.addProperty("id", "viewerConnectPermissionResponse");
         message.addProperty("response", "reject");
@@ -56,7 +55,7 @@ public final class ConferenceSender {
         session.sendMessage(message);
     }
 
-    public static void sendAcceptPresenterConnectPermissionResponse(UserSession session) throws IOException {
+    public static void sendAcceptPresenterConnectPermissionResponse(ConferenceUserSession session) throws IOException {
         JsonObject message = new JsonObject();
         message.addProperty("id", "presenterConnectPermissionResponse");
         message.addProperty("response", "accepted");
@@ -64,7 +63,7 @@ public final class ConferenceSender {
         session.sendMessage(message);
     }
 
-    public static void sendRejectPresenterConnectPermissionResponse(UserSession session) throws IOException {
+    public static void sendRejectPresenterConnectPermissionResponse(ConferenceUserSession session) throws IOException {
         JsonObject message = new JsonObject();
         message.addProperty("id", "presenterConnectPermissionResponse");
         message.addProperty("response", "reject");
@@ -73,7 +72,7 @@ public final class ConferenceSender {
         session.sendMessage(message);
     }
 
-    public static void sendRejectPresenterResponse(UserSession session) throws IOException {
+    public static void sendRejectPresenterResponse(ConferenceUserSession session) throws IOException {
         JsonObject message = new JsonObject();
         message.addProperty("id", "presenterResponse");
         message.addProperty("response", "rejected");
@@ -81,16 +80,16 @@ public final class ConferenceSender {
         session.sendMessage(message);
     }
 
-    public static void sendNewPresenterForAllViewers(Collection<UserSession> viewers, String presenterName) throws IOException {
+    public static void sendNewPresenterForAllViewers(Collection<ConferenceUserSession> viewers, String presenterName) throws IOException {
         JsonObject message = new JsonObject();
         message.addProperty("id", "newPresenter");
         message.addProperty("message", "Пользователь " + presenterName + " начал трансляцию");
-        for (UserSession viewer : viewers) {
+        for (ConferenceUserSession viewer : viewers) {
             viewer.sendMessage(message);
         }
     }
 
-    public static void sendPresenterResponseSdpAnswer(UserSession presenter, String sdpAnswer) throws IOException {
+    public static void sendPresenterResponseSdpAnswer(ConferenceUserSession presenter, String sdpAnswer) throws IOException {
         JsonObject response = new JsonObject();
         response.addProperty("id", "presenterResponse");
         response.addProperty("response", "accepted");
@@ -98,7 +97,7 @@ public final class ConferenceSender {
         presenter.sendMessage(response);
     }
 
-    public static void sendViewerResponseSdpAnswer(UserSession viewer, String presenterName, String sdpAnswer) throws IOException {
+    public static void sendViewerResponseSdpAnswer(ConferenceUserSession viewer, String presenterName, String sdpAnswer) throws IOException {
         JsonObject response = new JsonObject();
         response.addProperty("id", "viewerResponse");
         response.addProperty("response", "accepted");
@@ -119,7 +118,7 @@ public final class ConferenceSender {
         );
     }
 
-    public static void sendPresenterStopForAllViewers(String presenterName, Collection<UserSession> viewers) throws IOException {
+    public static void sendPresenterStopForAllViewers(String presenterName, Collection<ConferenceUserSession> viewers) throws IOException {
         JsonObject response = new JsonObject();
         response.addProperty("id", "stopCommunication");
         response.addProperty("message", MessageFormat.format(USER_STOP_PRESENTATION, presenterName));
@@ -127,7 +126,7 @@ public final class ConferenceSender {
         sendMessageForAllUsers(response, viewers);
     }
 
-    public static void sendAllUsersNewChatMessage(ChatMessageDto chatMessageDto, List<UserSession> users) throws IOException {
+    public static void sendAllUsersNewChatMessage(ChatMessageDto chatMessageDto, List<ConferenceUserSession> users) throws IOException {
         final JsonObject dataMessage = ConferenceMessageBuffer.convertChatMessageToJson(chatMessageDto);
         final JsonObject response = new JsonObject();
         response.addProperty("id", "newChatMessage");
@@ -136,8 +135,8 @@ public final class ConferenceSender {
         sendMessageForAllUsers(response, users);
     }
 
-    private static void sendMessageForAllUsers(JsonObject message, Collection<UserSession> users) throws IOException {
-        for (UserSession user : users) {
+    private static void sendMessageForAllUsers(JsonObject message, Collection<ConferenceUserSession> users) throws IOException {
+        for (ConferenceUserSession user : users) {
             user.sendMessage(message);
         }
     }

@@ -1,10 +1,10 @@
 package com.ikar.ikarserver.backend.handler.message.conference;
 
 import com.google.gson.JsonObject;
-import com.ikar.ikarserver.backend.domain.kurento.newconference.NewConference;
-import com.ikar.ikarserver.backend.domain.kurento.newconference.NewConferenceManager;
-import com.ikar.ikarserver.backend.domain.kurento.newconference.NewConferenceUserRegistry;
-import com.ikar.ikarserver.backend.domain.kurento.newconference.UserSession;
+import com.ikar.ikarserver.backend.domain.kurento.conference.Conference;
+import com.ikar.ikarserver.backend.domain.kurento.conference.ConferenceManager;
+import com.ikar.ikarserver.backend.domain.kurento.conference.ConferenceUserRegistry;
+import com.ikar.ikarserver.backend.domain.kurento.conference.ConferenceUserSession;
 import com.ikar.ikarserver.backend.dto.ChatMessageDto;
 import com.ikar.ikarserver.backend.exception.websocket.ConferenceException;
 import lombok.RequiredArgsConstructor;
@@ -21,14 +21,14 @@ import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_USER_NOT_EXIS
 @RequiredArgsConstructor
 public class SendChatConferenceMessageHandler implements ConferenceMessageHandler {
 
-    private final NewConferenceManager conferenceManager;
-    private final NewConferenceUserRegistry userRegistry;
+    private final ConferenceManager conferenceManager;
+    private final ConferenceUserRegistry userRegistry;
 
     @Override
     public void process(JsonObject message, WebSocketSession session) throws IOException {
-        UserSession user = userRegistry.getBySession(session)
+        ConferenceUserSession user = userRegistry.getBySession(session)
                 .orElseThrow(ConferenceException.supplier(CONFERENCE_USER_NOT_EXIST));;
-        NewConference conference = conferenceManager.getConference(user.getConferenceIdentifier())
+        Conference conference = conferenceManager.getConference(user.getConferenceIdentifier())
                 .orElseThrow(ConferenceException.supplier(CONFERENCE_NOT_FOUND));
         String chatMessage = message.get("message").getAsString();
         conference.sendNewMessage(

@@ -19,9 +19,10 @@ public class ConferenceUserRegistry {
         conferenceBySessionId.put(sessionId, conference);
     }
 
-    public ConferenceUserSession getBySessionAndUuid(String uuid, WebSocketSession session) {
-        final Conference conference = conferenceBySessionId.get(session.getId());
-        return conference.getUserBySession(session);
+    public Optional<Conference> getConferenceBySession(WebSocketSession session) {
+        return Optional.ofNullable(
+                conferenceBySessionId.get(session.getId())
+        );
     }
 
     public Optional<ConferenceUserSession> getBySession(WebSocketSession session) {
