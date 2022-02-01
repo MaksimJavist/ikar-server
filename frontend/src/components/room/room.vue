@@ -267,6 +267,9 @@ export default {
             case 'presenterStopCommunication':
                 this.presenterStopCommunication(parsedMessage)
                 break
+            case 'errorResponse':
+                this.errorResponse(parsedMessage)
+                break
             default:
                 break
             }
@@ -330,6 +333,12 @@ export default {
             }
             this.sendMessage(message)
         },
+        errorResponse: function (response) {
+            this.$bvToast.toast(response.message, {
+                variant: 'danger',
+                solid: true
+            })
+        },
         switchChatVisible: function () {
             this.chatVisible = !this.chatVisible
         },
@@ -348,7 +357,6 @@ export default {
             this.localParticipantUuid = null
             this.participants = []
             this.chatMessages = []
-            this.authenticatedUser = false
             this.microEnable = true
             this.videoEnable = true
             this.chatVisible = false

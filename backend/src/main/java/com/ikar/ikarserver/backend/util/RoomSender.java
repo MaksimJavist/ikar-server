@@ -82,13 +82,13 @@ public final class RoomSender {
         user.sendMessage(message);
     }
 
-    public static void sendRejectPresenterConnectPermissionResponse(RoomUserSession user) throws IOException {
-        JsonObject message = new JsonObject();
-        message.addProperty("id", "presenterConnectPermissionResponse");
-        message.addProperty("response", "reject");
-        message.addProperty("message", PRESENTER_BUSY);
+    public static void sendRejectPresenterConnectPermissionResponse(RoomUserSession user, String message) throws IOException {
+        JsonObject jsonMessage = new JsonObject();
+        jsonMessage.addProperty("id", "presenterConnectPermissionResponse");
+        jsonMessage.addProperty("response", "reject");
+        jsonMessage.addProperty("message", PRESENTER_BUSY);
 
-        user.sendMessage(message);
+        user.sendMessage(jsonMessage);
     }
 
     public static void sendAcceptViewerConnectPermissionResponse(RoomUserSession user, String presenterName) throws IOException {

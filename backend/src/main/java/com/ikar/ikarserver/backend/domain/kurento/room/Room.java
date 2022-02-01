@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,6 +34,7 @@ import static com.ikar.ikarserver.backend.util.Messages.NOT_ACTIVE_PRESENTER;
 import static com.ikar.ikarserver.backend.util.Messages.PRESENTER_BUSY;
 import static com.ikar.ikarserver.backend.util.Messages.ROOM_PARTICIPANT_LEFT;
 import static com.ikar.ikarserver.backend.util.Messages.ROOM_USER_NOT_FOUND;
+import static com.ikar.ikarserver.backend.util.Messages.USER_ALREADY_PRESENTER;
 import static com.ikar.ikarserver.backend.util.Messages.USER_ARE_NOT_PRESENTER;
 
 @Slf4j
@@ -82,11 +84,15 @@ public class Room implements Closeable {
     }
 
     public void presenterConnectPermission(RoomUserSession user) throws IOException {
-        if (presenterUuid != null) {
-            RoomSender.sendRejectPresenterConnectPermissionResponse(user);
-        } else {
-            RoomSender.sendAcceptPresenterConnectPermissionResponse(user);
+        if (Objects.equals(presenterUuid, user.getUuid())) {
+            RoomSender.sendRejectPresenterConnectPermissionResponse(user, USER_ALREADY_PRESENTER);
+            return;
         }
+        if (presenterUuid != null) {
+            RoomSender.sendRejectPresenterConnectPermissionResponse(user, PRESENTER_BUSY);
+            return;
+        }
+        RoomSender.sendAcceptPresenterConnectPermissionResponse(user);
     }
 
     public void viewerConnectPermission(RoomUserSession user) throws IOException {
@@ -100,8 +106,7 @@ public class Room implements Closeable {
 
     public synchronized void viewer(RoomUserSession user, JsonObject jsonMessage) throws IOException {
         if (!participants.containsKey(user.getUuid())) {
-            RoomSender.sendViewerRejectedResponse(user, ROOM_USER_NOT_FOUND);
-            return;
+            throw new RoomException(ROOM_USER_NOT_FOUND);
         }
         if (presenterUuid == null) {
             RoomSender.sendViewerRejectedResponse(user, NOT_ACTIVE_PRESENTER);
@@ -129,6 +134,9 @@ public class Room implements Closeable {
     }
 
     public synchronized void presenter(RoomUserSession user, JsonObject jsonMessage) throws IOException {
+        if (!participants.containsKey(user.getUuid())) {
+            throw new RoomException(ROOM_USER_NOT_FOUND);
+        }
         if (presenterUuid != null) {
             RoomSender.sendPresenterRejectedResponse(user, PRESENTER_BUSY);
             return;
@@ -149,9 +157,13 @@ public class Room implements Closeable {
 
         presenterWebRtc.gatherCandidates();
 
-        ConcurrentMap<String, RoomUserSession> notifiedParticipants = new ConcurrentHashMap<>(participants);
-        notifiedParticipants.remove(presenterUuid);
-        RoomSender.sendNewPresenterForAllParticipants(presenter, notifiedParticipants.values());
+        List<RoomUserSession> notifiedParticipants =
+                participants.entrySet()
+                        .stream()
+                        .filter(entry -> !entry.getKey().equals(presenterUuid))
+                        .map(Map.Entry::getValue)
+                        .collect(Collectors.toList());
+        RoomSender.sendNewPresenterForAllParticipants(presenter, notifiedParticipants);
     }
 
     public void leave(RoomUserSession user) throws IOException {

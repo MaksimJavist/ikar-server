@@ -40,7 +40,7 @@ const roomConferenceMixin = {
                     localVideo : this.$refs.presentationVideo,
                     onicecandidate : this.presentationOnIceCandidate,
                     mediaConstraints: constraints,
-                    sendSource: 'conference'
+                    sendSource: 'screen'
                 }
                 const onOfferPresenterCallback = this.onOfferPresenter
                 const disposePeerCallback = this.disposePresentationPeer
