@@ -12,14 +12,13 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class OnIceCandidateMessageHandler implements RoomMessageHandler {
+public class PresentationOnIceCandidateRoomMessageHandler implements RoomMessageHandler {
 
     private final RoomUserRegistry registry;
 
     @Override
-    public void process(JsonObject message, WebSocketSession session) {
+    public void process(JsonObject message, WebSocketSession session) throws IOException {
         final RoomUserSession user = registry.getBySession(session);
-
         JsonObject candidateMessage = message.get("candidate").getAsJsonObject();
 
         if (user != null) {
@@ -28,12 +27,12 @@ public class OnIceCandidateMessageHandler implements RoomMessageHandler {
                     candidateMessage.get("sdpMid").getAsString(),
                     candidateMessage.get("sdpMLineIndex").getAsInt()
             );
-            user.addCandidate(candidate, message.get("uuid").getAsString());
+            user.addPresentationCandidate(candidate);
         }
     }
 
     @Override
     public String getProcessedMessage() {
-        return "onIceCandidate";
+        return "presentationOnIceCandidate";
     }
 }

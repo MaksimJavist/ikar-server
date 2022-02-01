@@ -18,6 +18,8 @@ import static com.ikar.ikarserver.backend.util.Messages.NOT_ACTIVE_PRESENTER;
 import static com.ikar.ikarserver.backend.util.Messages.PRESENTER_BUSY;
 import static com.ikar.ikarserver.backend.util.Messages.ROOM_NEW_PARTICIPANT_ARRIVED;
 import static com.ikar.ikarserver.backend.util.Messages.USER_IS_BROADCASTING;
+import static com.ikar.ikarserver.backend.util.Messages.USER_START_PRESENTATION;
+import static com.ikar.ikarserver.backend.util.Messages.USER_STOP_PRESENTATION;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -156,7 +158,7 @@ public final class RoomSender {
     public static void sendNewPresenterForAllParticipants(RoomUserSession presenter, Collection<RoomUserSession> participants) {
         JsonObject response = new JsonObject();
         response.addProperty("id", "newPresenter");
-        response.addProperty("message", "Пользователь " + presenter.getName() + " начал трансляцию");
+        response.addProperty("message", MessageFormat.format(USER_START_PRESENTATION, presenter.getName()));
 
         sendMessageForAllParticipants(response, participants);
     }
@@ -164,7 +166,7 @@ public final class RoomSender {
     public static void sendPresenterStopCommunicationForAllParticipants(String presenterName, Collection<RoomUserSession> participants) {
         JsonObject message = new JsonObject();
         message.addProperty("id", "presenterStopCommunication");
-        message.addProperty("message", "Презентующий " + presenterName + " прекратил трансляцию");
+        message.addProperty("message", MessageFormat.format(USER_STOP_PRESENTATION, presenterName));
 
         sendMessageForAllParticipants(message, participants);
     }

@@ -8,17 +8,16 @@ import org.kurento.client.IceCandidate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.io.IOException;
-
 @Component
 @RequiredArgsConstructor
-public class PresentationOnIceCandidateMessageHandler implements RoomMessageHandler {
+public class OnIceCandidateRoomMessageHandler implements RoomMessageHandler {
 
     private final RoomUserRegistry registry;
 
     @Override
-    public void process(JsonObject message, WebSocketSession session) throws IOException {
+    public void process(JsonObject message, WebSocketSession session) {
         final RoomUserSession user = registry.getBySession(session);
+
         JsonObject candidateMessage = message.get("candidate").getAsJsonObject();
 
         if (user != null) {
@@ -27,12 +26,12 @@ public class PresentationOnIceCandidateMessageHandler implements RoomMessageHand
                     candidateMessage.get("sdpMid").getAsString(),
                     candidateMessage.get("sdpMLineIndex").getAsInt()
             );
-            user.addPresentationCandidate(candidate);
+            user.addCandidate(candidate, message.get("uuid").getAsString());
         }
     }
 
     @Override
     public String getProcessedMessage() {
-        return "presentationOnIceCandidate";
+        return "onIceCandidate";
     }
 }

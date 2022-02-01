@@ -13,7 +13,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class PresenterMessageHandler implements RoomMessageHandler {
+public class PresenterRoomMessageHandler implements RoomMessageHandler {
 
     private final RoomManager roomManager;
     private final RoomUserRegistry registry;

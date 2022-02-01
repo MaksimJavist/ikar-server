@@ -13,7 +13,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class PresenterStopCommunicationMessageHandler implements RoomMessageHandler {
+public class ViewerRoomMessageHandler implements RoomMessageHandler {
 
     private final RoomManager roomManager;
     private final RoomUserRegistry registry;
@@ -22,11 +22,11 @@ public class PresenterStopCommunicationMessageHandler implements RoomMessageHand
     public void process(JsonObject message, WebSocketSession session) throws IOException {
         RoomUserSession user = registry.getBySession(session);
         Room room = roomManager.getRoom(user.getRoomUuid());
-        room.presenterStopCommunication(user);
+        room.viewer(user, message);
     }
 
     @Override
     public String getProcessedMessage() {
-        return "presenterStopCommunication";
+        return "viewer";
     }
 }

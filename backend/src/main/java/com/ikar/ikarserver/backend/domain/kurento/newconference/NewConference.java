@@ -8,7 +8,6 @@ import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.ConferenceChatMessageService;
 import com.ikar.ikarserver.backend.util.ConferenceSender;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.*;
@@ -60,7 +59,7 @@ public class NewConference implements Closeable {
             throw new ConferenceException(CONFERENCE_USER_EXIST);
         }
         String uuid = getUserUuid(session);
-        UserSession viewer = new UserSession(uuid, username, session);
+        UserSession viewer = new UserSession(uuid, username, identifier, session);
         viewers.put(session.getId(), viewer);
         ConferenceSender.sendViewerRegisterSuccess(
                 viewer,
@@ -149,9 +148,7 @@ public class NewConference implements Closeable {
         String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
         String sdpAnswer = nextWebRtc.processOffer(sdpOffer);
 
-        synchronized (session) {
-            ConferenceSender.sendViewerResponseSdpAnswer(viewer, presenter.getUsername(), sdpAnswer);
-        }
+        ConferenceSender.sendViewerResponseSdpAnswer(viewer, presenter.getUsername(), sdpAnswer);
         nextWebRtc.gatherCandidates();
     }
 
@@ -174,30 +171,21 @@ public class NewConference implements Closeable {
         sendAllUsersNewChatMessage(chatMessage);
     }
 
-    public synchronized void leave(WebSocketSession session) throws IOException {
+    public void leave(WebSocketSession session) throws IOException {
         String sessionId = session.getId();
         if (isPresenter(sessionId)) {
-            for (UserSession viewer : viewers.values()) {
-                synchronized (viewer) {
-                    ConferenceSender.sendPresenterLeaveForViewer(viewer, presenter.getUsername());
-                }
-                viewer.close();
-            }
-            presenter.close();
-            presenter = null;
+            stop(session);
         } else if (viewers.containsKey(sessionId)) {
             closePeerConnection(sessionId);
-            viewers.remove(sessionId);
         }
+        viewers.remove(sessionId);
     }
 
     public synchronized void stop(WebSocketSession session) throws IOException {
         String sessionId = session.getId();
         if (isPresenter(sessionId)) {
+            ConferenceSender.sendPresenterStopForAllViewers(presenter.getUsername(), viewers.values());
             for (UserSession viewer : viewers.values()) {
-                synchronized (viewer) {
-                    ConferenceSender.sendPresenterStopForViewer(viewer, presenter.getUsername());
-                }
                 viewer.close();
             }
             viewers.put(session.getId(), presenter);

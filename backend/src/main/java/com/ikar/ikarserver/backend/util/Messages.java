@@ -10,6 +10,8 @@ public final class Messages {
     public static final String USER_ALREADY_PRESENTER = "Вы уже выступаете презентующим.";
     public static final String NOT_ACTIVE_PRESENTER = "Сейчас нет активного презентующего.";
     public static final String USER_ARE_NOT_PRESENTER = "Вы не являетесь перезнтующим.";
+    public static final String USER_START_PRESENTATION = "Пользователь {0} начал трансляцию";
+    public static final String USER_STOP_PRESENTATION = "Пользователь {0} прекратил трансляцию";
 
     public static final String ROOM_USER_NOT_FOUND = "Вы не являетесь участником комнаты.";
     public static final String ROOM_NEW_PARTICIPANT_ARRIVED = "Пользователь {0} поключился к комнате";

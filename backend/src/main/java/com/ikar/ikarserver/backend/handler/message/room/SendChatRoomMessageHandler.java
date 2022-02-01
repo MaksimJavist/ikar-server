@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
-public class SendChatMessageHandler implements RoomMessageHandler {
+public class SendChatRoomMessageHandler implements RoomMessageHandler {
 
     private final RoomManager roomManager;
     private final RoomUserRegistry registry;

@@ -40,7 +40,6 @@ public class RoomHandler extends TextWebSocketHandler {
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         final JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
-        final RoomUserSession user = registry.getBySession(session);
 
         try {
             final String messageId = jsonMessage.get("id").getAsString();

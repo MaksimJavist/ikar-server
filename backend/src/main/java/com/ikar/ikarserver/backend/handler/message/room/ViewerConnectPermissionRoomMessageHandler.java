@@ -13,7 +13,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class ViewerConnectPermissionMessageHandler implements RoomMessageHandler {
+public class ViewerConnectPermissionRoomMessageHandler implements RoomMessageHandler {
 
     private final RoomManager roomManager;
     private final RoomUserRegistry registry;

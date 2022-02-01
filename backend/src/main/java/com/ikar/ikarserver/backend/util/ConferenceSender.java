@@ -12,11 +12,13 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.List;
 
 import static com.ikar.ikarserver.backend.util.Messages.NOT_ACTIVE_PRESENTER;
 import static com.ikar.ikarserver.backend.util.Messages.PRESENTER_BUSY;
+import static com.ikar.ikarserver.backend.util.Messages.USER_STOP_PRESENTATION;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ConferenceSender {
@@ -115,18 +117,12 @@ public final class ConferenceSender {
         );
     }
 
-    public static void sendPresenterLeaveForViewer(UserSession viewer, String presenterName) throws IOException {
-        JsonObject response = new JsonObject();
-        response.addProperty("id", "presenterLeave");
-        response.addProperty("message", "Презентующий " + presenterName + " покинул трансляцию.");
-        viewer.sendMessage(response);
-    }
-
-    public static void sendPresenterStopForViewer(UserSession viewer, String presenterName) throws IOException {
+    public static void sendPresenterStopForAllViewers(String presenterName, Collection<UserSession> viewers) throws IOException {
         JsonObject response = new JsonObject();
         response.addProperty("id", "stopCommunication");
-        response.addProperty("message", "Пользователь " + presenterName + " прекратил трансляцию.");
-        viewer.sendMessage(response);
+        response.addProperty("message", MessageFormat.format(USER_STOP_PRESENTATION, presenterName));
+
+        sendMessageForAllUsers(response, viewers);
     }
 
     public static void sendAllUsersNewChatMessage(ChatMessageDto chatMessageDto, List<UserSession> users) throws IOException {
@@ -135,8 +131,12 @@ public final class ConferenceSender {
         response.addProperty("id", "newChatMessage");
         response.add("data", dataMessage);
 
+        sendMessageForAllUsers(response, users);
+    }
+
+    private static void sendMessageForAllUsers(JsonObject message, Collection<UserSession> users) throws IOException {
         for (UserSession user : users) {
-            user.sendMessage(response);
+            user.sendMessage(message);
         }
     }
 

@@ -72,7 +72,7 @@
                                         pill
                                         v-b-tooltip.hover
                                         title="Прекратить показ"
-                                        variant="outline-success"
+                                        variant="outline-danger"
                                         @click="stop">
                                         Прекратить показ
                                     </b-button>
@@ -213,7 +213,7 @@ export default {
                 this.stopCommunication(parsedMessage)
                 break
             default:
-                console.error('Unrecognized message', parsedMessage)
+                break
             }
         },
         viewerRegistered: function (message) {
@@ -388,7 +388,7 @@ export default {
             this.sendMessage(message)
             this.dispose()
         },
-        stopCommunication: function ({message}) {
+        stopCommunication: function ({ message }) {
             this.isActivePresentation = false
             this.$bvToast.toast(message, {
                 variant: 'info',

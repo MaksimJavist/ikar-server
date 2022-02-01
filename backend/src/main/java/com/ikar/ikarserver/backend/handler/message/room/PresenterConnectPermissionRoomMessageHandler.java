@@ -1,6 +1,8 @@
 package com.ikar.ikarserver.backend.handler.message.room;
 
 import com.google.gson.JsonObject;
+import com.ikar.ikarserver.backend.domain.kurento.room.Room;
+import com.ikar.ikarserver.backend.domain.kurento.room.RoomManager;
 import com.ikar.ikarserver.backend.domain.kurento.room.RoomUserRegistry;
 import com.ikar.ikarserver.backend.domain.kurento.room.RoomUserSession;
 import lombok.RequiredArgsConstructor;
@@ -11,23 +13,20 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class ReceiveVideoMessageHandler implements RoomMessageHandler {
+public class PresenterConnectPermissionRoomMessageHandler implements RoomMessageHandler {
 
+    private final RoomManager roomManager;
     private final RoomUserRegistry registry;
 
     @Override
     public void process(JsonObject message, WebSocketSession session) throws IOException {
-        final RoomUserSession user = registry.getBySession(session);
-
-        final String senderUuid = message.get("uuid").getAsString();
-        final RoomUserSession sender = registry.getBySessionAndUuid(senderUuid, session);
-        final String sdpOffer = message.get("sdpOffer").getAsString();
-        user.receiveVideoFrom(sender, sdpOffer);
+        RoomUserSession user = registry.getBySession(session);
+        Room room = roomManager.getRoom(user.getRoomUuid());
+        room.presenterConnectPermission(user);
     }
 
     @Override
     public String getProcessedMessage() {
-        return "receiveVideoFrom";
+        return "presenterConnectPermission";
     }
-
 }

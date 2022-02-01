@@ -21,6 +21,7 @@ public class UserSession implements Closeable {
 
     private final String uuid;
     private final String username;
+    private final String conferenceIdentifier;
     private final WebSocketSession session;
     private WebRtcEndpoint webRtcEndpoint;
 
