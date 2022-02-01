@@ -18,6 +18,7 @@ import java.util.List;
 
 import static com.ikar.ikarserver.backend.util.Messages.NOT_ACTIVE_PRESENTER;
 import static com.ikar.ikarserver.backend.util.Messages.PRESENTER_BUSY;
+import static com.ikar.ikarserver.backend.util.Messages.USER_IS_BROADCASTING;
 import static com.ikar.ikarserver.backend.util.Messages.USER_STOP_PRESENTATION;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -38,10 +39,11 @@ public final class ConferenceSender {
         userSession.sendMessage(message);
     }
 
-    public static void sendAcceptViewerConnectPermissionResponse(UserSession session) throws IOException {
+    public static void sendAcceptViewerConnectPermissionResponse(UserSession session, String presenterName) throws IOException {
         JsonObject message = new JsonObject();
         message.addProperty("id", "viewerConnectPermissionResponse");
         message.addProperty("response", "accepted");
+        message.addProperty("message", MessageFormat.format(USER_IS_BROADCASTING, presenterName));
         session.sendMessage(message);
     }
 

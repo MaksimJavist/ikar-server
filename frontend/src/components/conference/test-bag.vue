@@ -17,8 +17,8 @@
         </b-container>
         <b-container class="vh-100" v-show="isRegisteredInConference" fluid>
             <b-row class="pt-3 justify-content-center" style="height: 80%; max-height: 80%">
-                <b-col cols="10" style="max-height: 100%" v-show="isActivePresentation">
-                    <video id="video" ref="conferenceVideo" style="max-height: 100%; object-fit: cover; border-width: medium !important;" autoplay class="w-100 rounded border border-info"></video>
+                <b-col cols="10 text-center" style="max-height: 100%" v-show="isActivePresentation">
+                    <video id="video" ref="conferenceVideo" style="max-height: 100%; object-fit: contain; border-width: medium !important;" autoplay class="rounded border border-info"></video>
                 </b-col>
                 <b-col cols="10" v-if="!isActivePresentation">
                     <b-card no-body class="h-100 border border-info justify-content-center" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
@@ -243,13 +243,12 @@ export default {
             this.sendMessage(message)
         },
         viewerConnectPermissionResponse: function (message) {
+            this.$bvToast.toast(message.message, {
+                variant: 'info',
+                solid: true
+            })
             if (message.response === 'accepted') {
                 this.viewer()
-            } else {
-                this.$bvToast.toast(message.message, {
-                    variant: 'info',
-                    solid: true
-                })
             }
         },
         presenterConnectPermission: function () {
