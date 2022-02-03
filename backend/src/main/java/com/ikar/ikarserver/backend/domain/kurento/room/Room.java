@@ -8,6 +8,7 @@ import com.ikar.ikarserver.backend.exception.websocket.RoomException;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.RoomChatMessageService;
 import com.ikar.ikarserver.backend.util.RoomSender;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.MediaPipeline;
 import org.kurento.client.WebRtcEndpoint;
@@ -17,6 +18,7 @@ import javax.annotation.PreDestroy;
 import java.io.Closeable;
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -46,6 +48,8 @@ public class Room implements Closeable {
     private final String identifier;
     private final AuthInfoService authInfoService;
 
+    @Getter
+    private final LocalDateTime createdTime = LocalDateTime.now();
     private final ConcurrentMap<String, RoomUserSession> participants = new ConcurrentHashMap<>();
     private String presenterUuid;
 
@@ -242,6 +246,17 @@ public class Room implements Closeable {
         return participants.containsKey(uuid);
     }
 
+    public void sendNewMessage(ChatMessageDto message) {
+        executor.submit(
+                () -> messageBuffer.addNewMessageInBuffer(message)
+        );
+        RoomSender.sendNewChatMessageForAllParticipants(message, participants.values());
+    }
+
+    public boolean isEmpty() {
+        return participants.isEmpty();
+    }
+
     @Override
     public void close() {
         for (final RoomUserSession user : participants.values()) {
@@ -254,13 +269,6 @@ public class Room implements Closeable {
         participants.clear();
         pipeline.release();
         log.debug("Room {} closed", this.identifier);
-    }
-
-    public void sendNewMessage(ChatMessageDto message) {
-        executor.submit(
-                () -> messageBuffer.addNewMessageInBuffer(message)
-        );
-        RoomSender.sendNewChatMessageForAllParticipants(message, participants.values());
     }
 
     private JsonArray getAllRoomMessages() {

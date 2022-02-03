@@ -13,6 +13,7 @@ public final class Messages {
     public static final String USER_START_PRESENTATION = "Пользователь {0} начал трансляцию";
     public static final String USER_STOP_PRESENTATION = "Пользователь {0} прекратил трансляцию";
 
+    public static final String ROOM_NOT_FOUND = "Комната не найдена.";
     public static final String ROOM_USER_NOT_FOUND = "Вы не являетесь участником комнаты.";
     public static final String ROOM_NEW_PARTICIPANT_ARRIVED = "Пользователь {0} поключился к комнате";
     public static final String ROOM_PARTICIPANT_LEFT = "Пользователь {0} покинул комнату";

@@ -43,6 +43,8 @@ public class Conference implements Closeable {
     private final ConcurrentHashMap<String, ConferenceUserSession> viewers = new ConcurrentHashMap<>();
     private final LocalDateTime creationTime = LocalDateTime.now();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    @Getter
+    private final LocalDateTime createdTime = LocalDateTime.now();
 
     private ConferenceUserSession presenter;
 
@@ -232,8 +234,12 @@ public class Conference implements Closeable {
         return uuid;
     }
 
+    public boolean isEmpty() {
+        return viewers.isEmpty() && presenter == null;
+    }
+
     @Override
-    public void close() throws IOException {
+    public void close() {
         pipeline.release();
         presenter.close();
         for (ConferenceUserSession user : viewers.values()) {

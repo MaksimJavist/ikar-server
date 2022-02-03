@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.KurentoClient;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -24,6 +24,10 @@ public class ConferenceManager {
     private final ConferenceChatMessageService messageService;
     private final ConcurrentMap<String, Conference> conferences = new ConcurrentHashMap<>();
 
+    public Collection<Conference> getAll() {
+        return conferences.values();
+    }
+
     public String createConference() {
         final String identifier = identifierService.generateIdentifierRoom();
         log.info("Creation conference with identifier {}", identifier);
@@ -33,14 +37,15 @@ public class ConferenceManager {
     }
 
     public Optional<Conference> getConference(String identifier) {
-        log.debug("Searching for conference {}", identifier);
         final Conference conference = conferences.get(identifier);
         return Optional.ofNullable(conference);
     }
 
-    public void removeConference(Conference conference) throws IOException {
-        conferences.remove(conference.getIdentifier());
-        log.info("Conference {} removed and closed", conference.getIdentifier());
+    public void removeConference(String identifier) {
+        Conference removedConference = conferences.get(identifier);
+        removedConference.close();
+        conferences.remove(identifier);
+        log.info("Conference {} removed and closed", identifier);
     }
 
 }

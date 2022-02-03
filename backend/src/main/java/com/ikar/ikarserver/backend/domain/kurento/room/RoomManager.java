@@ -1,15 +1,19 @@
 package com.ikar.ikarserver.backend.domain.kurento.room;
 
+import com.ikar.ikarserver.backend.exception.NotFoundException;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
-import com.ikar.ikarserver.backend.service.RoomChatMessageService;
 import com.ikar.ikarserver.backend.service.CallIdentifierGenerator;
+import com.ikar.ikarserver.backend.service.RoomChatMessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.KurentoClient;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static com.ikar.ikarserver.backend.util.Messages.ROOM_NOT_FOUND;
 
 @Slf4j
 @Component
@@ -22,6 +26,10 @@ public class RoomManager {
     private final RoomChatMessageService service;
     private final ConcurrentMap<String, Room> rooms = new ConcurrentHashMap<>();
 
+    public Collection<Room> getAll() {
+        return rooms.values();
+    }
+
     public String createRoom() {
         String roomIdentifier = identifierService.generateIdentifierRoom();
         log.info("Creation room with identifier {}", roomIdentifier);
@@ -30,23 +38,19 @@ public class RoomManager {
         return roomIdentifier;
     }
 
-    public Room getRoom(String roomName) {
-        log.debug("Searching for room {}", roomName);
-        Room room = rooms.get(roomName);
-
+    public Room getRoom(String identifier) {
+        Room room = rooms.get(identifier);
         if (room == null) {
-            log.debug("Room {} not existent. Will create now!", roomName);
-            room = new Room(roomName, kurento.createMediaPipeline(), service, authInfoService);
-            rooms.put(roomName, room);
+            throw new NotFoundException(ROOM_NOT_FOUND);
         }
-        log.debug("Room {} found!", roomName);
         return room;
     }
 
-    public void removeRoom(Room room) {
-        this.rooms.remove(room.getIdentifier());
-        room.close();
-        log.info("Room {} removed and closed", room.getIdentifier());
+    public void removeRoom(String identifier) {
+        Room removedRoom = rooms.get(identifier);
+        removedRoom.close();
+        rooms.remove(identifier);
+        log.info("Room {} removed and closed", identifier);
     }
 
 }

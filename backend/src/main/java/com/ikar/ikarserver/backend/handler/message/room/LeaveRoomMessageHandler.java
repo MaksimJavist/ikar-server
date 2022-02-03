@@ -23,10 +23,6 @@ public class LeaveRoomMessageHandler implements RoomMessageHandler {
         final RoomUserSession user = registry.removeBySession(session);
         final Room room = roomManager.getRoom(user.getRoomUuid());
         room.leave(user);
-
-        if (room.getParticipants().isEmpty()) {
-            roomManager.removeRoom(room);
-        }
     }
 
     @Override
