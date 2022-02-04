@@ -8,12 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class LoginController {
 
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping("/")
-    public String index() {
-        return "index";
-    }
-
     @PreAuthorize("isAnonymous()")
     @GetMapping("/login")
     public String login() {

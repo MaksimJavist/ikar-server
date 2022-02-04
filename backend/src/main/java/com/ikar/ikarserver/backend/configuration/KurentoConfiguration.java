@@ -40,7 +40,6 @@ public class KurentoConfiguration implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(roomHandler, "/groupcall")
                 .addHandler(conferenceHandler, "/conference")
-                .addHandler(conferenceHandler, "/newconference")
                 .setAllowedOriginPatterns("*");
     }
 
