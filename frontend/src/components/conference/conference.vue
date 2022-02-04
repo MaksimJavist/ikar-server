@@ -15,92 +15,107 @@
                     </b-card>
                 </b-col>
             </b-row>
-            <b-row class="pb-2 justify-content-center" align-v="center" style="height: 20%">
-                <b-col cols="8" style="height: 65%">
-                    <b-card no-body class="h-100 border border-info justify-content-center" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
-                        <div class="d-inline-block" style="margin: 0 10px">
-                            <span v-if="isPresenter">
-                                <span class="buttonGroup">
-                                    <b-button
-                                        v-if="onAudioFlag"
-                                        v-b-tooltip.hover
-                                        title="Выключить микрофон"
-                                        variant="outline-success"
-                                        @click="changeEnableAudio(false)">
-                                        <b-icon-mic/>
-                                    </b-button>
-                                    <b-button
-                                        v-else
-                                        v-b-tooltip.hover
-                                        title="Включить микрофон"
-                                        variant="outline-danger"
-                                        @click="changeEnableAudio(true)">
-                                        <b-icon-mic-mute/>
-                                    </b-button>
-                                </span>
-                                <span class="buttonGroup">
-                                    <b-button
-                                        v-if="onVideoFlag"
-                                        v-b-tooltip.hover
-                                        title="Выключить камеру"
-                                        variant="outline-success"
-                                        @click="changeEnableVideo(false)">
-                                        <b-icon-camera-video/>
-                                    </b-button>
-                                    <b-button
-                                        v-else
-                                        v-b-tooltip.hover
-                                        title="Включить камеру"
-                                        variant="outline-danger"
-                                        @click="changeEnableVideo(true)">
-                                        <b-icon-camera-video-off/>
-                                    </b-button>
-                                </span>
-                                <span class="buttonGroup">
-                                    <b-button
-                                        pill
-                                        v-b-tooltip.hover
-                                        title="Прекратить показ"
-                                        variant="outline-danger"
-                                        @click="stop">
-                                        Прекратить показ
-                                    </b-button>
-                                </span>
-                            </span>
-                            <span class="buttonGroup">
-                                <b-button
-                                    pill
-                                    v-b-tooltip.hover
-                                    @click="presenterConnectPermission"
-                                    title="Начать показ"
-                                    variant="outline-success">
-                                        Начать показ
-                                    </b-button>
-                            </span>
-                            <span class="buttonGroup">
-                                <b-button
-                                    variant="outline-info"
-                                    v-b-tooltip.hover
-                                    title="Открыть чат"
-                                    @click="switchChatVisible">
-                                    <b-icon-chat-dots/>
-                                </b-button>
-                            </span>
-                            <span class="buttonGroup">
-                                <b-button
-                                    pill
-                                    v-b-tooltip.hover
-                                    @click="exitFromConference"
-                                    title="Начать показ"
-                                    variant="outline-danger">
-                                        Покинуть трансляцию
-                                    </b-button>
-                            </span>
-                        </div>
-                    </b-card>
-                </b-col>
-            </b-row>
-            <Chat v-show="isChatVisible" :sender-uuid="uuid" :chat-messages="chatMessages" @send-chat="sendChatMessage"/>
+            <ConferenceBottomPanel :presenter-flag="isPresenter"
+                                   :enable-audio-flag="onAudioFlag"
+                                   :enable-video-flag="onVideoFlag"
+                                   :unchecked-messages-count="uncheckedMessages"
+                                   @change-audio="changeEnableAudio"
+                                   @change-video="changeEnableVideo"
+                                   @stop-presentation="stop"
+                                   @start-presentation="presenterConnectPermission"
+                                   @show-chat="switchChatVisible"
+                                   @exit="exitFromConference"/>
+<!--            <b-row class="pb-2 justify-content-center" align-v="center" style="height: 20%">-->
+<!--                <b-col cols="8" style="height: 65%">-->
+<!--                    <b-card no-body class="h-100 border border-info justify-content-center" align="center" style="background-color: #e1e2e3; border-width: medium !important;">-->
+<!--                        <div class="d-inline-block" style="margin: 0 10px">-->
+<!--                            <span v-if="isPresenter">-->
+<!--                                <span class="buttonGroup">-->
+<!--                                    <b-button-->
+<!--                                        v-if="onAudioFlag"-->
+<!--                                        v-b-tooltip.hover-->
+<!--                                        title="Выключить микрофон"-->
+<!--                                        variant="outline-success"-->
+<!--                                        @click="changeEnableAudio(false)">-->
+<!--                                        <b-icon-mic/>-->
+<!--                                    </b-button>-->
+<!--                                    <b-button-->
+<!--                                        v-else-->
+<!--                                        v-b-tooltip.hover-->
+<!--                                        title="Включить микрофон"-->
+<!--                                        variant="outline-danger"-->
+<!--                                        @click="changeEnableAudio(true)">-->
+<!--                                        <b-icon-mic-mute/>-->
+<!--                                    </b-button>-->
+<!--                                </span>-->
+<!--                                <span class="buttonGroup">-->
+<!--                                    <b-button-->
+<!--                                        v-if="onVideoFlag"-->
+<!--                                        v-b-tooltip.hover-->
+<!--                                        title="Выключить камеру"-->
+<!--                                        variant="outline-success"-->
+<!--                                        @click="changeEnableVideo(false)">-->
+<!--                                        <b-icon-camera-video/>-->
+<!--                                    </b-button>-->
+<!--                                    <b-button-->
+<!--                                        v-else-->
+<!--                                        v-b-tooltip.hover-->
+<!--                                        title="Включить камеру"-->
+<!--                                        variant="outline-danger"-->
+<!--                                        @click="changeEnableVideo(true)">-->
+<!--                                        <b-icon-camera-video-off/>-->
+<!--                                    </b-button>-->
+<!--                                </span>-->
+<!--                                <span class="buttonGroup">-->
+<!--                                    <b-button-->
+<!--                                        pill-->
+<!--                                        v-b-tooltip.hover-->
+<!--                                        title="Прекратить показ"-->
+<!--                                        variant="outline-danger"-->
+<!--                                        @click="stop">-->
+<!--                                        Прекратить показ-->
+<!--                                    </b-button>-->
+<!--                                </span>-->
+<!--                            </span>-->
+<!--                            <span class="buttonGroup">-->
+<!--                                <b-button-->
+<!--                                    pill-->
+<!--                                    v-b-tooltip.hover-->
+<!--                                    @click="presenterConnectPermission"-->
+<!--                                    title="Начать показ"-->
+<!--                                    variant="outline-success">-->
+<!--                                        Начать показ-->
+<!--                                    </b-button>-->
+<!--                            </span>-->
+<!--                            <span class="buttonGroup">-->
+<!--                                <b-button-->
+<!--                                    :variant="uncheckedMessages === 0 ? 'outline-info' : 'info'"-->
+<!--                                    v-b-tooltip.hover-->
+<!--                                    :title="uncheckedMessages === 0 ? 'Открыть чат' : `У вас ${ uncheckedMessages } непрочитанных сообщений`"-->
+<!--                                    @click="switchChatVisible">-->
+<!--                                    <b-icon-chat-dots/>-->
+<!--                                    <span v-if="uncheckedMessages !== 0" class="pl-1">+{{ uncheckedMessages }}</span>-->
+<!--                                </b-button>-->
+<!--                            </span>-->
+<!--                            <span class="buttonGroup">-->
+<!--                                <b-button-->
+<!--                                    pill-->
+<!--                                    v-b-tooltip.hover-->
+<!--                                    @click="exitFromConference"-->
+<!--                                    title="Начать показ"-->
+<!--                                    variant="outline-danger">-->
+<!--                                        Покинуть трансляцию-->
+<!--                                    </b-button>-->
+<!--                            </span>-->
+<!--                        </div>-->
+<!--                    </b-card>-->
+<!--                </b-col>-->
+<!--            </b-row>-->
+            <Chat v-show="isChatVisible"
+                  :sender-uuid="uuid"
+                  :chat-messages="chatMessages"
+                  @send-chat="sendChatMessage"
+                  @check-message="checkMessage"/>
         </b-container>
     </div>
 </template>
@@ -109,6 +124,7 @@
 import Chat from '@/components/common/chat'
 import WebRtcPeer from '@/util/WebRtcPeer'
 import JoinFrame from '@/components/common/join-frame'
+import ConferenceBottomPanel from '@/components/conference/conference-bottom-panel'
 import api from '@/api'
 
 export default {
@@ -134,7 +150,8 @@ export default {
     },
     components: {
         Chat,
-        JoinFrame
+        JoinFrame,
+        ConferenceBottomPanel
     },
     beforeCreate() {
         api.getAuthInfo()
@@ -159,12 +176,28 @@ export default {
             }
         }
     },
+    computed: {
+        uncheckedMessages: function () {
+            return this.chatMessages.filter(message => !message.checked && message.senderUuid !== this.uuid).length
+        }
+    },
     methods: {
         baseUrl: function () {
             return process.env.BASE_URL
         },
-        checkMessage: function (messageUuid) {
-            console.log(messageUuid)
+        checkMessage: function (index) {
+            const indexes = []
+            this.chatMessages
+                .forEach((element, indexElement) => {
+                    if (element.senderUuid !== this.uuid && indexElement <= index) {
+                        indexes.push(index)
+                    }
+                })
+            indexes.forEach(indexMessage => {
+                const message = this.chatMessages[indexMessage]
+                message.checked = true
+                this.chatMessages.splice(indexMessage, 1, message)
+            })
         },
         updateUsername: function (value) {
             this.userName = value
