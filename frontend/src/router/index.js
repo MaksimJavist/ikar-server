@@ -1,6 +1,6 @@
 import VueRouter from "vue-router"
 
-import CreateCall from '@/components/manage/create-call'
+import CreateCall from '@/components/main/main-page'
 import Room from '@/components/room/room'
 import Conference from "@/components/conference/conference"
 

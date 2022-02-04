@@ -1,20 +1,9 @@
 <template>
     <div>
-        <b-container fluid v-if="joinFrameVisible">
-            <b-row class="vh-100 justify-content-center" align-v="center">
-                <b-col cols="4">
-                    <b-card title="Присоедениться к комнате" align="center">
-                        <b-form-input v-if="!authenticatedUser"
-                                      class="mt-3 mb-3 text-center"
-                                      v-model="userName"
-                                      placeholder="Введите имя"/>
-                        <b-button class="w-50" @click="connectRoom" variant="outline-success" pill>
-                            Присоедениться
-                        </b-button>
-                    </b-card>
-                </b-col>
-            </b-row>
-        </b-container>
+        <JoinFrame v-if="joinFrameVisible"
+                   :name="userName"
+                   @connect="connectRoom"
+                   @update-username="updateUsername"/>
         <b-container class="vh-100" fluid v-else>
             <b-row class="pt-4 justify-content-center" style="height: 85%">
                 <b-col cols="10 text-center" style="max-height: 100%">
@@ -134,17 +123,19 @@
 </template>
 
 <script>
-import Chat from '@/components/chat'
+import Chat from '@/components/common/chat'
 import ParticipantMixin from '@/mixin/ParticipantMixin'
 import RoomParticipantsMixin from '@/mixin/room-participants-mixin'
 import RoomConferenceMixin from '@/mixin/room-conference-mixin'
 import ParticipantLocal from '@/components/room/participant/participant-local'
 import ParticipantRemote from '@/components/room/participant/participant-remote'
+import JoinFrame from "@/components/common/join-frame"
 import api from '@/api'
 
 export default {
     name: "room",
     components: {
+        JoinFrame,
         ParticipantLocal,
         ParticipantRemote,
         Chat
@@ -152,7 +143,8 @@ export default {
     mixins: [
         ParticipantMixin,
         RoomParticipantsMixin,
-        RoomConferenceMixin
+        RoomConferenceMixin,
+        JoinFrame
     ],
     data() {
         return {
@@ -207,6 +199,9 @@ export default {
         }
     },
     methods: {
+        updateUsername: function (value) {
+            this.userName = value
+        },
         connectRoom: function () {
             this.socket = new WebSocket('ws://localhost:8080/groupcall')
             this.socket.onopen = this.joinRoom

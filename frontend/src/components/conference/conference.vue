@@ -1,20 +1,9 @@
 <template>
     <div>
-        <b-container fluid v-if="joinFrameVisible">
-            <b-row class="vh-100 justify-content-center" align-v="center">
-                <b-col cols="4">
-                    <b-card title="Присоедениться к конференции" align="center">
-                        <b-form-input v-if="!authenticatedUser"
-                                      class="mt-3 mb-3 text-center"
-                                      v-model="userName"
-                                      placeholder="Введите имя"/>
-                        <b-button class="w-50" @click="connectConference" variant="outline-success" pill>
-                            Присоедениться
-                        </b-button>
-                    </b-card>
-                </b-col>
-            </b-row>
-        </b-container>
+        <JoinFrame v-if="joinFrameVisible"
+                   :name="userName"
+                   @connect="connectConference"
+                   @update-username="updateUsername"/>
         <b-container class="vh-100" v-show="isRegisteredInConference" fluid>
             <b-row class="pt-3 justify-content-center" style="height: 80%; max-height: 80%">
                 <b-col cols="10 text-center" style="max-height: 100%" v-show="isActivePresentation">
@@ -117,8 +106,9 @@
 </template>
 
 <script>
-import Chat from '@/components/chat'
+import Chat from '@/components/common/chat'
 import WebRtcPeer from '@/util/WebRtcPeer'
+import JoinFrame from '@/components/common/join-frame'
 import api from '@/api'
 
 export default {
@@ -143,7 +133,8 @@ export default {
         }
     },
     components: {
-        Chat
+        Chat,
+        JoinFrame
     },
     beforeCreate() {
         api.getAuthInfo()
@@ -172,8 +163,14 @@ export default {
         baseUrl: function () {
             return process.env.BASE_URL
         },
+        checkMessage: function (messageUuid) {
+            console.log(messageUuid)
+        },
+        updateUsername: function (value) {
+            this.userName = value
+        },
         connectConference: function () {
-            this.webSocket = new WebSocket('ws://localhost:8080/newconference')
+            this.webSocket = new WebSocket('ws://localhost:8080/conference')
             this.webSocket.onopen = this.setSettingSocket
         },
         setSettingSocket: function () {
@@ -414,6 +411,13 @@ export default {
             this.sendMessage(message)
         },
         newChatMessage: function (chatMessage) {
+            if (chatMessage.senderUuid !== this.uuid) {
+                this.$bvToast.toast(chatMessage.text, {
+                    title: chatMessage.senderName,
+                    variant: 'primary',
+                    solid: true
+                })
+            }
             this.chatMessages.push(chatMessage)
         },
         errorResponse: function (message) {
