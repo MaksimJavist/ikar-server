@@ -197,7 +197,7 @@ public class Conference implements Closeable {
         }
     }
 
-    private void sendAllUsersNewChatMessage(ChatMessageDto chatMessage) throws IOException {
+    private void sendAllUsersNewChatMessage(ChatMessageDto chatMessage) {
         final List<ConferenceUserSession> allUsersForSend = new ArrayList<>(viewers.values());
         if (presenter != null) {
             allUsersForSend.add(presenter);
