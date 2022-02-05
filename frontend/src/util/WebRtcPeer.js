@@ -698,8 +698,22 @@ function WebRtcPeer(mode, options, callback) {
             self.showLocalVideo()
         }
 
+        function installEnabledTrack(track) {
+            switch (track.kind) {
+                case 'audio':
+                    track.enabled = options.mediaUseOptions.audio !== undefined ? options.mediaUseOptions.audio : true
+                    break
+                case 'video':
+                    track.enabled = options.mediaUseOptions.video !== undefined ? options.mediaUseOptions.video : true
+                    break
+            }
+        }
+
         if (videoStream) {
             videoStream.getTracks().forEach(function (track) {
+                if (options.mediaUseOptions) {
+                    installEnabledTrack(track)
+                }
                 pc.addTrack(track, videoStream)
             })
         }

@@ -19,6 +19,24 @@
                             Поле не может содержать более {{ $v.name.$params.maxLength.max }} символов
                         </div>
                     </div>
+                    <div>
+                        <b-form-checkbox
+                            size="lg"
+                            class="d-inline-block mr-5"
+                            :checked="audioEnableFlag"
+                            @change="changeMicroEnableFlagEmit($event)"
+                        >
+                            Микрофон
+                        </b-form-checkbox>
+                        <b-form-checkbox
+                            size="lg"
+                            class="d-inline-block"
+                            :checked="videoEnableFlag"
+                            @change="changeVideoEnabledEmit($event)"
+                        >
+                            Камера
+                        </b-form-checkbox>
+                    </div>
                     <b-row class="justify-content-center mt-4 mb-3">
                         <b-button class="w-50" @click="connectRoom" variant="outline-success" pill>
                             Присоедениться
@@ -42,6 +60,8 @@ export default {
     name: "join-frame",
     props: {
         name: String,
+        audioEnableFlag: Boolean,
+        videoEnableFlag: Boolean
     },
     validations: {
         name: {
@@ -70,6 +90,12 @@ export default {
         },
         propertyHasError: function (property) {
             return this.$v[property].$error
+        },
+        changeMicroEnableFlagEmit: function (event) {
+            this.$emit('change-micro-enable', event)
+        },
+        changeVideoEnabledEmit: function (event) {
+            this.$emit('change-video-enable', event)
         }
     }
 }

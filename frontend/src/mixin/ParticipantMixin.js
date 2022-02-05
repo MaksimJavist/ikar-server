@@ -1,12 +1,12 @@
-import KurentoUtils from 'kurento-utils'
+import WebRtcPeer from '@/util/WebRtcPeer'
 
 const ParticipantMixin = {
     methods: {
         createWebRtcPeerForReceiver: function (options, participant) {
-            return new KurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options, generateOfferCallback(participant))
+            return new WebRtcPeer.WebRtcPeerSendonly(options, generateOfferCallback(participant))
         },
         createWebRtcPeerForSender: function (options, participant) {
-            return new KurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options, generateOfferCallback(participant))
+            return new WebRtcPeer.WebRtcPeerRecvonly(options, generateOfferCallback(participant))
         },
         getParticipantByUuid: function (uuid) {
             return this.participants.find(el => el.uuid === uuid)

@@ -24,7 +24,11 @@ const roomParticipantsMixin = {
             const options = {
                 localVideo: video,
                 mediaConstraints: constraints,
-                onicecandidate: participant.onIceCandidate.bind(participant)
+                onicecandidate: participant.onIceCandidate.bind(participant),
+                mediaUseOptions: {
+                    audio: this.microEnable,
+                    video: this.videoEnable
+                }
             }
             participant.rtcPeer = this.createWebRtcPeerForReceiver(options, participant)
             this.participants.push(participant)

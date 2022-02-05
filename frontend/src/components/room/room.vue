@@ -2,6 +2,10 @@
     <div>
         <JoinFrame v-if="joinFrameVisible"
                    :name="userName"
+                   :audio-enable-flag="microEnable"
+                   :video-enable-flag="videoEnable"
+                   @change-micro-enable="changeMicroDisabled"
+                   @change-video-enable="changeVideoEnabled"
                    @connect="connectRoom"
                    @update-username="updateUsername"/>
         <b-container class="vh-100" fluid v-else>
@@ -107,10 +111,14 @@ export default {
     },
     watch: {
         microEnable: function (newVal) {
-            this.getLocalParticipant.rtcPeer.audioEnabled = newVal
+            if (this.getLocalParticipant && this.getLocalParticipant.rtcPeer) {
+                this.getLocalParticipant.rtcPeer.audioEnabled = newVal
+            }
         },
         videoEnable: function (newVal) {
-            this.getLocalParticipant.rtcPeer.videoEnabled = newVal
+            if (this.getLocalParticipant && this.getLocalParticipant.rtcPeer) {
+                this.getLocalParticipant.rtcPeer.videoEnabled = newVal
+            }
         }
     },
     computed: {
@@ -229,31 +237,9 @@ export default {
         },
         changeMicroDisabled: function (value) {
             this.microEnable = value
-            if (value) {
-                this.$bvToast.toast('Микрофон включен', {
-                    variant: 'info',
-                    solid: true
-                })
-            } else {
-                this.$bvToast.toast('Микрофон выключен', {
-                    variant: 'info',
-                    solid: true
-                })
-            }
         },
         changeVideoEnabled: function (value) {
             this.videoEnable = value
-            if (value) {
-                this.$bvToast.toast('Камера включена', {
-                    variant: 'info',
-                    solid: true
-                })
-            } else {
-                this.$bvToast.toast('Камера выключена', {
-                    variant: 'info',
-                    solid: true
-                })
-            }
         },
         sendChatMessage: function (chatMessage) {
             const message = {
