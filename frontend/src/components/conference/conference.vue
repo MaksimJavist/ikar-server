@@ -29,7 +29,8 @@
                   :sender-uuid="uuid"
                   :chat-messages="chatMessages"
                   @send-chat="sendChatMessage"
-                  @check-message="checkMessage"/>
+                  @check-message="checkMessage"
+                  @hide-chat="hideChat"/>
         </b-container>
     </div>
 </template>
@@ -414,6 +415,9 @@ export default {
                     })
                 }
             }
+        },
+        hideChat: function () {
+            this.isChatVisible = false
         },
         switchChatVisible: function () {
             this.isChatVisible = !this.isChatVisible

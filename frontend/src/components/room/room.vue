@@ -39,6 +39,7 @@
             <Chat v-show="chatVisible"
                   :sender-uuid="localParticipantUuid"
                   :chat-messages="chatMessages"
+                  @hide-chat="hideChat"
                   @send-chat="sendChatMessage"
                   @check-message="checkMessage"/>
         </b-container>
@@ -226,15 +227,6 @@ export default {
         newChatMessage: function (chatMessage) {
             this.chatMessages.push(chatMessage)
         },
-        getRoomFullReference: function () {
-            return window.location.href
-        },
-        copyLinkToast: function () {
-            this.$bvToast.toast('Ссылка на конференцию успешно скопирована', {
-                variant: 'primary',
-                solid: true
-            })
-        },
         changeMicroDisabled: function (value) {
             this.microEnable = value
             if (value) {
@@ -275,6 +267,9 @@ export default {
                 variant: 'danger',
                 solid: true
             })
+        },
+        hideChat: function () {
+            this.chatVisible = false
         },
         switchChatVisible: function () {
             this.chatVisible = !this.chatVisible

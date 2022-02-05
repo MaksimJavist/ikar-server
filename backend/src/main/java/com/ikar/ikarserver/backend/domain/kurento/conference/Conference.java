@@ -241,7 +241,9 @@ public class Conference implements Closeable {
     @Override
     public void close() {
         pipeline.release();
-        presenter.close();
+        if (presenter != null) {
+            presenter.close();
+        }
         for (ConferenceUserSession user : viewers.values()) {
             user.close();
         }

@@ -1,6 +1,14 @@
 <template>
     <b-card class="w-25 border border-primary position-fixed rounded text-center"
             style="height: 500px; border-width: medium !important; bottom: 3%; right: 3%; background-color: #e1e2e3;">
+        <b-button
+            class="position-absolute"
+            style="right: 5px; top: 5px"
+            variant="outline-danger"
+            title="Закрыть"
+            @click="hideChatEmit">
+            <b-icon-x/>
+        </b-button>
         <h3>Чат</h3>
         <div ref="chatDiv" class="mb-4 bg-white text-white rounded overflow-auto" style="height: 65%">
             <span v-for="(message, index) in chatMessages" :key="index">
@@ -60,6 +68,9 @@ export default {
             if (!this.chatMessages[index].checked) {
                 this.$emit('check-message', index)
             }
+        },
+        hideChatEmit: function () {
+            this.$emit('hide-chat')
         }
     }
 }
