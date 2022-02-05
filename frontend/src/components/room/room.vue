@@ -25,99 +25,22 @@
                     </b-card>
                 </b-col>
             </b-row>
-            <b-row v-if="getLocalParticipant" class="justify-content-center" align-v="center" style="height: 15%">
-                <b-col cols="7" class="h-75">
-                    <b-card no-body class="h-100 border border-info justify-content-center" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
-                        <div class="d-inline-block" style="margin: 0 10px">
-                            <span class="buttonGroup">
-                                <b-button
-                                    v-if="isPresenter"
-                                    pill
-                                    v-b-tooltip.hover
-                                    @click="stopCommunication"
-                                    title="Прекратить показ"
-                                    variant="outline-danger">
-                                    Прекратить показ
-                                </b-button>
-                                <b-button
-                                    v-else
-                                    pill
-                                    v-b-tooltip.hover
-                                    @click="presenterConnectPermission"
-                                    title="Начать показ"
-                                    variant="outline-success">
-                                    Начать показ
-                                </b-button>
-                            </span>
-                            <span class="buttonGroup">
-                                <b-button v-if="microEnable"
-                                          v-b-tooltip.hover
-                                          title="Выключить микрофон"
-                                          @click="changeMicroDisabled(false)"
-                                          variant="outline-success">
-                                    <b-icon-mic/>
-                                </b-button>
-                                <b-button
-                                    v-else
-                                    v-b-tooltip.hover
-                                    title="Включить микрофон"
-                                    @click="changeMicroDisabled(true)"
-                                    variant="outline-danger">
-                                    <b-icon-mic-mute/>
-                                </b-button>
-                            </span>
-                            <span class="buttonGroup">
-                                <b-button
-                                    v-if="videoEnable"
-                                    v-b-tooltip.hover
-                                    title="Выключить камеру"
-                                    @click="changeVideoEnabled(false)"
-                                    variant="outline-success">
-                                    <b-icon-camera-video/>
-                                </b-button>
-                                <b-button
-                                    v-else
-                                    v-b-tooltip.hover
-                                    title="Включить камеру"
-                                    @click="changeVideoEnabled(true)"
-                                    variant="outline-danger">
-                                    <b-icon-camera-video-off/>
-                                </b-button>
-                            </span>
-                            <span class="buttonGroup">
-                                <b-button
-                                    variant="outline-primary"
-                                    v-b-tooltip.hover
-                                    title="Скопировать ссылку на конференцию"
-                                    v-clipboard:copy="getRoomFullReference()"
-                                    @click="copyLinkToast">
-                                <b-icon-share/>
-                            </b-button>
-                            </span>
-                            <span class="buttonGroup">
-                                <b-button
-                                    variant="outline-info"
-                                    v-b-tooltip.hover
-                                    title="Открыть чат"
-                                    @click="switchChatVisible">
-                                    <b-icon-chat-dots/>
-                                </b-button>
-                            </span>
-                            <span class="buttonGroup">
-                                <b-button
-                                    pill
-                                    variant="outline-danger"
-                                    v-b-tooltip.hover
-                                    title="Покинуть комнату"
-                                    @click="exitFromRoom">
-                                    Покинуть комнату
-                                </b-button>
-                            </span>
-                        </div>
-                    </b-card>
-                </b-col>
-            </b-row>
-            <Chat v-show="chatVisible" :sender-uuid="localParticipantUuid" :chat-messages="chatMessages" @send-chat="sendChatMessage"/>
+            <RoomBottomPanel v-if="getLocalParticipant"
+                             :presenter-flag="isPresenter"
+                             :audio-enable-flag="microEnable"
+                             :video-enable-flag="videoEnable"
+                             :unchecked-messages-count="uncheckedMessages"
+                             @stop-communication="stopCommunication"
+                             @presenter-connect="presenterConnectPermission"
+                             @change-audio="changeMicroDisabled"
+                             @change-video="changeVideoEnabled"
+                             @switch-chat-visible="switchChatVisible"
+                             @exit-room="exitFromRoom"/>
+            <Chat v-show="chatVisible"
+                  :sender-uuid="localParticipantUuid"
+                  :chat-messages="chatMessages"
+                  @send-chat="sendChatMessage"
+                  @check-message="checkMessage"/>
         </b-container>
     </div>
 </template>
@@ -130,6 +53,7 @@ import RoomConferenceMixin from '@/mixin/room-conference-mixin'
 import ParticipantLocal from '@/components/room/participant/participant-local'
 import ParticipantRemote from '@/components/room/participant/participant-remote'
 import JoinFrame from "@/components/common/join-frame"
+import RoomBottomPanel from '@/components/room/room-bottom-panel'
 import api from '@/api'
 
 export default {
@@ -138,6 +62,7 @@ export default {
         JoinFrame,
         ParticipantLocal,
         ParticipantRemote,
+        RoomBottomPanel,
         Chat
     },
     mixins: [
@@ -196,11 +121,28 @@ export default {
         },
         getFilledParticipants: function () {
             return this.participants.filter(el => el.name && el.video && el.rtcPeer)
+        },
+        uncheckedMessages: function () {
+            return this.chatMessages.filter(message => !message.checked && message.senderUuid !== this.localParticipantUuid).length
         }
     },
     methods: {
         updateUsername: function (value) {
             this.userName = value
+        },
+        checkMessage: function (index) {
+            const indexes = []
+            this.chatMessages
+                .forEach((element, indexElement) => {
+                    if (element.senderUuid !== this.localParticipantUuid && indexElement <= index) {
+                        indexes.push(index)
+                    }
+                })
+            indexes.forEach(indexMessage => {
+                const message = this.chatMessages[indexMessage]
+                message.checked = true
+                this.chatMessages.splice(indexMessage, 1, message)
+            })
         },
         connectRoom: function () {
             this.socket = new WebSocket('ws://localhost:8080/groupcall')
