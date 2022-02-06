@@ -130,10 +130,7 @@ public class Conference implements Closeable {
             ConferenceSender.sendPresenterResponseSdpAnswer(presenter, sdpAnswer);
         }
         presenterWebRtc.gatherCandidates();
-
-        synchronized (presenter) {
-            ConferenceSender.sendNewPresenterForAllViewers(viewers.values(), presenter.getUsername());
-        }
+        ConferenceSender.sendNewPresenterForAllViewers(viewers.values(), presenter.getUsername());
     }
 
     private void newViewer(final WebSocketSession session, JsonObject jsonMessage)

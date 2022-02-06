@@ -241,6 +241,10 @@ export default {
                     if (error)
                         return console.error(error)
                 })
+                this.$bvToast.toast('Трансляция начата', {
+                    variant: 'info',
+                    solid: true
+                })
             }
         },
         viewerResponse: function (message) {
@@ -258,7 +262,7 @@ export default {
         presenter: function () {
             if (!this.webRtcPeer) {
                 const constraints = {
-                    audio : this.onAudioFlag,
+                    audio : true,
                     video : {
                         width: screen.width,
                         height: screen.height,
@@ -271,18 +275,30 @@ export default {
                     localVideo : this.$refs.conferenceVideo,
                     onicecandidate : this.onIceCandidate,
                     mediaConstraints: constraints,
-                    sendSource: 'conference'
+                    sendSource: 'conference',
+                    mediaUseOptions: {
+                        audio: this.onAudioFlag,
+                        video: this.onVideoFlag
+                    }
                 }
                 const onOfferPresenterCallback = this.onOfferPresenter
                 const disposePeerCallback = this.dispose
+                const warningToastCallback = this.warningToast
                 this.webRtcPeer = new WebRtcPeer.WebRtcPeerSendonly(options,
                     function(error) {
                         if (error) {
+                            warningToastCallback()
                             return disposePeerCallback()
                         }
                         this.generateOffer(onOfferPresenterCallback)
                     })
             }
+        },
+        warningToast: function () {
+            this.$bvToast.toast('Не удалось получить доступ к камере или микрофону, проверите разрешения вашего браузера.', {
+                variant: 'warning',
+                solid: true
+            })
         },
         onOfferPresenter: function (error, offerSdp) {
             if (error)
@@ -342,14 +358,18 @@ export default {
             }
             this.sendMessage(message)
             this.dispose()
+            this.$bvToast.toast('Трансляция закончена', {
+                variant: 'info',
+                solid: true
+            })
         },
         stopCommunication: function ({ message }) {
+            this.dispose()
             this.isActivePresentation = false
             this.$bvToast.toast(message, {
                 variant: 'info',
                 solid: true
             })
-            this.dispose()
         },
         sendChatMessage: function (chatMessage) {
             const message = {
@@ -387,33 +407,11 @@ export default {
         changeEnableAudio: function (value) {
             if (this.webRtcPeer) {
                 this.onAudioFlag = value
-                if (value) {
-                    this.$bvToast.toast('Микрофон включен', {
-                        variant: 'info',
-                        solid: true
-                    })
-                } else {
-                    this.$bvToast.toast('Микрофон выключен', {
-                        variant: 'info',
-                        solid: true
-                    })
-                }
             }
         },
         changeEnableVideo: function (value) {
             if (this.webRtcPeer) {
                 this.onVideoFlag = value
-                if (value) {
-                    this.$bvToast.toast('Видео включено', {
-                        variant: 'info',
-                        solid: true
-                    })
-                } else {
-                    this.$bvToast.toast('Видео выключено', {
-                        variant: 'info',
-                        solid: true
-                    })
-                }
             }
         },
         hideChat: function () {

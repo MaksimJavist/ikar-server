@@ -720,6 +720,9 @@ function WebRtcPeer(mode, options, callback) {
 
         if (audioStream) {
             audioStream.getTracks().forEach(function (track) {
+                if (options.mediaUseOptions) {
+                    installEnabledTrack(track)
+                }
                 pc.addTrack(track, audioStream)
             })
         }
@@ -751,25 +754,13 @@ function WebRtcPeer(mode, options, callback) {
                 constraints = MEDIA_CONSTRAINTS;
             }
             navigator.mediaDevices.getDisplayMedia(constraints).then(function (screenStream) {
-                navigator.mediaDevices.getUserMedia({audio: true, video: false})
+                navigator.mediaDevices.getUserMedia({ audio: true, video: false })
                     .then(microStream => {
-                        const microMediaStream = new MediaStream([microStream.getAudioTracks()[0]]);
-
-                        const audioContext = new AudioContext();
-                        const audioSourceMicro = audioContext.createMediaStreamSource(microMediaStream);
-                        const destination = audioContext.createMediaStreamDestination();
-                        audioSourceMicro.connect(destination);
-
-                        if (screenStream.getAudioTracks()[0]) {
-                            const screenAudioMediaStream = new MediaStream([screenStream.getAudioTracks()[0]]);
-                            const audioSourceSystem = audioContext.createMediaStreamSource(screenAudioMediaStream);
-                            audioSourceSystem.connect(destination);
-                        }
-
-                        videoStream = new MediaStream([screenStream.getVideoTracks()[0]]);
-                        audioStream = new MediaStream([destination.stream.getAudioTracks()[0]]);
+                        videoStream = screenStream
+                        audioStream = microStream
                         start();
                     })
+                    .catch(callback)
             }).catch(callback);
         }
         function getDisplay(constraints) {
