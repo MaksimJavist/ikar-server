@@ -2,8 +2,12 @@ package com.ikar.ikarserver.backend.util;
 
 public final class Messages {
 
-    public static final String NOT_FOUND_USER = "Пользователь с именем {0} не найден";
-    public static final String BUSY_USERNAME = "Имя пользователя {0} уже используется";
+    public static final String NOT_FOUND_USER_ERROR = "Пользователь не найден.";
+    public static final String BUSY_USERNAME_ERROR = "Имя пользователя {0} уже используется.";
+    public static final String EMPTY_USER_USERNAME_ERROR = "Логин пользователя не может быть пустым.";
+    public static final String EMPTY_USER_PASSWORD_ERROR = "Пароль не может быть пустым";
+    public static final String EMPTY_USER_FIRSTNAME_ERROR = "Имя пользователя не может быть пустым.";
+    public static final String EMPTY_USER_SECONDNAME_ERROR = "Фамилия пользователя не может быть пустой.";
 
     public static final String USER_IS_BROADCASTING = "Пользователь {0} ведет трансляцию";
     public static final String PRESENTER_BUSY = "В настоящее время презентующим выступает другой пользователь.";

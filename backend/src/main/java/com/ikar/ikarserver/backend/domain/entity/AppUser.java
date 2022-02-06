@@ -14,35 +14,41 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Null;
 
+import java.util.UUID;
+
+import static com.ikar.ikarserver.backend.util.Messages.EMPTY_USER_FIRSTNAME_ERROR;
+import static com.ikar.ikarserver.backend.util.Messages.EMPTY_USER_PASSWORD_ERROR;
+import static com.ikar.ikarserver.backend.util.Messages.EMPTY_USER_SECONDNAME_ERROR;
+import static com.ikar.ikarserver.backend.util.Messages.EMPTY_USER_USERNAME_ERROR;
+
 @Getter
 @Setter
 @Entity
-@Table(name = "app_user", schema = "public")
+@Table(name = "app_user")
 public class AppUser {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @NotBlank
+    @GeneratedValue
+    @Column(name = "uuid")
     @NotNull(groups = Marker.Update.class)
     @Null(groups = Marker.Create.class)
-    private Long id;
+    private UUID uuid;
 
-    @NotBlank
-    @Column(name = "uuid")
-    private String uuid;
-
-    @NotBlank
     @Column(name = "username")
+    @NotBlank(message = EMPTY_USER_USERNAME_ERROR)
     private String username;
 
-    @NotBlank
     @Column(name = "password")
+    @NotBlank(message = EMPTY_USER_PASSWORD_ERROR)
     private String password;
 
     @Column(name = "first_name")
+    @NotBlank(message = EMPTY_USER_FIRSTNAME_ERROR)
     private String firstName;
 
     @Column(name = "second_name")
+    @NotBlank(message = EMPTY_USER_SECONDNAME_ERROR)
     private String secondName;
 
     @Column(name = "middle_name")

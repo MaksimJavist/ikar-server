@@ -52,7 +52,7 @@
 
 <script>
 import Chat from '@/components/common/chat'
-import ParticipantMixin from '@/mixin/ParticipantMixin'
+import ParticipantMixin from '@/mixin/participant-mixin'
 import RoomParticipantsMixin from '@/mixin/room-participants-mixin'
 import RoomConferenceMixin from '@/mixin/room-conference-mixin'
 import ParticipantLocal from '@/components/room/participant/participant-local'

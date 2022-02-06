@@ -7,8 +7,6 @@ import lombok.Setter;
 @Setter
 public class AuthUserInfo {
 
-    private Long id;
-
     private String uuid;
 
     private String username;

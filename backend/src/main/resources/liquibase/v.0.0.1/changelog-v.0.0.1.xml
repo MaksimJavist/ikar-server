@@ -7,5 +7,6 @@
     <include file="liquibase/v.0.0.1/20-12-2021-create-chat-messages-table.xml"/>
     <include file="liquibase/v.0.0.1/22-01-2021-user-table-modify.xml"/>
     <include file="liquibase/v.0.0.1/13-01-2022-rename-key-chat-tables.xml"/>
+    <include file="liquibase/v.0.0.1/06-02-2022-change-app-user-key.xml"/>
 
 </databaseChangeLog>

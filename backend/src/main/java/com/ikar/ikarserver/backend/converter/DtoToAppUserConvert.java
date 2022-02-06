@@ -15,7 +15,7 @@ public class DtoToAppUserConvert implements Converter<AppUserDto, AppUser> {
         final AppUser user = new AppUser();
         user.setUsername(userDto.getUsername());
         user.setUuid(
-                UUID.randomUUID().toString()
+                UUID.fromString(userDto.getUuid())
         );
         user.setFirstName(userDto.getFirstName());
         user.setSecondName(userDto.getSecondName());

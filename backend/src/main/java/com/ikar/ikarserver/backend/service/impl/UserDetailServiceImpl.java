@@ -22,12 +22,11 @@ public class UserDetailServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
         AppUser appUser = userService.getUserByUsername(s)
-                .orElseThrow(NotFoundException.supplier(Messages.NOT_FOUND_USER, s));
+                .orElseThrow(NotFoundException.supplier(Messages.NOT_FOUND_USER_ERROR, s));
         return new CustomUserDetails(
                 appUser.getUsername(),
                 appUser.getPassword(),
                 new ArrayList<>(),
-                appUser.getId(),
                 appUser.getUuid(),
                 appUser.getFirstName(),
                 appUser.getSecondName()

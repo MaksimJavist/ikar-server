@@ -292,7 +292,9 @@ public class Room implements Closeable {
         String uuid;
         Optional<CustomUserDetails> optUser = authInfoService.getWebsocketUser(session);
         if (optUser.isPresent()) {
-            uuid = optUser.get().getUuid();
+            uuid = optUser.get()
+                    .getUuid()
+                    .toString();
         } else {
             uuid = UUID.randomUUID().toString();
         }

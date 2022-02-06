@@ -3,6 +3,7 @@ package com.ikar.ikarserver.backend.controller;
 import com.ikar.ikarserver.backend.domain.entity.AppUser;
 import com.ikar.ikarserver.backend.dto.AppUserDto;
 import com.ikar.ikarserver.backend.service.UserService;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.http.HttpStatus;
@@ -22,7 +23,7 @@ public class RegistrationController {
 
     @PreAuthorize("isAnonymous()")
     @PostMapping
-    public HttpStatus registration(@RequestBody AppUserDto appUserDto) {
+    public HttpStatus registration(@NonNull @RequestBody AppUserDto appUserDto) {
         userService.register(
                 converter.convert(appUserDto, AppUser.class)
         );

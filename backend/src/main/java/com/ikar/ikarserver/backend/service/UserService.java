@@ -7,6 +7,7 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.validation.groups.Default;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface UserService {
 
@@ -17,6 +18,8 @@ public interface UserService {
     AppUser update(@NonNull AppUser appUser);
 
     Optional<AppUser> getUserByUsername(@NonNull String username);
+
+    Optional<AppUser> getUserByUuid(@NonNull UUID uuid);
 
     boolean existsByUsername(@NonNull String username);
 

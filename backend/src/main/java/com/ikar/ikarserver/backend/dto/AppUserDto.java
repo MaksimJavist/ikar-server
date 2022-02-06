@@ -7,6 +7,8 @@ import lombok.Setter;
 @Setter
 public class AppUserDto {
 
+    private String uuid;
+
     private String username;
 
     private String password;

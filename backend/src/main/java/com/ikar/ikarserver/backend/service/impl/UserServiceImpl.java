@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -27,7 +28,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public AppUser register(@NonNull AppUser appUser) {
         if (existsByUsername(appUser.getUsername())) {
-            throw CreationException.supplier(Messages.BUSY_USERNAME, appUser.getUsername()).get();
+            throw CreationException.supplier(Messages.BUSY_USERNAME_ERROR, appUser.getUsername()).get();
         }
         appUser.setPassword(
                 passwordEncoder.encode(appUser.getPassword())
@@ -37,12 +38,26 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public AppUser update(@NonNull AppUser appUser) {
-        String username = appUser.getUsername();
-        Optional<AppUser> optionalUser = getUserByUsername(username);
-        AppUser appUserForUpdate = optionalUser.orElseThrow(
-                NotFoundException.supplier(Messages.NOT_FOUND_USER, username)
-        );
-        return repository.save(appUserForUpdate);
+        Optional<AppUser> optUser = getUserByUuid(appUser.getUuid());
+        AppUser originAppUser = optUser
+                .orElseThrow(NotFoundException.supplier(Messages.NOT_FOUND_USER_ERROR));
+
+        String originUsername = originAppUser.getUsername();
+        String newUsername = appUser.getUsername();
+        if (!originUsername.equals(newUsername) && existsByUsername(newUsername)) {
+            throw CreationException.supplier(Messages.BUSY_USERNAME_ERROR, appUser.getUsername()).get();
+        }
+
+        originAppUser.setUsername(appUser.getUsername());
+        originAppUser.setFirstName(appUser.getFirstName());
+        originAppUser.setSecondName(appUser.getSecondName());
+        originAppUser.setMiddleName(appUser.getMiddleName());
+        return repository.save(originAppUser);
+    }
+
+    @Override
+    public Optional<AppUser> getUserByUuid(@NonNull UUID uuid) {
+        return repository.findByUuid(uuid);
     }
 
     @Override
