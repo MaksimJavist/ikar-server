@@ -233,6 +233,13 @@ export default {
             this.socket.close()
         },
         newChatMessage: function (chatMessage) {
+            if (chatMessage.senderUuid !== this.localParticipantUuid) {
+                this.$bvToast.toast(chatMessage.text, {
+                    title: chatMessage.senderName,
+                    variant: 'primary',
+                    solid: true
+                })
+            }
             this.chatMessages.push(chatMessage)
         },
         changeMicroDisabled: function (value) {

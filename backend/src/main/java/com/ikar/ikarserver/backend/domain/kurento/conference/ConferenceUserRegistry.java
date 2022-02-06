@@ -11,11 +11,9 @@ import java.util.concurrent.ConcurrentMap;
 public class ConferenceUserRegistry {
 
     private final ConcurrentMap<String, Conference> conferenceBySessionId = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, ConferenceUserSession> usersBySessionId = new ConcurrentHashMap<>();
 
     public void register(ConferenceUserSession user, Conference conference) {
         String sessionId = user.getSession().getId();
-        usersBySessionId.put(sessionId, user);
         conferenceBySessionId.put(sessionId, conference);
     }
 
@@ -25,16 +23,9 @@ public class ConferenceUserRegistry {
         );
     }
 
-    public Optional<ConferenceUserSession> getBySession(WebSocketSession session) {
-        return Optional.ofNullable(
-                usersBySessionId.get(session.getId())
-        );
-    }
-
     public void removeBySession(WebSocketSession session) {
         final String sessionId = session.getId();
         conferenceBySessionId.remove(sessionId);
-        usersBySessionId.remove(sessionId);
     }
 
 }

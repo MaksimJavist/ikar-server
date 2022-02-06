@@ -165,7 +165,15 @@ public class Conference implements Closeable {
         }
     }
 
-    public void sendNewMessage(ChatMessageDto chatMessage) throws IOException {
+    public void sendNewMessage(String messageText, WebSocketSession session) {
+        ConferenceUserSession user = getUserBySession(session);
+        final ChatMessageDto chatMessage = new ChatMessageDto(
+                user.getUuid(),
+                user.getUsername(),
+                LocalDateTime.now(),
+                messageText
+        );
+
         executor.submit(
                 () -> messageBuffer.addNewMessageInBuffer(chatMessage)
         );
