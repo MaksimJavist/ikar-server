@@ -74,7 +74,7 @@ export default {
         connectRoom: function () {
             this.$v.$touch()
             if (this.$v.name.$error) {
-                this.$bvToast.toast('Проверьте правильность заполнения формы', {
+                this.$bvToast.toast('Проверьте правильность заполнения имени пользователя', {
                     variant: 'danger',
                     solid: true
                 })

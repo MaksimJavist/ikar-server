@@ -38,7 +38,7 @@
 <script>
 import Chat from '@/components/common/chat'
 import WebRtcPeer from '@/util/WebRtcPeer'
-import JoinFrame from '@/components/common/join-frame'
+import JoinFrame from '@/components/conference/conference-join-frame'
 import ConferenceBottomPanel from '@/components/conference/conference-bottom-panel'
 import api from '@/api'
 

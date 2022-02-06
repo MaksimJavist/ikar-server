@@ -57,7 +57,7 @@ import RoomParticipantsMixin from '@/mixin/room-participants-mixin'
 import RoomConferenceMixin from '@/mixin/room-conference-mixin'
 import ParticipantLocal from '@/components/room/participant/participant-local'
 import ParticipantRemote from '@/components/room/participant/participant-remote'
-import JoinFrame from "@/components/common/join-frame"
+import JoinFrame from "@/components/room/room-join-frame"
 import RoomBottomPanel from '@/components/room/room-bottom-panel'
 import api from '@/api'
 
