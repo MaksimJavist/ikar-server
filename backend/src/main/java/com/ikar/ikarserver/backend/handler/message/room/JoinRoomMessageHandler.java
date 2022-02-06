@@ -27,7 +27,7 @@ public class JoinRoomMessageHandler implements RoomMessageHandler {
         log.info("PARTICIPANT {}: trying to join room {}", name, roomIdentifier);
         Room room = roomManager.getRoom(roomIdentifier);
         final RoomUserSession user = room.join(name, session);
-        registry.register(user, room);
+        registry.register(user);
     }
 
     @Override

@@ -16,6 +16,7 @@ public final class Messages {
     public static final String USER_ARE_NOT_PRESENTER = "Вы не являетесь перезнтующим.";
     public static final String USER_START_PRESENTATION = "Пользователь {0} начал трансляцию";
     public static final String USER_STOP_PRESENTATION = "Пользователь {0} прекратил трансляцию";
+    public static final String CALL_USER_NOT_EXIST = "Пользователь не найден.";
 
     public static final String ROOM_NOT_FOUND = "Комната не найдена.";
     public static final String ROOM_USER_NOT_FOUND = "Вы не являетесь участником комнаты.";
@@ -24,7 +25,6 @@ public final class Messages {
 
     public static final String CONFERENCE_NOT_FOUND = "Конференция не найдена.";
     public static final String CONFERENCE_USER_EXIST = "Пользователь уже зарегистрирован в конференции.";
-    public static final String CONFERENCE_USER_NOT_EXIST = "Пользователь не найден.";
     public static final String CONFERENCE_USER_NOT_FOUND = "Пользователь не зарегистрирован в конференции.";
     public static final String CONFERENCE_DOES_NOT_PRESENTER = "Вы не являетесь презентующим";
     public static final String CONFERENCE_VIEWED_EXCEPTION = "Вы уже просматриваете эту конференцию.";

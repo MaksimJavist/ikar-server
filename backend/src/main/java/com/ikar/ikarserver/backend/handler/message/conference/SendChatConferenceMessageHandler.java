@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 
 import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_NOT_FOUND;
-import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_USER_NOT_EXIST;
+import static com.ikar.ikarserver.backend.util.Messages.CALL_USER_NOT_EXIST;
 
 @Component
 @RequiredArgsConstructor
@@ -27,7 +27,7 @@ public class SendChatConferenceMessageHandler implements ConferenceMessageHandle
     @Override
     public void process(JsonObject message, WebSocketSession session) throws IOException {
         ConferenceUserSession user = userRegistry.getBySession(session)
-                .orElseThrow(ConferenceException.supplier(CONFERENCE_USER_NOT_EXIST));;
+                .orElseThrow(ConferenceException.supplier(CALL_USER_NOT_EXIST));;
         Conference conference = conferenceManager.getConference(user.getConferenceIdentifier())
                 .orElseThrow(ConferenceException.supplier(CONFERENCE_NOT_FOUND));
         String chatMessage = message.get("message").getAsString();
