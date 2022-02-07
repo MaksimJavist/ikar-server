@@ -2,7 +2,6 @@ package com.ikar.ikarserver.backend.util;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.ikar.ikarserver.backend.domain.kurento.conference.ConferenceMessageBuffer;
 import com.ikar.ikarserver.backend.domain.kurento.conference.ConferenceUserSession;
 import com.ikar.ikarserver.backend.dto.ChatMessageDto;
 import lombok.AccessLevel;
@@ -123,7 +122,7 @@ public final class ConferenceSender {
     }
 
     public static void sendAllUsersNewChatMessage(ChatMessageDto chatMessageDto, List<ConferenceUserSession> users) {
-        final JsonObject dataMessage = ConferenceMessageBuffer.convertChatMessageToJson(chatMessageDto);
+        final JsonObject dataMessage = ChatMessageUtil.convertMessageToJson(chatMessageDto);
         final JsonObject response = new JsonObject();
         response.addProperty("id", "newChatMessage");
         response.add("data", dataMessage);

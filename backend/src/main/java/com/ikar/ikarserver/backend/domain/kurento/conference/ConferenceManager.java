@@ -1,8 +1,9 @@
 package com.ikar.ikarserver.backend.domain.kurento.conference;
 
+import com.ikar.ikarserver.backend.domain.entity.ConferenceChatMessage;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.CallIdentifierGenerator;
-import com.ikar.ikarserver.backend.service.ConferenceChatMessageService;
+import com.ikar.ikarserver.backend.service.ChatMessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.KurentoClient;
@@ -21,7 +22,7 @@ public class ConferenceManager {
     private final CallIdentifierGenerator identifierService;
     private final AuthInfoService authInfoService;
     private final KurentoClient kurentoClient;
-    private final ConferenceChatMessageService messageService;
+    private final ChatMessageService<ConferenceChatMessage> messageService;
     private final ConcurrentMap<String, Conference> conferences = new ConcurrentHashMap<>();
 
     public Collection<Conference> getAll() {

@@ -3,10 +3,11 @@ package com.ikar.ikarserver.backend.domain.kurento.room;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.ikar.ikarserver.backend.domain.CustomUserDetails;
+import com.ikar.ikarserver.backend.domain.entity.RoomChatMessage;
 import com.ikar.ikarserver.backend.dto.ChatMessageDto;
 import com.ikar.ikarserver.backend.exception.websocket.RoomException;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
-import com.ikar.ikarserver.backend.service.RoomChatMessageService;
+import com.ikar.ikarserver.backend.service.ChatMessageService;
 import com.ikar.ikarserver.backend.util.RoomSender;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -54,12 +55,12 @@ public class Room implements Closeable {
     private String presenterUuid;
 
 
-    public Room(String roomName, MediaPipeline pipeline, RoomChatMessageService messageService, AuthInfoService authInfoService) {
-        this.identifier = roomName;
+    public Room(String identifier, MediaPipeline pipeline, ChatMessageService<RoomChatMessage> messageService, AuthInfoService authInfoService) {
+        this.identifier = identifier;
         this.pipeline = pipeline;
         this.authInfoService = authInfoService;
-        this.messageBuffer = new RoomMessagesBuffer(messageService, identifier);
-        log.info("ROOM {} has been created", roomName);
+        this.messageBuffer = new RoomMessagesBuffer(identifier, messageService);
+        log.info("ROOM {} has been created", identifier);
     }
 
     public String getIdentifier() {
@@ -231,7 +232,7 @@ public class Room implements Closeable {
                 participantsArray.add(participantJson);
             }
         }
-        RoomSender.sendExistingParticipants(user, participantsArray, getAllRoomMessages());
+        RoomSender.sendExistingParticipants(user, participantsArray, messageBuffer.getAllMessagesForSend());
     }
 
     public Collection<RoomUserSession> getParticipants() {
@@ -269,23 +270,6 @@ public class Room implements Closeable {
         participants.clear();
         pipeline.release();
         log.debug("Room {} closed", this.identifier);
-    }
-
-    private JsonArray getAllRoomMessages() {
-        List<ChatMessageDto> messages = messageBuffer.getAllRoomMessages();
-        JsonArray array = new JsonArray();
-
-        messages.forEach(message -> {
-            final JsonObject element = new JsonObject();
-            element.addProperty("senderUuid", message.getSenderUuid());
-            element.addProperty("senderName", message.getSender());
-            element.addProperty("time", message.getTimeMessage().toString());
-            element.addProperty("text", message.getMessage());
-
-            array.add(element);
-        });
-
-        return array;
     }
 
     private String getUserUuid(WebSocketSession session) {

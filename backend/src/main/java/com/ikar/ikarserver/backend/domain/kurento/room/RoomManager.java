@@ -1,9 +1,10 @@
 package com.ikar.ikarserver.backend.domain.kurento.room;
 
+import com.ikar.ikarserver.backend.domain.entity.RoomChatMessage;
 import com.ikar.ikarserver.backend.exception.app.NotFoundException;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.CallIdentifierGenerator;
-import com.ikar.ikarserver.backend.service.RoomChatMessageService;
+import com.ikar.ikarserver.backend.service.ChatMessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.KurentoClient;
@@ -23,7 +24,7 @@ public class RoomManager {
     private final KurentoClient kurento;
     private final CallIdentifierGenerator identifierService;
     private final AuthInfoService authInfoService;
-    private final RoomChatMessageService service;
+    private final ChatMessageService<RoomChatMessage> service;
     private final ConcurrentMap<String, Room> rooms = new ConcurrentHashMap<>();
 
     public Collection<Room> getAll() {

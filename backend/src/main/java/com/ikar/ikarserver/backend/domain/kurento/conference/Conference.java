@@ -2,10 +2,11 @@ package com.ikar.ikarserver.backend.domain.kurento.conference;
 
 import com.google.gson.JsonObject;
 import com.ikar.ikarserver.backend.domain.CustomUserDetails;
+import com.ikar.ikarserver.backend.domain.entity.ConferenceChatMessage;
 import com.ikar.ikarserver.backend.dto.ChatMessageDto;
 import com.ikar.ikarserver.backend.exception.websocket.ConferenceException;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
-import com.ikar.ikarserver.backend.service.ConferenceChatMessageService;
+import com.ikar.ikarserver.backend.service.ChatMessageService;
 import com.ikar.ikarserver.backend.util.ConferenceSender;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,9 +37,11 @@ public class Conference implements Closeable {
 
     private final String identifier;
     private final AuthInfoService authInfoService;
-    private final ConferenceChatMessageService messageService;
+    private final ChatMessageService<ConferenceChatMessage> messageService;
     private final MediaPipeline pipeline;
     private final ConferenceMessageBuffer messageBuffer;
+
+    private ConferenceUserSession presenter;
 
     private final ConcurrentHashMap<String, ConferenceUserSession> viewers = new ConcurrentHashMap<>();
     private final LocalDateTime creationTime = LocalDateTime.now();
@@ -46,14 +49,12 @@ public class Conference implements Closeable {
     @Getter
     private final LocalDateTime createdTime = LocalDateTime.now();
 
-    private ConferenceUserSession presenter;
-
-    public Conference(String identifier, AuthInfoService authInfoService, ConferenceChatMessageService messageService, MediaPipeline pipeline) {
+    public Conference(String identifier, AuthInfoService authInfoService, ChatMessageService<ConferenceChatMessage> messageService, MediaPipeline pipeline) {
         this.identifier = identifier;
         this.authInfoService = authInfoService;
         this.messageService = messageService;
         this.pipeline = pipeline;
-        this.messageBuffer = new ConferenceMessageBuffer(messageService, identifier);
+        this.messageBuffer = new ConferenceMessageBuffer(identifier, messageService);
     }
 
     public ConferenceUserSession registerViewer(WebSocketSession session, String username) throws IOException, ConferenceException {
@@ -65,7 +66,7 @@ public class Conference implements Closeable {
         viewers.put(session.getId(), viewer);
         ConferenceSender.sendViewerRegisterSuccess(
                 viewer,
-                messageBuffer.getAllConferenceMessagesForSend()
+                messageBuffer.getAllMessagesForSend()
         );
         return viewer;
     }
@@ -112,7 +113,7 @@ public class Conference implements Closeable {
         ConferenceSender.sendRejectPresenterResponse(user);
     }
 
-    private void newPresenter(final WebSocketSession session, JsonObject jsonMessage)
+    private void newPresenter(WebSocketSession session, JsonObject jsonMessage)
             throws IOException {
         final String sessionId = session.getId();
         presenter = viewers.get(sessionId);
@@ -229,16 +230,10 @@ public class Conference implements Closeable {
     }
 
     private String getUserUuid(WebSocketSession session) {
-        String uuid;
         Optional<CustomUserDetails> optUser = authInfoService.getWebsocketUser(session);
-        if (optUser.isPresent()) {
-            uuid = optUser.get()
-                    .getUuid()
-                    .toString();
-        } else {
-            uuid = UUID.randomUUID().toString();
-        }
-        return uuid;
+        return optUser
+                .map(customUserDetails -> customUserDetails.getUuid().toString())
+                .orElseGet(() -> UUID.randomUUID().toString());
     }
 
     public boolean isEmpty() {
