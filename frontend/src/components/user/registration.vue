@@ -245,6 +245,10 @@ export default {
                         this.$router.replace('/')
                     })
                     .catch(err => {
+                        this.$bvToast.toast(err.data.message, {
+                            variant: 'danger',
+                            solid: true
+                        })
                         this.registrationButtonEnabled = true
                     })
 

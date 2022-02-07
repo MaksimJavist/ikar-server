@@ -15,6 +15,8 @@
                 <div v-if="message.senderUuid === senderUuid" class="text-right">
                     <div class="m-2 p-2 w-auto d-inline-block rounded text-left bg-success"
                          style="max-width: 75%">
+                        <small>{{ dateTimeFormat(message.time) }}</small>
+                        <br/>
                         <strong>{{ message.senderName}}:</strong>
                         <div>{{ message.text }}</div>
                     </div>
@@ -42,6 +44,8 @@
 </template>
 
 <script>
+import { DateTime } from 'luxon'
+
 export default {
     name: "chat",
     props: {
@@ -71,6 +75,9 @@ export default {
         },
         hideChatEmit: function () {
             this.$emit('hide-chat')
+        },
+        dateTimeFormat: function (value) {
+            return DateTime.fromISO(value).toFormat('dd.MM.yyyy HH:mm:ss')
         }
     }
 }

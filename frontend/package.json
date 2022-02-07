@@ -14,6 +14,7 @@
     "core-js": "^3.6.5",
     "kurento-browser-extensions": "0.0.2",
     "kurento-utils": "^6.16.0",
+    "luxon": "^2.3.0",
     "vue": "^2.6.11",
     "vue-clipboard2": "^0.3.3",
     "vue-router": "^3.5.3",
