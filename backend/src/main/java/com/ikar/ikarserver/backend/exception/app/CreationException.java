@@ -1,4 +1,4 @@
-package com.ikar.ikarserver.backend.exception;
+package com.ikar.ikarserver.backend.exception.app;
 
 import java.text.MessageFormat;
 import java.util.function.Supplier;

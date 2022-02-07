@@ -5,7 +5,7 @@
                 <b-card title="Присоедениться к комнате" align="center">
                     <b-form-input class="mt-3 mb-3 text-center form-control"
                                   :value="name"
-                                  :class="{'is-invalid : propertyNameHasError' : propertyHasError('name')}"
+                                  :class="{'is-invalid' : propertyHasError('name')}"
                                   @input="updateName($event)"
                                   placeholder="Введите имя"/>
                     <div class="text-danger" v-if="propertyHasError('name')">

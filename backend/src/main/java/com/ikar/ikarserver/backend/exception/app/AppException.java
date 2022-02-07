@@ -1,4 +1,4 @@
-package com.ikar.ikarserver.backend.exception;
+package com.ikar.ikarserver.backend.exception.app;
 
 public abstract class AppException extends RuntimeException {
 

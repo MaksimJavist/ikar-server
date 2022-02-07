@@ -22,8 +22,16 @@ const getAuthInfo = () =>
         method: 'GET'
     })
 
+const registerNewUser = (data) =>
+    axiosInstance({
+        url: 'api/registration',
+        method: 'POST',
+        data
+    })
+
 export default {
     createNewRoom,
     createNewConference,
-    getAuthInfo
+    getAuthInfo,
+    registerNewUser
 }

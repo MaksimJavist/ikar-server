@@ -14,14 +14,11 @@ public class DtoToAppUserConvert implements Converter<AppUserDto, AppUser> {
     public AppUser convert(AppUserDto userDto) {
         final AppUser user = new AppUser();
         user.setUsername(userDto.getUsername());
-        user.setUuid(
-                UUID.fromString(userDto.getUuid())
-        );
         user.setFirstName(userDto.getFirstName());
         user.setSecondName(userDto.getSecondName());
         user.setMiddleName(userDto.getMiddleName());
         user.setPassword(userDto.getPassword());
-        return null;
+        return user;
     }
 
 }

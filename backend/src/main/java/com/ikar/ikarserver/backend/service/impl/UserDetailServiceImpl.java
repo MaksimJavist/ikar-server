@@ -2,7 +2,7 @@ package com.ikar.ikarserver.backend.service.impl;
 
 import com.ikar.ikarserver.backend.domain.CustomUserDetails;
 import com.ikar.ikarserver.backend.domain.entity.AppUser;
-import com.ikar.ikarserver.backend.exception.NotFoundException;
+import com.ikar.ikarserver.backend.exception.app.NotFoundException;
 import com.ikar.ikarserver.backend.service.UserService;
 import com.ikar.ikarserver.backend.util.Messages;
 import lombok.RequiredArgsConstructor;
