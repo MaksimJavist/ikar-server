@@ -63,7 +63,7 @@
                         <b-button
                             variant="outline-primary"
                             v-b-tooltip.hover
-                            title="Скопировать ссылку на конференцию"
+                            title="Скопировать ссылку на комнату"
                             v-clipboard:copy="getRoomFullReference()"
                             @click="copyLinkToast">
                             <b-icon-share/>

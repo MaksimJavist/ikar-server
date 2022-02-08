@@ -105,7 +105,7 @@ export default {
             this.chatMessages
                 .forEach((element, indexElement) => {
                     if (element.senderUuid !== this.uuid && indexElement <= index) {
-                        indexes.push(index)
+                        indexes.push(indexElement)
                     }
                 })
             indexes.forEach(indexMessage => {

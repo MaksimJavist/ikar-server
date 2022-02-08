@@ -24,6 +24,8 @@
                 <div v-else class="text-left" @mouseenter="checkMessage(index)">
                     <div class="m-2 p-2 w-auto d-inline-block rounded text-left bg-dark"
                          style="max-width: 75%">
+                        <small>{{ dateTimeFormat(message.time) }}</small>
+                        <br/>
                         <strong>{{ message.senderName}}:</strong>
                         <div>{{ message.text }}</div>
                     </div>

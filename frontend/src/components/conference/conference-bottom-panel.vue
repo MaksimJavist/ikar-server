@@ -73,6 +73,16 @@
                     </span>
                     <span class="buttonGroup">
                         <b-button
+                            variant="outline-primary"
+                            v-b-tooltip.hover
+                            title="Скопировать ссылку на комнату"
+                            v-clipboard:copy="getConferenceFullReference()"
+                            @click="copyLinkToast">
+                            <b-icon-share/>
+                        </b-button>
+                    </span>
+                    <span class="buttonGroup">
+                        <b-button
                             pill
                             v-b-tooltip.hover
                             @click="exitEmit"
@@ -114,6 +124,15 @@ export default {
         },
         exitEmit: function () {
             this.$emit('exit')
+        },
+        getConferenceFullReference: function () {
+            return window.location.href
+        },
+        copyLinkToast: function () {
+            this.$bvToast.toast('Ссылка на конферению скопирована!', {
+                variant: 'info',
+                solid: true
+            })
         }
     }
 }
