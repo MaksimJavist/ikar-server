@@ -97,25 +97,8 @@ export default {
         }
     },
     methods: {
-        checkMessage: function (index) {
-            const indexes = []
-            this.chatMessages
-                .forEach((element, indexElement) => {
-                    if (element.senderUuid !== this.uuid && indexElement <= index) {
-                        indexes.push(indexElement)
-                    }
-                })
-            indexes.forEach(indexMessage => {
-                const message = this.chatMessages[indexMessage]
-                message.checked = true
-                this.chatMessages.splice(indexMessage, 1, message)
-            })
-        },
-        updateUsername: function (value) {
-            this.userName = value
-        },
         connectConference: function () {
-            this.webSocket = new WebSocket('ws://localhost:8080/conference')
+            this.webSocket = new WebSocket(`ws://${this.getDomain()}/conference`)
             this.webSocket.onopen = this.setSettingSocket
         },
         setSettingSocket: function () {
@@ -401,6 +384,23 @@ export default {
                 this.webRtcPeer = null
             }
         },
+        checkMessage: function (index) {
+            const indexes = []
+            this.chatMessages
+                .forEach((element, indexElement) => {
+                    if (element.senderUuid !== this.uuid && indexElement <= index) {
+                        indexes.push(indexElement)
+                    }
+                })
+            indexes.forEach(indexMessage => {
+                const message = this.chatMessages[indexMessage]
+                message.checked = true
+                this.chatMessages.splice(indexMessage, 1, message)
+            })
+        },
+        updateUsername: function (value) {
+            this.userName = value
+        },
         changeEnableAudio: function (value) {
             if (this.webRtcPeer) {
                 this.onAudioFlag = value
@@ -433,6 +433,9 @@ export default {
             this.isActivePresentation = false
             this.isPresenter = false
             this.isChatVisible = false
+        },
+        getDomain: function () {
+            return process.env.NODE_ENV === 'production' ? window.location : 'localhost:8080'
         }
     }
 }

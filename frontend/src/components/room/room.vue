@@ -162,7 +162,7 @@ export default {
             })
         },
         connectRoom: function () {
-            this.socket = new WebSocket('ws://localhost:8080/groupcall')
+            this.socket = new WebSocket(`ws://${this.getDomain()}/groupcall`)
             this.socket.onopen = this.joinRoom
         },
         joinRoom: function () {
@@ -294,6 +294,9 @@ export default {
             this.videoEnable = true
             this.chatVisible = false
             this.chatInputText = null
+        },
+        getDomain: function () {
+            return process.env.NODE_ENV === 'production' ? window.location : 'localhost:8080'
         }
     }
 }

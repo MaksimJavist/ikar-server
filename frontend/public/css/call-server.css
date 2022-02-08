@@ -17,6 +17,6 @@
 }
 
 .video-spinner {
-    background: no-repeat center  url("../../img/spinner-participant.gif");
+    background: no-repeat center  url("public/img/spinner-participant.gif");
     background-size: 100%;
 }

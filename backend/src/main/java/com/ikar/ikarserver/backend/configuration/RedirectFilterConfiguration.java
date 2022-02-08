@@ -28,11 +28,11 @@ public class RedirectFilterConfiguration {
 
     private OncePerRequestFilter createRedirectFilter() {
         return new OncePerRequestFilter() {
-            private final String REGEX = "(?!/login|/logout|/groupcall|/conference|/actuator|/js|/css|/api|/static|/200\\.html|/favicon\\.ico|/sw\\.js).*$";
-            private Pattern pattern = Pattern.compile(REGEX);
+            private final String REGEX = "(?!/login|/logout|/groupcall|/conference|/actuator|/js|/css|/img|/api|/static|/200\\.html|/favicon\\.ico|/sw\\.js).*$";
+            private final Pattern pattern = Pattern.compile(REGEX);
 
             @Override
-            protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain) throws ServletException, IOException, IOException {
+            protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain) throws ServletException, IOException {
                 if (pattern.matcher(req.getRequestURI()).matches() && !req.getRequestURI().equals("/")) {
                     RequestDispatcher rd = req.getRequestDispatcher("/");
                     rd.forward(req, res);
