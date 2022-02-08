@@ -242,7 +242,12 @@ export default {
                 }
                 api.registerNewUser(data)
                     .then(() => {
-                        this.$router.replace('/')
+                        this.registrationButtonEnabled = false
+                        this.$bvToast.toast('Вы успешно зарегистрированы', {
+                            variant: 'success',
+                            solid: true
+                        })
+                        setTimeout(this.redirectToMainPage, 1200)
                     })
                     .catch(err => {
                         this.$bvToast.toast(err.data.message, {
@@ -256,6 +261,9 @@ export default {
         },
         moveToMainPage: function () {
             this.$router.push('/')
+        },
+        redirectToMainPage: function () {
+            this.$router.replace('/')
         },
         propertyHasError: function (property) {
             return this.$v[property].$error

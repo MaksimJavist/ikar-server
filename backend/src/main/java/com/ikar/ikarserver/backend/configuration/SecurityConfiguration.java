@@ -30,6 +30,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter implemen
                 .csrf().disable()
                 .authorizeRequests()
                     .antMatchers("/").authenticated()
+                    .antMatchers("/registration").anonymous()
                     .and()
                 .formLogin()
                     .loginPage("/login")
