@@ -6,8 +6,11 @@
                     <b-row class="justify-content-center mt-4 mb-3">
                         <b-button class="w-75" @click="createRoomCall" variant="outline-success" pill>Создать комнату</b-button>
                     </b-row>
-                    <b-row class="justify-content-center">
+                    <b-row class="justify-content-center mb-3">
                         <b-button class="w-75" @click="createConference" variant="outline-success" pill>Создать конференцию</b-button>
+                    </b-row>
+                    <b-row class="justify-content-center">
+                        <b-button class="w-75" @click="exitFromAccount" variant="outline-primary" pill>Выход из учетной записи</b-button>
                     </b-row>
               </b-card>
           </b-col>
@@ -32,6 +35,9 @@ export default {
                 .then(resp => {
                     this.$router.push(`/conference/${resp.data}`)
                 })
+        },
+        exitFromAccount: function () {
+            window.location = '/logout'
         }
     }
 }
