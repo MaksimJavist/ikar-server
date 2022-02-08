@@ -242,6 +242,7 @@ public class Conference implements Closeable {
 
     @Override
     public void close() {
+        executor.submit(messageBuffer::deleteAllMessages);
         pipeline.release();
         if (presenter != null) {
             presenter.close();

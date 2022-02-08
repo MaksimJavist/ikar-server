@@ -12,4 +12,6 @@ public interface ChatMessageJpaRepository<T extends ChatMessage> extends JpaRepo
 
     List<T> getAllByCallIdentifierOrderByDateTimeMessageAsc(String roomIdentifier);
 
+    void deleteConferenceChatMessageByCallIdentifier(String callIdentifier);
+
 }

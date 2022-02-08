@@ -21,4 +21,9 @@ public class AbstractChatMessageService<T extends ChatMessage> implements ChatMe
     public List<T> getAllMessagesByUuid(@NonNull String callUuid) {
         return repository.getAllByCallIdentifierOrderByDateTimeMessageAsc(callUuid);
     }
+
+    @Override
+    public void deleteAllMessagesByCallIdentifier(String identifier) {
+        repository.deleteConferenceChatMessageByCallIdentifier(identifier);
+    }
 }

@@ -43,7 +43,7 @@ import ConferenceBottomPanel from '@/components/conference/conference-bottom-pan
 import api from '@/api'
 
 export default {
-    name: "test-bag",
+    name: "conference",
     data () {
         return {
             uuid: null,
@@ -422,13 +422,20 @@ export default {
         },
         exitFromConference: function () {
             this.isRegisteredInConference = false
-            if (this.webRtcPeer) {
-                this.webRtcPeer.dispose()
-            }
+            this.dispose()
             if (this.webSocket) {
                 this.webSocket.close()
             }
-            this.$router.go()
+            this.uuid = null
+            this.webSocket = null
+            this.webRtcPeer = null
+            this.chatMessages = []
+            this.authenticatedUser = false
+            this.isRegisteredInConference = false
+            this.joinFrameVisible = true
+            this.isActivePresentation = false
+            this.isPresenter = false
+            this.isChatVisible = false
         }
     }
 }

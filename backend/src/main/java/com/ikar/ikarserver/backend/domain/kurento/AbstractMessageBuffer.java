@@ -43,6 +43,11 @@ public abstract class AbstractMessageBuffer<T extends ChatMessage> {
         return messagesForSending;
     }
 
+    public void deleteAllMessages() {
+        buffer.clear();
+        messageService.deleteAllMessagesByCallIdentifier(callIdentifier);
+    }
+
     private List<ChatMessageDto> getAllMessages() {
         synchronized (buffer) {
             List<ChatMessageDto> roomMessages = messageService

@@ -260,6 +260,7 @@ public class Room implements Closeable {
 
     @Override
     public void close() {
+        executor.submit(messageBuffer::deleteAllMessages);
         for (final RoomUserSession user : participants.values()) {
             try {
                 user.close();

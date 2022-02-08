@@ -11,4 +11,6 @@ public interface ChatMessageService<T extends ChatMessage> {
 
     List<T> getAllMessagesByUuid(@NonNull String callUuid);
 
+    void deleteAllMessagesByCallIdentifier(String identifier);
+
 }
