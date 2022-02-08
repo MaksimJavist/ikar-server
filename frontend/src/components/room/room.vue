@@ -296,7 +296,7 @@ export default {
             this.chatInputText = null
         },
         getDomain: function () {
-            return process.env.NODE_ENV === 'production' ? window.location : 'localhost:8080'
+            return process.env.NODE_ENV === 'production' ? location.host : 'localhost:8080'
         }
     }
 }
