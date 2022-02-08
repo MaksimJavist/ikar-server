@@ -19,6 +19,7 @@ class Participant {
         this.video.style.maxHeight='100%'
         this.video.style.objectFit='cover'
         this.video.classList.add('rounded')
+        this.video.classList.add('video-spinner')
     }
 
     onIceCandidate(candidate) {

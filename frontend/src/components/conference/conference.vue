@@ -7,7 +7,7 @@
         <b-container class="vh-100" v-show="isRegisteredInConference" fluid>
             <b-row class="pt-3 justify-content-center" style="height: 80%; max-height: 80%">
                 <b-col cols="10 text-center" style="max-height: 100%" v-show="isActivePresentation">
-                    <video id="video" ref="conferenceVideo" :poster="baseUrl() + 'img/spinner.gif'" style="max-height: 100%; object-fit: contain; border-width: medium !important;" autoplay class="rounded border border-info"></video>
+                    <video id="video" ref="conferenceVideo" style="max-height: 100%; object-fit: contain; border-width: medium !important;" autoplay class="rounded border border-info video-spinner"></video>
                 </b-col>
                 <b-col cols="10" v-if="!isActivePresentation">
                     <b-card no-body class="h-100 border border-info justify-content-center" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
@@ -97,9 +97,6 @@ export default {
         }
     },
     methods: {
-        baseUrl: function () {
-            return process.env.BASE_URL
-        },
         checkMessage: function (index) {
             const indexes = []
             this.chatMessages

@@ -10,8 +10,13 @@
                    @update-username="updateUsername"/>
         <b-container class="vh-100" fluid v-else>
             <b-row class="pt-4 justify-content-center" style="height: 85%">
-                <b-col cols="10 text-center" style="max-height: 100%">
-                    <video v-show="isActivePresentation" id="video" ref="presentationVideo" style="max-height: 100%; object-fit: contain; border-width: medium !important;" autoplay class="rounded border border-info"></video>
+                <b-col cols="10" class="text-center" style="max-height: 100%">
+                    <video v-show="isActivePresentation"
+                           id="video"
+                           ref="presentationVideo"
+                           style="max-height: 100%; object-fit: contain; border-width: medium !important;"
+                           autoplay
+                           class="rounded border border-info video-spinner"></video>
                     <b-card v-show="!isActivePresentation" no-body class="h-100 border border-info justify-content-center" align="center" style="background-color: #e1e2e3; border-width: medium !important;">
                         <h5>Пока никто не начал трансляцию</h5>
                     </b-card>
@@ -136,6 +141,9 @@ export default {
         }
     },
     methods: {
+        baseUrl: function () {
+            return process.env.BASE_URL
+        },
         updateUsername: function (value) {
             this.userName = value
         },
