@@ -162,7 +162,7 @@ export default {
             })
         },
         connectRoom: function () {
-            this.socket = new WebSocket(`ws://${this.getDomain()}/groupcall`)
+            this.socket = new WebSocket(`ws://${this.getDomain()}/socket/room`)
             this.socket.onopen = this.joinRoom
         },
         joinRoom: function () {

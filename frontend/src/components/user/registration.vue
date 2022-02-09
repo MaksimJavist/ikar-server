@@ -247,7 +247,7 @@ export default {
                             variant: 'success',
                             solid: true
                         })
-                        setTimeout(this.redirectToMainPage, 1200)
+                        setTimeout(this.moveToMainPage, 1200)
                     })
                     .catch(err => {
                         this.$bvToast.toast(err.data.message, {
@@ -260,10 +260,7 @@ export default {
             }
         },
         moveToMainPage: function () {
-            this.$router.push('/')
-        },
-        redirectToMainPage: function () {
-            this.$router.replace('/')
+            window.location = '/'
         },
         propertyHasError: function (property) {
             return this.$v[property].$error

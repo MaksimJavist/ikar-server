@@ -98,7 +98,7 @@ export default {
     },
     methods: {
         connectConference: function () {
-            this.webSocket = new WebSocket(`ws://${this.getDomain()}/conference`)
+            this.webSocket = new WebSocket(`ws://${this.getDomain()}/socket/conference`)
             this.webSocket.onopen = this.setSettingSocket
         },
         setSettingSocket: function () {

@@ -28,7 +28,7 @@ public class RedirectFilterConfiguration {
 
     private OncePerRequestFilter createRedirectFilter() {
         return new OncePerRequestFilter() {
-            private final String REGEX = "(?!/login|/logout|/groupcall|/conference|/actuator|/js|/css|/img|/api|/static|/200\\.html|/favicon\\.ico|/sw\\.js).*$";
+            private final String REGEX = "(?!/login|/logout|/socket|/actuator|/js|/css|/img|/api|/static|/200\\.html|/favicon\\.ico|/sw\\.js).*$";
             private final Pattern pattern = Pattern.compile(REGEX);
 
             @Override

@@ -38,8 +38,8 @@ public class KurentoConfiguration implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(roomHandler, "/groupcall")
-                .addHandler(conferenceHandler, "/conference")
+        registry.addHandler(roomHandler, "/socket/room")
+                .addHandler(conferenceHandler, "/socket/conference")
                 .setAllowedOriginPatterns("*");
     }
 
