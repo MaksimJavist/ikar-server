@@ -141,9 +141,6 @@ export default {
         }
     },
     methods: {
-        baseUrl: function () {
-            return process.env.BASE_URL
-        },
         updateUsername: function (value) {
             this.userName = value
         },

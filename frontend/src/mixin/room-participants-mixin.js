@@ -1,9 +1,9 @@
 import Participant from "@/util/Participant"
+import WebRtcPeer from "@/util/WebRtcPeer"
 
 const roomParticipantsMixin = {
     methods: {
         onExistingParticipants: function (message) {
-            this.joinFrameVisible = false
             const constraints = {
                 audio : true,
                 video : {
@@ -30,10 +30,28 @@ const roomParticipantsMixin = {
                     video: this.videoEnable
                 }
             }
-            participant.rtcPeer = this.createWebRtcPeerForReceiver(options, participant)
-            this.participants.push(participant)
-            message.data.forEach(this.receiveVideoFromSender)
+
+            const successCreationPeerCallback = this.successGenerationPeer
+            const errorCreationPeerCallback = this.errorCreationPeer
+            participant.rtcPeer = new WebRtcPeer.WebRtcPeerSendonly(options, function (error) {
+                if (error) {
+                    return errorCreationPeerCallback
+                }
+                this.generateOffer(participant.offerToReceiveVideo.bind(participant))
+                successCreationPeerCallback(participant, message.data)
+            })
+        },
+        successGenerationPeer: function (localParticipant, participants) {
+            this.joinFrameVisible = false
+            this.participants.push(localParticipant)
+            participants.forEach(this.receiveVideoFromSender)
             this.viewerConnectPermission()
+        },
+        errorCreationPeer: function () {
+            this.$bvToast.toast('Не удалось получить доступ к камере или микрофону, проверите разрешения вашего браузера.', {
+                variant: 'warning',
+                solid: true
+            })
         },
         receiveVideoFromSender: function (sender) {
             const participant = new Participant(sender.uuid, sender.name, this.socket)
