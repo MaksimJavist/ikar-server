@@ -66,7 +66,7 @@ public final class RoomSender {
         sendMessageForAllParticipants(newParticipantMsg, participants);
     }
 
-    public static void sendIceCandidate(RoomUserSession user, IceCandidateFoundEvent event) throws IOException {
+    public static void sendIceCandidate(RoomUserSession user, String uuid, IceCandidateFoundEvent event) throws IOException {
         JsonObject response = new JsonObject();
         response.addProperty("id", "iceCandidate");
         response.addProperty("uuid", user.getUuid());

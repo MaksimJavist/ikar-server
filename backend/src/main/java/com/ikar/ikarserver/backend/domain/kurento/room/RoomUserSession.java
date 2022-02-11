@@ -44,7 +44,7 @@ public class RoomUserSession implements Closeable {
         this.outgoingRtcPeer = new WebRtcEndpoint.Builder(pipeline).build();
 
         this.outgoingRtcPeer.addIceCandidateFoundListener(
-                getIceCandidateFoundEventListener()
+                getIceCandidateFoundEventListener(uuid)
         );
     }
 
@@ -74,7 +74,7 @@ public class RoomUserSession implements Closeable {
         if (incoming == null) {
             incoming = new WebRtcEndpoint.Builder(pipeline).build();
             incoming.addIceCandidateFoundListener(
-                    getIceCandidateFoundEventListener()
+                    getIceCandidateFoundEventListener(sender.uuid)
             );
             incomingRtcPeer.put(sender.getUuid(), incoming);
         }
@@ -131,21 +131,17 @@ public class RoomUserSession implements Closeable {
     public EventListener<IceCandidateFoundEvent> getPresentationIceCandidateFoundEventListener() {
         return event -> {
             try {
-                synchronized (session) {
-                    RoomSender.sendPresentationIceCandidate(this, event);
-                }
+                RoomSender.sendPresentationIceCandidate(this, event);
             } catch (IOException e) {
                 log.debug(e.getMessage());
             }
         };
     }
 
-    private EventListener<IceCandidateFoundEvent> getIceCandidateFoundEventListener() {
+    private EventListener<IceCandidateFoundEvent> getIceCandidateFoundEventListener(String uuid) {
         return event -> {
             try {
-                synchronized (session) {
-                    RoomSender.sendIceCandidate(this, event);
-                }
+                RoomSender.sendIceCandidate(this, uuid, event);
             } catch (IOException e) {
                 log.debug(e.getMessage());
             }

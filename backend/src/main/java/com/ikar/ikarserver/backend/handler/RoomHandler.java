@@ -8,6 +8,7 @@ import com.ikar.ikarserver.backend.domain.kurento.room.RoomUserRegistry;
 import com.ikar.ikarserver.backend.domain.kurento.room.RoomUserSession;
 import com.ikar.ikarserver.backend.handler.message.room.RoomMessageHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.kurento.commons.exception.KurentoException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -45,6 +46,8 @@ public class RoomHandler extends TextWebSocketHandler {
             final String messageId = jsonMessage.get("id").getAsString();
             RoomMessageHandler handler = handlers.get(messageId);
             handler.process(jsonMessage, session);
+        } catch (KurentoException ke) {
+            log.error(ke.getMessage());
         } catch (Exception e) {
             handleErrorResponse(e.getMessage(), session);
         }
