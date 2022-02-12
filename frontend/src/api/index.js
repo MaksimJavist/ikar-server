@@ -16,6 +16,13 @@ const createNewConference = () =>
         method: 'GET'
     })
 
+const getAuthenticatedUser = () =>
+    axiosInstance({
+        url: '/api/users',
+        method: 'GET'
+    })
+
+
 const getAuthInfo = () =>
     axiosInstance({
         url: '/api/auth/info',
@@ -24,14 +31,32 @@ const getAuthInfo = () =>
 
 const registerNewUser = (data) =>
     axiosInstance({
-        url: 'api/registration',
+        url: 'api/users',
         method: 'POST',
         data
     })
 
+const updateUser = (data) =>
+    axiosInstance({
+        url: 'api/users',
+        method: 'PUT',
+        data
+    })
+
+const updateUserPassword = (data) =>
+    axiosInstance({
+        url: 'api/users/password',
+        method: 'PUT',
+        data
+    })
+
+
 export default {
     createNewRoom,
     createNewConference,
+    getAuthenticatedUser,
     getAuthInfo,
-    registerNewUser
+    registerNewUser,
+    updateUser,
+    updateUserPassword
 }

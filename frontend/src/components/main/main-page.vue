@@ -9,6 +9,9 @@
                     <b-row class="justify-content-center mb-3">
                         <b-button class="w-75" @click="createConference" variant="outline-success" pill>Создать конференцию</b-button>
                     </b-row>
+                    <b-row class="justify-content-center mb-3">
+                        <b-button class="w-75" @click="moveToUserPage" variant="outline-info" pill>Страница пользователя</b-button>
+                    </b-row>
                     <b-row class="justify-content-center">
                         <b-button class="w-75" @click="exitFromAccount" variant="outline-primary" pill>Выход из учетной записи</b-button>
                     </b-row>
@@ -35,6 +38,9 @@ export default {
                 .then(resp => {
                     this.$router.push(`/conference/${resp.data}`)
                 })
+        },
+        moveToUserPage: function () {
+            this.$router.push('/user/update')
         },
         exitFromAccount: function () {
             window.location = '/logout'

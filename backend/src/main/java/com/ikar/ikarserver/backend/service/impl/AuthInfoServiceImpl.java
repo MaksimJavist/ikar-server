@@ -16,14 +16,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class AuthInfoServiceImpl implements AuthInfoService {
 
     @Override
-    public AuthUserInfo getAuthUserInfo() {
-        User user = (User) getAuthentication().getPrincipal();
-        return convertToAuthInfo(user);
+    public UUID getAuthUserUuid() {
+        final CustomUserDetails userDetails = (CustomUserDetails) getAuthentication().getPrincipal();
+        return userDetails.getUuid();
     }
 
     @Override
@@ -47,32 +48,18 @@ public class AuthInfoServiceImpl implements AuthInfoService {
             info.setAuthenticated(false);
             return info;
         }
-        AuthUserInfo userInfo = getAuthUserInfo();
+        CustomUserDetails userDetails = (CustomUserDetails) getAuthentication().getPrincipal();
 
         AuthInfoDetail info = new AuthInfoDetail();
         info.setAuthenticated(true);
-        info.setFirstName(userInfo.getFirstName());
-        info.setSecondName(userInfo.getSecondName());
+        info.setFirstName(userDetails.getFirstName());
+        info.setSecondName(userDetails.getSecondName());
 
         return info;
     }
 
     private Authentication getAuthentication() {
         return SecurityContextHolder.getContext().getAuthentication();
-    }
-
-    private AuthUserInfo convertToAuthInfo(User user) {
-        CustomUserDetails customUser = (CustomUserDetails) user;
-
-        AuthUserInfo info = new AuthUserInfo();
-        info.setUuid(
-                customUser.getUuid()
-        );
-        info.setUsername(customUser.getUsername());
-        info.setFirstName(customUser.getFirstName());
-        info.setSecondName(customUser.getSecondName());
-
-        return info;
     }
 
     private boolean isAnonymousUser(Authentication authentication) {

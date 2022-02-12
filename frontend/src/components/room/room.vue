@@ -159,7 +159,9 @@ export default {
             })
         },
         connectRoom: function () {
-            this.socket = new WebSocket(`ws://${this.getDomain()}/socket/room`)
+            this.socket = new WebSocket(
+                this.getSocketUrl()
+            )
             this.socket.onopen = this.joinRoom
         },
         joinRoom: function () {
@@ -285,8 +287,8 @@ export default {
             this.chatVisible = false
             this.chatInputText = null
         },
-        getDomain: function () {
-            return process.env.NODE_ENV === 'production' ? location.host : 'localhost:8080'
+        getSocketUrl: function () {
+            return process.env.NODE_ENV === 'production' ? `wss://${location.host}/socket/room` : 'ws://localhost:8080/socket/room'
         }
     }
 }

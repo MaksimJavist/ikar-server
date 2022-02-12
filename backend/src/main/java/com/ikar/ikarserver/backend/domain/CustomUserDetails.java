@@ -16,14 +16,19 @@ public class CustomUserDetails extends User {
 
     private final String secondName;
 
+    private final String middleName;
+
     public CustomUserDetails(String username,
-                             String password, Collection<? extends GrantedAuthority> authorities,
+                             String password,
+                             Collection<? extends GrantedAuthority> authorities,
                              UUID uuid,
                              String firstName,
-                             String secondName) {
+                             String secondName,
+                             String middleName) {
         super(username, password, authorities);
         this.uuid = uuid;
         this.firstName = firstName;
         this.secondName = secondName;
+        this.middleName = middleName;
     }
 }

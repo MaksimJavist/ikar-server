@@ -5,8 +5,10 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class AuthInfo {
+public class PasswordDto {
 
-    private boolean isAuthenticated;
+    String oldPassword;
+
+    String newPassword;
 
 }

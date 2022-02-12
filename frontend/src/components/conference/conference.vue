@@ -110,7 +110,9 @@ export default {
     },
     methods: {
         connectConference: function () {
-            this.webSocket = new WebSocket(`ws://${this.getDomain()}/socket/conference`)
+            this.webSocket = new WebSocket(
+                this.getSocketUrl()
+            )
             this.webSocket.onopen = this.setSettingSocket
         },
         setSettingSocket: function () {
@@ -489,8 +491,8 @@ export default {
             this.isPresenter = false
             this.isChatVisible = false
         },
-        getDomain: function () {
-            return process.env.NODE_ENV === 'production' ? location.host : 'localhost:8080'
+        getSocketUrl: function () {
+            return process.env.NODE_ENV === 'production' ? `wss://${location.host}/socket/conference` : 'ws://localhost:8080/socket/conference'
         }
     }
 }

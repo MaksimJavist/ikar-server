@@ -9,6 +9,7 @@ public final class Messages {
     public static final String EMPTY_USER_FIRSTNAME_ERROR = "Имя пользователя не может быть пустым.";
     public static final String EMPTY_USER_SECONDNAME_ERROR = "Фамилия пользователя не может быть пустой.";
     public static final String UPDATES_USER_IS_NOT_AUTHORIZED = "Обновляемый пользователь не авторизирован.";
+    public static final String PASSWORD_DOES_NOT_MATCH_ERROR = "Старый пароль не верен.";
 
     public static final String USER_IS_BROADCASTING = "Пользователь {0} ведет трансляцию";
     public static final String PRESENTER_BUSY = "В настоящее время презентующим выступает другой пользователь.";

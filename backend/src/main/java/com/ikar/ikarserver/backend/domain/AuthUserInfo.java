@@ -17,4 +17,6 @@ public class AuthUserInfo {
 
     private String secondName;
 
+    private String middleName;
+
 }

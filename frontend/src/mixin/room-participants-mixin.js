@@ -35,7 +35,7 @@ const roomParticipantsMixin = {
             const errorCreationPeerCallback = this.errorCreationPeer
             participant.rtcPeer = new WebRtcPeer.WebRtcPeerSendonly(options, function (error) {
                 if (error) {
-                    return errorCreationPeerCallback
+                    return errorCreationPeerCallback()
                 }
                 this.generateOffer(participant.offerToReceiveVideo.bind(participant))
                 successCreationPeerCallback(participant, message.data)
@@ -52,6 +52,7 @@ const roomParticipantsMixin = {
                 variant: 'warning',
                 solid: true
             })
+            this.exitFromRoom()
         },
         receiveVideoFromSender: function (sender) {
             const participant = new Participant(sender.uuid, sender.name, this.socket)

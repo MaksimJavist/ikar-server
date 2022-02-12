@@ -7,10 +7,11 @@ import lombok.NonNull;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.Optional;
+import java.util.UUID;
 
 public interface AuthInfoService {
 
-    AuthUserInfo getAuthUserInfo();
+    UUID getAuthUserUuid();
 
     AuthInfo getAuthInfo();
 

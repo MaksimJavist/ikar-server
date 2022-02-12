@@ -1,6 +1,7 @@
 package com.ikar.ikarserver.backend.controller;
 
 import com.ikar.ikarserver.backend.domain.AuthInfo;
+import com.ikar.ikarserver.backend.domain.AuthUserInfo;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,7 @@ public class AuthInfoController {
 
     @GetMapping("info")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<AuthInfo> getAuthInfo() {
+    public ResponseEntity<AuthInfo> getShortAuthInfo() {
         return ResponseEntity.ok(
                 service.getAuthInfo()
         );

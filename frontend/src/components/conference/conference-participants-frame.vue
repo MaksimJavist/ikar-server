@@ -22,10 +22,14 @@
                 <div class="float-right">
                     <b-icon-star-fill v-if="participant.uuid === localParticipantUuid"
                                       v-b-tooltip.hover
+                                      class="pr-1"
+                                      style="height: 25px; width: 25px"
                                       title="Это вы"/>
-                    <b-icon-display v-if="participant.uuid === presenterParticipantUuid"
-                                    v-b-tooltip.hover
-                                    title="Презентующий"/>
+                    <b-icon-display-fill v-if="participant.uuid === presenterParticipantUuid"
+                                         v-b-tooltip.hover
+                                         class="pr-1"
+                                         style="height: 25px; width: 25px"
+                                         title="Презентующий"/>
                 </div>
             </div>
         </div>
