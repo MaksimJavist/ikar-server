@@ -66,7 +66,7 @@ public class AuthInfoServiceImpl implements AuthInfoService {
 
         AuthUserInfo info = new AuthUserInfo();
         info.setUuid(
-                customUser.getUuid().toString()
+                customUser.getUuid()
         );
         info.setUsername(customUser.getUsername());
         info.setFirstName(customUser.getFirstName());

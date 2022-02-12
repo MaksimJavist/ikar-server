@@ -1,20 +1,20 @@
-package com.ikar.ikarserver.backend.domain;
+package com.ikar.ikarserver.backend.dto;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.UUID;
-
 @Getter
 @Setter
-public class AuthUserInfo {
+public class AppUserShortDto {
 
-    private UUID uuid;
+    private String uuid;
 
     private String username;
 
     private String firstName;
 
     private String secondName;
+
+    private String middleName;
 
 }
