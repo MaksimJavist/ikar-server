@@ -1,10 +1,12 @@
 package com.ikar.ikarserver.backend.domain.kurento.conference;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.ikar.ikarserver.backend.domain.CustomUserDetails;
 import com.ikar.ikarserver.backend.domain.entity.ConferenceChatMessage;
 import com.ikar.ikarserver.backend.dto.ChatMessageDto;
 import com.ikar.ikarserver.backend.exception.websocket.ConferenceException;
+import com.ikar.ikarserver.backend.exception.websocket.RoomException;
 import com.ikar.ikarserver.backend.service.AuthInfoService;
 import com.ikar.ikarserver.backend.service.ChatMessageService;
 import com.ikar.ikarserver.backend.util.ConferenceSender;
@@ -29,6 +31,7 @@ import java.util.concurrent.Executors;
 
 import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_USER_EXIST;
 import static com.ikar.ikarserver.backend.util.Messages.CONFERENCE_USER_NOT_FOUND;
+import static com.ikar.ikarserver.backend.util.Messages.USER_ARE_NOT_PRESENTER;
 
 @Slf4j
 @Getter
@@ -63,9 +66,11 @@ public class Conference implements Closeable {
         }
         String uuid = getUserUuid(session);
         ConferenceUserSession viewer = new ConferenceUserSession(uuid, username, identifier, session);
+        ConferenceSender.sendNewUserJoinForAll(viewers.values(), viewer);
         viewers.put(session.getId(), viewer);
         ConferenceSender.sendViewerRegisterSuccess(
                 viewer,
+                getConferenceUsersNames(),
                 messageBuffer.getAllMessagesForSend()
         );
         return viewer;
@@ -127,11 +132,9 @@ public class Conference implements Closeable {
         String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
         String sdpAnswer = presenterWebRtc.processOffer(sdpOffer);
 
-        synchronized (session) {
-            ConferenceSender.sendPresenterResponseSdpAnswer(presenter, sdpAnswer);
-        }
+        ConferenceSender.sendPresenterResponseSdpAnswer(presenter, sdpAnswer);
         presenterWebRtc.gatherCandidates();
-        ConferenceSender.sendNewPresenterForAllViewers(viewers.values(), presenter.getUsername());
+        ConferenceSender.sendNewPresenterForAllViewers(viewers.values(), presenter);
     }
 
     private void newViewer(final WebSocketSession session, JsonObject jsonMessage)
@@ -185,11 +188,21 @@ public class Conference implements Closeable {
         } else if (viewers.containsKey(sessionId)) {
             closePeerConnection(sessionId);
         }
+        ConferenceUserSession leavedUser = viewers.get(sessionId);
         viewers.remove(sessionId);
+        List<ConferenceUserSession> allConferenceUsers = new ArrayList<>(viewers.values());
+        if (presenter != null) {
+            allConferenceUsers.add(presenter);
+        }
+        ConferenceSender.sendUserLeaveFromConferenceForAllUsers(leavedUser, getAllUsers());
     }
 
     public synchronized void stop(WebSocketSession session) throws IOException {
         String sessionId = session.getId();
+        if (presenter != null && !sessionId.equals(presenter.getSession().getId())) {
+            throw new RoomException(USER_ARE_NOT_PRESENTER);
+        }
+
         if (isPresenter(sessionId)) {
             ConferenceSender.sendPresenterStopForAllViewers(presenter.getUsername(), viewers.values());
             for (ConferenceUserSession viewer : viewers.values()) {
@@ -234,6 +247,30 @@ public class Conference implements Closeable {
         return optUser
                 .map(customUserDetails -> customUserDetails.getUuid().toString())
                 .orElseGet(() -> UUID.randomUUID().toString());
+    }
+
+    private JsonArray getConferenceUsersNames() {
+        List<ConferenceUserSession> allConferenceUsers = getAllUsers();
+
+        JsonArray allConferenceUsersJson = new JsonArray();
+        allConferenceUsers
+                .forEach(user -> {
+                    final JsonObject userJson = new JsonObject();
+                    userJson.addProperty("uuid", user.getUuid());
+                    userJson.addProperty("name", user.getUsername());
+
+                    allConferenceUsersJson.add(userJson);
+                });
+
+        return allConferenceUsersJson;
+    }
+
+    private List<ConferenceUserSession> getAllUsers() {
+        final List<ConferenceUserSession> allConferenceUsers = new ArrayList<>(viewers.values());
+        if (presenter != null) {
+            allConferenceUsers.add(presenter);
+        }
+        return allConferenceUsers;
     }
 
     public boolean isEmpty() {

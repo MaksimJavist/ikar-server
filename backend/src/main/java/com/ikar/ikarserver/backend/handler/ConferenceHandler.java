@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.ikar.ikarserver.backend.domain.kurento.conference.Conference;
 import com.ikar.ikarserver.backend.domain.kurento.conference.ConferenceManager;
 import com.ikar.ikarserver.backend.domain.kurento.conference.ConferenceUserRegistry;
+import com.ikar.ikarserver.backend.exception.app.AppException;
 import com.ikar.ikarserver.backend.handler.message.conference.ConferenceMessageHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -47,8 +48,10 @@ public class ConferenceHandler extends TextWebSocketHandler {
             final String messageId = jsonMessage.get("id").getAsString();
             ConferenceMessageHandler handler = handlers.get(messageId);
             handler.process(jsonMessage, session);
-        } catch (Exception e) {
+        } catch (AppException e) {
             handleErrorResponse(e.getMessage(), session);
+        } catch (Exception e) {
+            log.error(e.getMessage());
         }
     }
 

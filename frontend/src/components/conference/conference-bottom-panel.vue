@@ -51,7 +51,7 @@
                             </b-button>
                         </span>
                     </span>
-                    <span class="buttonGroup">
+                    <span class="buttonGroup" v-else>
                         <b-button
                             pill
                             v-b-tooltip.hover
@@ -59,6 +59,16 @@
                             title="Начать показ"
                             variant="outline-success">
                                 Начать показ
+                        </b-button>
+                    </span>
+                    <span class="buttonGroup">
+                        <b-button
+                            v-b-tooltip.hover
+                            @click="showParticipantsFrameEmit"
+                            title="Участники конференции"
+                            variant="outline-info">
+                                <b-icon-people-fill/>
+                                {{ participantCount }}
                         </b-button>
                     </span>
                     <span class="buttonGroup">
@@ -104,7 +114,8 @@ export default {
         presenterFlag: Boolean,
         enableAudioFlag: Boolean,
         enableVideoFlag: Boolean,
-        uncheckedMessagesCount: Number
+        uncheckedMessagesCount: Number,
+        participantCount: Number
     },
     methods: {
         changeEnableAudioEmit: function (value) {
@@ -118,6 +129,9 @@ export default {
         },
         startPresentationEmit: function () {
             this.$emit('start-presentation')
+        },
+        showParticipantsFrameEmit: function () {
+            this.$emit('show-participants-frame')
         },
         showChatEmit: function () {
             this.$emit('show-chat')

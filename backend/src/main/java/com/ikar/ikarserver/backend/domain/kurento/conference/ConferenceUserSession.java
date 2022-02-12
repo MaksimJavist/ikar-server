@@ -1,6 +1,7 @@
 package com.ikar.ikarserver.backend.domain.kurento.conference;
 
 import com.google.gson.JsonObject;
+import com.ikar.ikarserver.backend.util.ConferenceSender;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -28,17 +29,10 @@ public class ConferenceUserSession implements Closeable {
     private final WebSocketSession session;
     private WebRtcEndpoint webRtcEndpoint;
 
-    public void setWebRtcEndpoint(WebRtcEndpoint webRtcEndpoint) {
-        this.webRtcEndpoint = webRtcEndpoint;
-    }
-
-    public WebSocketSession getSession() {
-        return session;
-    }
-
     public void sendMessage(JsonObject message) throws IOException {
-        log.debug("Sending message from user with session Id '{}': {}", session.getId(), message);
-        session.sendMessage(new TextMessage(message.toString()));
+        synchronized (session) {
+            session.sendMessage(new TextMessage(message.toString()));
+        }
     }
 
     public void addCandidate(IceCandidate candidate) {
@@ -49,13 +43,8 @@ public class ConferenceUserSession implements Closeable {
 
     public EventListener<IceCandidateFoundEvent> getCandidateEventListener() {
         return event -> {
-            JsonObject response = new JsonObject();
-            response.addProperty("id", "iceCandidate");
-            response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
             try {
-                synchronized (session) {
-                    session.sendMessage(new TextMessage(response.toString()));
-                }
+                ConferenceSender.sendIceCandidate(this, event);
             } catch (IOException e) {
                 log.debug(e.getMessage());
             }

@@ -6,9 +6,9 @@ import com.google.gson.JsonObject;
 import com.ikar.ikarserver.backend.domain.kurento.room.RoomManager;
 import com.ikar.ikarserver.backend.domain.kurento.room.RoomUserRegistry;
 import com.ikar.ikarserver.backend.domain.kurento.room.RoomUserSession;
+import com.ikar.ikarserver.backend.exception.app.AppException;
 import com.ikar.ikarserver.backend.handler.message.room.RoomMessageHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.kurento.commons.exception.KurentoException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -46,17 +46,11 @@ public class RoomHandler extends TextWebSocketHandler {
             final String messageId = jsonMessage.get("id").getAsString();
             RoomMessageHandler handler = handlers.get(messageId);
             handler.process(jsonMessage, session);
-        } catch (KurentoException ke) {
-            log.error(ke.getMessage());
+        } catch (AppException ae) {
+            handleErrorResponse(ae.getMessage(), session);
         } catch (Exception e) {
-            handleErrorResponse(e.getMessage(), session);
+            log.error(e.getMessage());
         }
-    }
-
-    @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        RoomUserSession user = registry.removeBySession(session);
-        manager.getRoom(user.getRoomUuid()).leave(user);
     }
 
     private void handleErrorResponse(String message, WebSocketSession session) throws IOException {
@@ -65,6 +59,12 @@ public class RoomHandler extends TextWebSocketHandler {
         response.addProperty("id", "errorResponse");
         response.addProperty("message", message);
         session.sendMessage(new TextMessage(response.toString()));
+    }
+
+    @Override
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        RoomUserSession user = registry.removeBySession(session);
+        manager.getRoom(user.getRoomUuid()).leave(user);
     }
 
 }

@@ -19,12 +19,19 @@
                                    :enable-audio-flag="onAudioFlag"
                                    :enable-video-flag="onVideoFlag"
                                    :unchecked-messages-count="uncheckedMessages"
+                                   :participant-count="conferenceParticipants.length"
                                    @change-audio="changeEnableAudio"
                                    @change-video="changeEnableVideo"
                                    @stop-presentation="stop"
                                    @start-presentation="presenterConnectPermission"
+                                   @show-participants-frame="switchParticipantFrameVisible"
                                    @show-chat="switchChatVisible"
                                    @exit="exitFromConference"/>
+            <ConferenceParticipantsFrame v-show="isParticipantsFrameVisible"
+                                         :participants="conferenceParticipants"
+                                         :local-participant-uuid="uuid"
+                                         :presenter-participant-uuid="presenterUuid"
+                                         @hide-frame="hideParticipantsFrame"/>
             <Chat v-show="isChatVisible"
                   :sender-uuid="uuid"
                   :chat-messages="chatMessages"
@@ -40,6 +47,7 @@ import Chat from '@/components/common/chat'
 import WebRtcPeer from '@/util/WebRtcPeer'
 import JoinFrame from '@/components/conference/conference-join-frame'
 import ConferenceBottomPanel from '@/components/conference/conference-bottom-panel'
+import ConferenceParticipantsFrame from '@/components/conference/conference-participants-frame'
 import api from '@/api'
 
 export default {
@@ -51,6 +59,8 @@ export default {
             webRtcPeer: null,
             userName: null,
             chatMessages: [],
+            conferenceParticipants: [],
+            presenterUuid: null,
 
             authenticatedUser: false,
             isRegisteredInConference: false,
@@ -58,6 +68,7 @@ export default {
             isActivePresentation: false,
             isPresenter: false,
             isChatVisible: false,
+            isParticipantsFrameVisible: false,
 
             onAudioFlag: true,
             onVideoFlag: true
@@ -66,7 +77,8 @@ export default {
     components: {
         Chat,
         JoinFrame,
-        ConferenceBottomPanel
+        ConferenceBottomPanel,
+        ConferenceParticipantsFrame
     },
     beforeCreate() {
         api.getAuthInfo()
@@ -102,7 +114,6 @@ export default {
             this.webSocket.onopen = this.setSettingSocket
         },
         setSettingSocket: function () {
-            this.joinFrameVisible = false
             this.webSocket.onmessage = this.handleMessage
             const message = {
                 id: "registerViewer",
@@ -142,20 +153,31 @@ export default {
                         return console.error('Error adding candidate: ' + error)
                 })
                 break
+            case 'newUserJoin':
+                this.newUserJoin(parsedMessage)
+                break
+            case 'userLeave':
+                this.userLeave(parsedMessage)
+                break
             case 'newChatMessage':
                 this.newChatMessage(parsedMessage.data)
                 break
             case 'stopCommunication':
                 this.stopCommunication(parsedMessage)
                 break
+            case 'errorResponse':
+                this.errorResponse(parsedMessage)
+                break
             default:
                 break
             }
         },
         viewerRegistered: function (message) {
+            this.joinFrameVisible = false
             this.isRegisteredInConference = true
             this.uuid = message.uuid
             this.userName = message.username
+            this.conferenceParticipants = this.conferenceParticipants.concat(message.users)
             this.chatMessages = this.chatMessages.concat(message.messages)
             this.$bvToast.toast(message.message, {
                 variant: 'info',
@@ -169,6 +191,7 @@ export default {
                 solid: true
             })
             this.isActivePresentation = false
+            this.presenterUuid = null
             this.webRtcPeer.dispose()
             this.webRtcPeer = null
         },
@@ -208,6 +231,7 @@ export default {
                 variant: 'info',
                 solid: true
             })
+            this.presenterUuid = message.presenterUuid
             this.viewerConnectPermission()
         },
         presenterResponse: function (message) {
@@ -217,6 +241,7 @@ export default {
             } else {
                 this.isPresenter = true
                 this.isActivePresentation = true
+                this.presenterUuid = this.uuid
                 this.webRtcPeer.processAnswer(message.sdpAnswer, function(error) {
                     if (error)
                         return console.error(error)
@@ -316,7 +341,6 @@ export default {
         onOfferViewer: function (error, offerSdp) {
             if (error)
                 return console.error('Error generating the offer')
-            console.info('Invoking SDP offer callback function ' + location.host)
             const message = {
                 id : 'viewer',
                 sdpOffer : offerSdp
@@ -333,6 +357,7 @@ export default {
         stop: function () {
             this.isPresenter = false
             this.isActivePresentation = false
+            this.presenterUuid = null
             const message = {
                 id : 'stop'
             }
@@ -343,9 +368,32 @@ export default {
                 solid: true
             })
         },
+        newUserJoin: function (message) {
+            this.$bvToast.toast(message.message, {
+                variant: 'info',
+                solid: true
+            })
+            const participant = {
+                uuid: message.uuid,
+                name: message.name
+            }
+
+            this.conferenceParticipants.push(participant)
+        },
+        userLeave: function (message) {
+            this.$bvToast.toast(message.message, {
+                variant: 'info',
+                solid: true
+            })
+            const removedIndex = this.conferenceParticipants.findIndex(element => element.uuid === message.uuid)
+            if (removedIndex !== -1) {
+                this.conferenceParticipants.splice(removedIndex, 1)
+            }
+        },
         stopCommunication: function ({ message }) {
             this.dispose()
             this.isActivePresentation = false
+            this.presenterUuid = null
             this.$bvToast.toast(message, {
                 variant: 'info',
                 solid: true
@@ -368,11 +416,12 @@ export default {
             }
             this.chatMessages.push(chatMessage)
         },
-        errorResponse: function (message) {
+        errorResponse: function ({ message }) {
             this.$bvToast.toast(message, {
                 variant: 'danger',
                 solid: true
             })
+            this.exitFromConference()
         },
         sendMessage: function (message) {
             const jsonMessage = JSON.stringify(message)
@@ -411,8 +460,14 @@ export default {
                 this.onVideoFlag = value
             }
         },
+        hideParticipantsFrame: function () {
+            this.isParticipantsFrameVisible = false
+        },
         hideChat: function () {
             this.isChatVisible = false
+        },
+        switchParticipantFrameVisible: function () {
+            this.isParticipantsFrameVisible = !this.isParticipantsFrameVisible
         },
         switchChatVisible: function () {
             this.isChatVisible = !this.isChatVisible

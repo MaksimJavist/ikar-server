@@ -229,14 +229,6 @@ export default {
             const jsonMessage = JSON.stringify(message)
             this.socket.send(jsonMessage)
         },
-        leaveRoom: function () {
-            this.sendMessage({
-                id : 'leaveRoom'
-            })
-            this.getLocalParticipant.dispose()
-            this.participants = []
-            this.socket.close()
-        },
         newChatMessage: function (chatMessage) {
             if (chatMessage.senderUuid !== this.localParticipantUuid) {
                 this.$bvToast.toast(chatMessage.text, {
@@ -265,6 +257,7 @@ export default {
                 variant: 'danger',
                 solid: true
             })
+            this.exitFromRoom()
         },
         hideChat: function () {
             this.chatVisible = false
