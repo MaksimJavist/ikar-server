@@ -66,7 +66,7 @@ export default {
             this.$emit('update-username', event)
         },
         moveToMainPage: function () {
-            this.$router.push('/')
+            window.location = '/'
         },
         propertyHasError: function (property) {
             return this.$v[property].$error

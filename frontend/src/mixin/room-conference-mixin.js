@@ -40,6 +40,7 @@ const roomConferenceMixin = {
                     localVideo : this.$refs.presentationVideo,
                     onicecandidate : this.presentationOnIceCandidate,
                     mediaConstraints: constraints,
+                    configuration: JSON.parse(process.env.VUE_APP_ICE_SERVER_CONFIG),
                     sendSource: 'screen'
                 }
                 const onOfferPresenterCallback = this.onOfferPresenter
@@ -126,7 +127,8 @@ const roomConferenceMixin = {
                             maxFrameRate : 30,
                             minFrameRate : 15
                         }
-                    }
+                    },
+                    configuration: JSON.parse(process.env.VUE_APP_ICE_SERVER_CONFIG)
                 }
                 const onOfferViewerCallback = this.onOfferViewer
                 const disposePeerCallback = this.disposePresentationPeer

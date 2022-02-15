@@ -27,7 +27,7 @@
                             <b-col cols="12" class="h-50 p-1" v-if="getLocalParticipant">
                                 <ParticipantLocal :participant="getLocalParticipant.getObject()"/>
                             </b-col>
-                            <b-col cols="12" class="h-50 p-1" v-for="(participant, index) in getRemoteParticipants" :key="index">
+                            <b-col cols="12" class="h-50 p-1" v-for="(participant) in getRemoteParticipants" :key="participant.uuid">
                                 <ParticipantRemote :participant="participant.getObject()"/>
                             </b-col>
                         </b-row>
@@ -78,8 +78,7 @@ export default {
     mixins: [
         ParticipantMixin,
         RoomParticipantsMixin,
-        RoomConferenceMixin,
-        JoinFrame
+        RoomConferenceMixin
     ],
     data() {
         return {

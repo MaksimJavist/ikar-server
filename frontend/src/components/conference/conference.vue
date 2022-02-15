@@ -283,6 +283,7 @@ export default {
                     onicecandidate : this.onIceCandidate,
                     mediaConstraints: constraints,
                     sendSource: 'conference',
+                    configuration: JSON.parse(process.env.VUE_APP_ICE_SERVER_CONFIG),
                     mediaUseOptions: {
                         audio: this.onAudioFlag,
                         video: this.onVideoFlag
@@ -321,6 +322,7 @@ export default {
                 const options = {
                     remoteVideo : this.$refs.conferenceVideo,
                     onicecandidate : this.onIceCandidate,
+                    configuration: JSON.parse(process.env.VUE_APP_ICE_SERVER_CONFIG),
                     video : {
                         mandatory : {
                             maxWidth : screen.width,

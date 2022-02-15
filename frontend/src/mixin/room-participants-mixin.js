@@ -25,6 +25,7 @@ const roomParticipantsMixin = {
                 localVideo: video,
                 mediaConstraints: constraints,
                 onicecandidate: participant.onIceCandidate.bind(participant),
+                configuration: JSON.parse(process.env.VUE_APP_ICE_SERVER_CONFIG),
                 mediaUseOptions: {
                     audio: this.microEnable,
                     video: this.videoEnable
@@ -60,9 +61,15 @@ const roomParticipantsMixin = {
 
             const options = {
                 remoteVideo: video,
-                onicecandidate: participant.onIceCandidate.bind(participant)
+                onicecandidate: participant.onIceCandidate.bind(participant),
+                configuration: JSON.parse(process.env.VUE_APP_ICE_SERVER_CONFIG)
             }
-            participant.rtcPeer = this.createWebRtcPeerForSender(options, participant)
+            participant.rtcPeer = new WebRtcPeer.WebRtcPeerRecvonly(options, function (error) {
+                if (error) {
+                    return console.error(error)
+                }
+                this.generateOffer(participant.offerToReceiveVideo.bind(participant))
+            })
             this.participants.push(participant)
         },
         receiveVideoResponse: function (result) {
