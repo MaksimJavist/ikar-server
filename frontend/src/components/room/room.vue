@@ -21,7 +21,7 @@
                         <h5>Пока никто не начал трансляцию</h5>
                     </b-card>
                 </b-col>
-                <b-col cols="2">
+                <b-col cols="2" class="mh-100">
                     <b-card class="h-100 pl-1 pr-1 overflow-auto border border-info" style="size: auto; background-color: #e1e2e3; border-width: medium !important;" title="Участники:" align="center">
                         <b-row>
                             <b-col cols="12" class="h-50 p-1" v-if="getLocalParticipant">

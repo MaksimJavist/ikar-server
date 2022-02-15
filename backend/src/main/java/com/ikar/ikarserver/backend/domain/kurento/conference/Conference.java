@@ -123,11 +123,13 @@ public class Conference implements Closeable {
         final String sessionId = session.getId();
         presenter = viewers.get(sessionId);
         viewers.remove(sessionId);
-        presenter.setWebRtcEndpoint(new WebRtcEndpoint.Builder(pipeline).build());
-        WebRtcEndpoint presenterWebRtc = presenter.getWebRtcEndpoint();
+        WebRtcEndpoint presenterWebRtc = new WebRtcEndpoint.Builder(pipeline).build();
+        presenterWebRtc.setMinVideoSendBandwidth(2000);
+        presenterWebRtc.setMinVideoRecvBandwidth(2000);
         presenterWebRtc.addIceCandidateFoundListener(
                 presenter.getCandidateEventListener()
         );
+        presenter.setWebRtcEndpoint(presenterWebRtc);
 
         String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
         String sdpAnswer = presenterWebRtc.processOffer(sdpOffer);
@@ -143,9 +145,12 @@ public class Conference implements Closeable {
 
         WebRtcEndpoint nextWebRtc = new WebRtcEndpoint.Builder(pipeline).build();
         viewer.setWebRtcEndpoint(nextWebRtc);
+        nextWebRtc.setMinVideoRecvBandwidth(2000);
+        nextWebRtc.setMinVideoRecvBandwidth(2000);
         nextWebRtc.addIceCandidateFoundListener(
                 viewer.getCandidateEventListener()
         );
+
         presenter.getWebRtcEndpoint().connect(nextWebRtc);
         String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
         String sdpAnswer = nextWebRtc.processOffer(sdpOffer);

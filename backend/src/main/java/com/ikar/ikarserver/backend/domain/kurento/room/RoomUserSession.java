@@ -50,7 +50,6 @@ public class RoomUserSession implements Closeable {
 
     public void receiveVideoFrom(RoomUserSession sender, String sdpOffer) throws IOException {
         log.info("USER {}: connecting with {} in room {}", this.name, sender.getUuid(), this.roomUuid);
-        log.trace("USER {}: SdpOffer for {} is {}", this.name, sender.getUuid(), sdpOffer);
 
         final String ipSdpAnswer = this.getEndpointForUser(sender).processOffer(sdpOffer);
         final JsonObject scParams = new JsonObject();
@@ -59,14 +58,12 @@ public class RoomUserSession implements Closeable {
         scParams.addProperty("name", sender.getName());
         scParams.addProperty("sdpAnswer", ipSdpAnswer);
 
-        log.trace("USER {}: SdpAnswer for {} is {}", this.name, sender.getName(), ipSdpAnswer);
         this.sendMessage(scParams);
         this.getEndpointForUser(sender).gatherCandidates();
     }
 
     private WebRtcEndpoint getEndpointForUser(final RoomUserSession sender) {
         if (sender.getUuid().equals(uuid)) {
-            log.debug("PARTICIPANT {}: configuring loopback", this.name);
             return outgoingRtcPeer;
         }
 
@@ -78,21 +75,18 @@ public class RoomUserSession implements Closeable {
             );
             incomingRtcPeer.put(sender.getUuid(), incoming);
         }
-        log.debug("PARTICIPANT {}: obtained endpoint for {}", this.name, sender.getUuid());
         sender.getOutgoingRtcPeer().connect(incoming);
 
         return incoming;
     }
 
     public void cancelVideoFrom(final String uuid) {
-        log.debug("PARTICIPANT {}: canceling video reception from {}", this.uuid, uuid);
         final WebRtcEndpoint incoming = incomingRtcPeer.remove(uuid);
         incoming.release();
     }
 
     @Override
     public void close() throws IOException {
-        log.debug("PARTICIPANT {}: Releasing resources", this.uuid);
         for (final String remoteParticipantUuid : incomingRtcPeer.keySet()) {
             final WebRtcEndpoint ep = this.incomingRtcPeer.get(remoteParticipantUuid);
             ep.release();
@@ -104,10 +98,16 @@ public class RoomUserSession implements Closeable {
 
     }
 
-    public void sendMessage(JsonObject message) throws IOException {
-        log.debug("USER {}: Sending message {}", uuid, message);
+    public void sendMessage(JsonObject message) {
         synchronized (session) {
-            session.sendMessage(new TextMessage(message.toString()));
+            try {
+                if (session.isOpen()) {
+                    session.sendMessage(new TextMessage(message.toString()));
+                }
+            } catch (Exception e) {
+                log.error("ERROR SENDING - ROOM: error send message for user with identifier {}", uuid);
+            }
+
         }
     }
 

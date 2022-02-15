@@ -273,7 +273,7 @@ export default {
                     video : {
                         width: screen.width,
                         height: screen.height,
-                        maxFrameRate: 30,
+                        maxFrameRate: 40,
                         minFrameRate: 15
                     },
                 }
@@ -327,7 +327,7 @@ export default {
                         mandatory : {
                             maxWidth : screen.width,
                             maxHeight: screen.height,
-                            maxFrameRate : 30,
+                            maxFrameRate : 40,
                             minFrameRate : 15
                         }
                     }

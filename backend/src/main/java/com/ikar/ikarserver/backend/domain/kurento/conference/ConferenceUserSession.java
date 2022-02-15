@@ -29,9 +29,15 @@ public class ConferenceUserSession implements Closeable {
     private final WebSocketSession session;
     private WebRtcEndpoint webRtcEndpoint;
 
-    public void sendMessage(JsonObject message) throws IOException {
+    public void sendMessage(JsonObject message) {
         synchronized (session) {
-            session.sendMessage(new TextMessage(message.toString()));
+            try {
+                if (session.isOpen()) {
+                    session.sendMessage(new TextMessage(message.toString()));
+                }
+            } catch (Exception e) {
+                log.error("ERROR SENDING - CONFERENCE: error send message for user with identifier {}", uuid);
+            }
         }
     }
 

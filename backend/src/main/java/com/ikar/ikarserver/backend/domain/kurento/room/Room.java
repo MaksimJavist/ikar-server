@@ -122,6 +122,8 @@ public class Room implements Closeable {
 
     private void connectViewer(RoomUserSession viewer, JsonObject jsonMessage) throws IOException {
         WebRtcEndpoint viewerWebRtc = new WebRtcEndpoint.Builder(pipeline).build();
+        viewerWebRtc.setMinVideoRecvBandwidth(2000);
+        viewerWebRtc.setMinVideoRecvBandwidth(2000);
         viewerWebRtc.addIceCandidateFoundListener(
                 viewer.getPresentationIceCandidateFoundEventListener()
         );
@@ -152,9 +154,12 @@ public class Room implements Closeable {
     private void newPresenter(RoomUserSession presenter, JsonObject jsonMessage) throws IOException {
         presenterUuid = presenter.getUuid();
         final WebRtcEndpoint presenterWebRtc = new WebRtcEndpoint.Builder(pipeline).build();
-
+        presenterWebRtc.setMinVideoRecvBandwidth(2000);
+        presenterWebRtc.setMinVideoRecvBandwidth(2000);
+        presenterWebRtc.addIceCandidateFoundListener(
+                presenter.getPresentationIceCandidateFoundEventListener()
+        );
         presenter.setPresenterMediaEndpoint(presenterWebRtc);
-        presenterWebRtc.addIceCandidateFoundListener(presenter.getPresentationIceCandidateFoundEventListener());
 
         String sdpOffer = jsonMessage.getAsJsonPrimitive("sdpOffer").getAsString();
         String sdpAnswer = presenterWebRtc.processOffer(sdpOffer);
@@ -204,21 +209,10 @@ public class Room implements Closeable {
         participantLeftJson.addProperty("uuid", userUuid);
         participantLeftJson.addProperty("message", MessageFormat.format(ROOM_PARTICIPANT_LEFT, user.getName()));
 
-        final List<String> unnotifiedParticipants = new ArrayList<>();
         for (final RoomUserSession participant : participants.values()) {
-            try {
-                participant.cancelVideoFrom(userUuid);
-                participant.sendMessage(participantLeftJson);
-            } catch (final IOException e) {
-                unnotifiedParticipants.add(participant.getUuid());
-            }
+            participant.cancelVideoFrom(userUuid);
+            participant.sendMessage(participantLeftJson);
         }
-
-        if (!unnotifiedParticipants.isEmpty()) {
-            log.debug("ROOM {}: The users {} could not be notified that {} left the room", this.identifier,
-                    unnotifiedParticipants, this.identifier);
-        }
-
     }
 
     public void sendParticipantNames(RoomUserSession user) throws IOException {

@@ -174,11 +174,7 @@ public final class RoomSender {
     private static void sendMessageForAllParticipants(JsonObject message,
                                                       Collection<RoomUserSession> participants) {
         for (RoomUserSession participant : participants) {
-            try {
-                participant.sendMessage(message);
-            } catch (IOException e) {
-                log.debug("ROOM: participant {} could not be notified", participant.getName(), e);
-            }
+            participant.sendMessage(message);
         }
     }
 

@@ -31,7 +31,7 @@ public final class ConferenceSender {
 
     public static void sendViewerRegisterSuccess(ConferenceUserSession userSession,
                                                  JsonArray conferenceUsersNames,
-                                                 JsonArray chatMessages) throws IOException {
+                                                 JsonArray chatMessages) {
         final JsonObject message = new JsonObject();
         message.addProperty("id", "viewerRegistered");
         message.addProperty("uuid", userSession.getUuid());
@@ -53,7 +53,7 @@ public final class ConferenceSender {
         sendMessageForAllUsers(message, notifiedUsers);
     }
 
-    public static void sendAcceptViewerConnectPermissionResponse(ConferenceUserSession session, String presenterName) throws IOException {
+    public static void sendAcceptViewerConnectPermissionResponse(ConferenceUserSession session, String presenterName) {
         final JsonObject message = new JsonObject();
         message.addProperty("id", "viewerConnectPermissionResponse");
         message.addProperty("response", "accepted");
@@ -62,7 +62,7 @@ public final class ConferenceSender {
         session.sendMessage(message);
     }
 
-    public static void sendRejectViewerConnectPermissionResponse(ConferenceUserSession session) throws IOException {
+    public static void sendRejectViewerConnectPermissionResponse(ConferenceUserSession session) {
         final JsonObject message = new JsonObject();
         message.addProperty("id", "viewerConnectPermissionResponse");
         message.addProperty("response", "reject");
@@ -71,7 +71,7 @@ public final class ConferenceSender {
         session.sendMessage(message);
     }
 
-    public static void sendAcceptPresenterConnectPermissionResponse(ConferenceUserSession session) throws IOException {
+    public static void sendAcceptPresenterConnectPermissionResponse(ConferenceUserSession session) {
         final JsonObject message = new JsonObject();
         message.addProperty("id", "presenterConnectPermissionResponse");
         message.addProperty("response", "accepted");
@@ -79,7 +79,7 @@ public final class ConferenceSender {
         session.sendMessage(message);
     }
 
-    public static void sendRejectPresenterConnectPermissionResponse(ConferenceUserSession session) throws IOException {
+    public static void sendRejectPresenterConnectPermissionResponse(ConferenceUserSession session) {
         final JsonObject message = new JsonObject();
         message.addProperty("id", "presenterConnectPermissionResponse");
         message.addProperty("response", "reject");
@@ -88,7 +88,7 @@ public final class ConferenceSender {
         session.sendMessage(message);
     }
 
-    public static void sendRejectPresenterResponse(ConferenceUserSession session) throws IOException {
+    public static void sendRejectPresenterResponse(ConferenceUserSession session) {
         final JsonObject message = new JsonObject();
         message.addProperty("id", "presenterResponse");
         message.addProperty("response", "rejected");
@@ -96,7 +96,7 @@ public final class ConferenceSender {
         session.sendMessage(message);
     }
 
-    public static void sendNewPresenterForAllViewers(Collection<ConferenceUserSession> viewers, ConferenceUserSession user) throws IOException {
+    public static void sendNewPresenterForAllViewers(Collection<ConferenceUserSession> viewers, ConferenceUserSession user) {
         final JsonObject message = new JsonObject();
         message.addProperty("id", "newPresenter");
         message.addProperty("presenterUuid", user.getUuid());
@@ -113,7 +113,7 @@ public final class ConferenceSender {
         user.sendMessage(message);
     }
 
-    public static void sendPresenterResponseSdpAnswer(ConferenceUserSession presenter, String sdpAnswer) throws IOException {
+    public static void sendPresenterResponseSdpAnswer(ConferenceUserSession presenter, String sdpAnswer) {
         final JsonObject response = new JsonObject();
         response.addProperty("id", "presenterResponse");
         response.addProperty("response", "accepted");
@@ -122,7 +122,7 @@ public final class ConferenceSender {
         presenter.sendMessage(response);
     }
 
-    public static void sendViewerResponseSdpAnswer(ConferenceUserSession viewer, String presenterName, String sdpAnswer) throws IOException {
+    public static void sendViewerResponseSdpAnswer(ConferenceUserSession viewer, String presenterName, String sdpAnswer) {
         final JsonObject response = new JsonObject();
         response.addProperty("id", "viewerResponse");
         response.addProperty("response", "accepted");
@@ -173,11 +173,7 @@ public final class ConferenceSender {
 
     private static void sendMessageForAllUsers(JsonObject message, Collection<ConferenceUserSession> users) {
         for (ConferenceUserSession user : users) {
-            try {
-                user.sendMessage(message);
-            } catch (IOException e) {
-                log.debug("ROOM: participant {} could not be notified", user.getUsername(), e);
-            }
+            user.sendMessage(message);
         }
     }
 

@@ -32,7 +32,7 @@ const roomConferenceMixin = {
                     video : {
                         width: screen.width,
                         height: screen.height,
-                        maxFrameRate: 30,
+                        maxFrameRate: 40,
                         minFrameRate: 15
                     },
                 }
@@ -124,8 +124,8 @@ const roomConferenceMixin = {
                         mandatory : {
                             maxWidth : screen.width,
                             maxHeight: screen.height,
-                            maxFrameRate : 30,
-                            minFrameRate : 15
+                            maxFrameRate: 40,
+                            minFrameRate: 15
                         }
                     },
                     configuration: JSON.parse(process.env.VUE_APP_ICE_SERVER_CONFIG)
