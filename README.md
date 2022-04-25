@@ -1,1 +1,1 @@
-# ikar-server
+# video-call-server
